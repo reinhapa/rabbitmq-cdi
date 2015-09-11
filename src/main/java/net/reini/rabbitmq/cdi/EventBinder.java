@@ -167,6 +167,7 @@ public abstract class EventBinder {
          * for every consumed message.
          *
          * @param queue The queue
+         * @return the queue binding
          */
         public QueueBinding toQueue(String queue) {
             return new QueueBinding(eventType, queue);
@@ -178,6 +179,7 @@ public abstract class EventBinder {
          * be published to the exchange.
          *
          * @param exchange The exchange
+         * @return the exchange binding
          */
         public ExchangeBinding toExchange(String exchange) {
             return new ExchangeBinding(eventType, exchange);
@@ -209,6 +211,8 @@ public abstract class EventBinder {
          * a fire-and-forget manner. The broker removes a message from the queue as soon as its
          * is delivered to the consumer and does not care about whether the consumer successfully
          * processes this message or not.</p>
+         * 
+         * @return the queue binding
          */
         public QueueBinding autoAck() {
             this.autoAck = true;
@@ -241,6 +245,7 @@ public abstract class EventBinder {
          * Sets the routing key to be used for message publishing.
          *
          * @param routingKey The routing key
+         * @return the exchange binding
          */
         public ExchangeBinding withRoutingKey(String routingKey) {
             this.routingKey = routingKey;
@@ -252,6 +257,7 @@ public abstract class EventBinder {
          * Sets the given basic properties to be used for message publishing.
          *
          * @param basicProperties The basic properties
+         * @return the exchange binding
          */
         public ExchangeBinding withProperties(AMQP.BasicProperties basicProperties) {
             this.basicProperties = basicProperties;
