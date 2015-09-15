@@ -6,6 +6,9 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -24,7 +27,6 @@ public class GenericPublisher implements MessagePublisher {
 
 	public GenericPublisher(ConnectionFactory connectionFactory) {
 		this.connectionFactory = connectionFactory;
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -86,8 +88,13 @@ public class GenericPublisher implements MessagePublisher {
 			}
 			try {
 				Channel channel = provideChannel();
-				// TODO
+				ObjectMapper mapper = new ObjectMapper();
+				mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+				byte[] data = mapper.writeValueAsBytes(event);
+				channel.basicPublish(publisherConfiguration.exchange, publisherConfiguration.routingKey, publisherConfiguration.basicProperties, data);
 				return;
+			} catch (JsonProcessingException e) {
+				LOGGER.error("Unable to serialize {} due to: {}", event, e.getMessage());
 			} catch (IOException e) {
 				handleIoException(attempt, e);
 			} catch (TimeoutException e) {

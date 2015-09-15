@@ -1,8 +1,27 @@
 package net.reini.rabbitmq.cdi;
 
-public class ConnectionConfigurator {
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-	public void configureFactory(Class<? extends EventBinder> class1) {
-		// TODO Auto-generated method stub
+import com.rabbitmq.client.ConnectionFactory;
+
+@Singleton
+public class ConnectionConfigurator {
+    @Inject
+    ConnectionFactory connectionFactory;
+
+	public void configureFactory(Class<? extends EventBinder> eventBinderClass) {
+        // First, look up if there is a single connection configuration
+        ConnectionConfiguration connectionConfiguration = eventBinderClass.getAnnotation(ConnectionConfiguration.class);
+        if (connectionConfiguration != null) {
+			connectionFactory.setHost(connectionConfiguration.host());
+			connectionFactory.setVirtualHost(connectionConfiguration.virtualHost());
+			connectionFactory.setPort(connectionConfiguration.port());
+			connectionFactory.setConnectionTimeout(connectionConfiguration.timeout());
+			connectionFactory.setRequestedHeartbeat(connectionConfiguration.heartbeat());
+			connectionFactory.setUsername(connectionConfiguration.username());
+			connectionFactory.setPassword(connectionConfiguration.password());
+			connectionFactory.setRequestedFrameMax(connectionConfiguration.frameMax());
+	       }
 	}
 }

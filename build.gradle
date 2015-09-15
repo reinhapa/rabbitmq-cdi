@@ -35,10 +35,19 @@ repositories {
 
 dependencies {
     compile 'javax.enterprise:cdi-api:1.2'
+    compile 'javax.json:javax.json-api:1.0'
     compile 'org.slf4j:slf4j-api:1.7.12'
     compile 'com.rabbitmq:amqp-client:3.5.4'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.3.2'
     
     testCompile 'junit:junit:4.+'
+    testCompile 'org.mockito:mockito-core:1.+'
+    
+    testRuntime 'junit:junit:4.+'
+    testRuntime 'org.mockito:mockito-core:1.+'
+
+    testRuntime 'org.glassfish:javax.json:1.+'
+    testRuntime 'ch.qos.logback:logback-classic:1.+'
 }
 
 task sourcesJar(type: Jar) {

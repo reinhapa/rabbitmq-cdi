@@ -18,22 +18,21 @@ import com.rabbitmq.client.ConnectionFactory;
 /**
  * Publishes events to exchanges of a broker.
  *
- * @author christian.bick
+ * @author Patrick Reinhart
  */
 @Singleton
 public class EventPublisher {
-	private static Logger LOGGER = LoggerFactory
-			.getLogger(EventPublisher.class);
-
-	ConnectionFactory connectionFactory;
-
-	Map<Class<?>, PublisherConfiguration> publisherConfigurations = new HashMap<>();
-
-	ThreadLocal<Map<Class<?>, MessagePublisher>> publishers = new ThreadLocal<>();
+	private static final Logger LOGGER = LoggerFactory.getLogger(EventPublisher.class);
 
 	@Inject
-	public EventPublisher(ConnectionFactory connectionFactory) {
-		this.connectionFactory = connectionFactory;
+	ConnectionFactory connectionFactory;
+
+	private final Map<Class<?>, PublisherConfiguration> publisherConfigurations;
+	private final ThreadLocal<Map<Class<?>, MessagePublisher>> publishers;
+
+	public EventPublisher() {
+		this.publisherConfigurations = new HashMap<>();
+		this.publishers = new ThreadLocal<>();
 	}
 
 	/**
@@ -48,8 +47,7 @@ public class EventPublisher {
 	 * @param <T>
 	 *            The event type
 	 */
-	public <T> void addEvent(Class<T> eventType,
-			PublisherConfiguration configuration) {
+	public <T> void addEvent(Class<T> eventType, PublisherConfiguration configuration) {
 		publisherConfigurations.put(eventType, configuration);
 	}
 
@@ -64,26 +62,20 @@ public class EventPublisher {
 	 * @throws TimeoutException
 	 *             if the event failed to be published
 	 */
-	public void publishEvent(@Observes Object event)
-			throws IOException, TimeoutException {
+	public void publishEvent(@Observes Object event) throws IOException, TimeoutException {
 		Class<?> eventType = event.getClass();
 		LOGGER.debug("Receiving event of type {}", eventType.getSimpleName());
 		if (!publisherConfigurations.containsKey(eventType)) {
-			LOGGER.debug("No publisher configured for event of type {}",
-					eventType.getSimpleName());
+			LOGGER.debug("No publisher configured for event of type {}", eventType.getSimpleName());
 			return;
 		}
-		PublisherConfiguration publisherConfiguration = publisherConfigurations
-				.get(eventType);
+		PublisherConfiguration publisherConfiguration = publisherConfigurations.get(eventType);
 		try (MessagePublisher publisher = providePublisher(eventType)) {
-			LOGGER.info("Publishing event of type {}",
-					eventType.getSimpleName());
+			LOGGER.debug("Publishing event of type {}", eventType.getSimpleName());
 			publisher.publish(event, publisherConfiguration);
-			LOGGER.info("Successfully published event of type {}",
-					eventType.getSimpleName());
+			LOGGER.debug("Successfully published event of type {}", eventType.getSimpleName());
 		} catch (IOException | TimeoutException e) {
-			LOGGER.error("Failed to publish event {}",
-					eventType.getSimpleName(), e);
+			LOGGER.error("Failed to publish event {}", eventType.getSimpleName(), e);
 			throw e;
 		}
 	}
@@ -119,8 +111,8 @@ public class EventPublisher {
 	 * @author christian.bick
 	 */
 	public static class PublisherConfiguration {
-		public PublisherConfiguration(String exchange, String routingKey,
-				Boolean persistent, AMQP.BasicProperties basicProperties) {
+		public PublisherConfiguration(String exchange, String routingKey, Boolean persistent,
+				AMQP.BasicProperties basicProperties) {
 			this.exchange = exchange;
 			this.routingKey = routingKey;
 			this.persistent = persistent;
