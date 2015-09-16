@@ -120,7 +120,7 @@ public abstract class EventBinder {
         Event<Object> eventControl = (Event<Object>)remoteEventControl.select(queueBinding.eventType);
         @SuppressWarnings("unchecked")
         Instance<Object> eventPool = (Instance<Object>)remoteEventPool.select(queueBinding.eventType);
-        EventConsumer consumer = new EventConsumer(eventControl, eventPool);
+        EventConsumer consumer = new EventConsumer(queueBinding.eventType, eventControl, eventPool);
         consumerContainer.addConsumer(consumer, queueBinding.queue, queueBinding.autoAck);
         LOGGER.info("Binding between queue {} and event type {} activated",
                 queueBinding.queue, queueBinding.eventType.getSimpleName());

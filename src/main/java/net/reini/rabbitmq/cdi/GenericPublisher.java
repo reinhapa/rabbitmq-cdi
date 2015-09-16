@@ -17,6 +17,7 @@ import net.reini.rabbitmq.cdi.EventPublisher.PublisherConfiguration;
 
 public class GenericPublisher implements MessagePublisher {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GenericPublisher.class);
+	private static final ObjectMapper MAPPER = new ObjectMapper().disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
 	public static final int DEFAULT_RETRY_ATTEMPTS = 3;
 	public static final int DEFAULT_RETRY_INTERVAL = 1000;
@@ -87,10 +88,8 @@ public class GenericPublisher implements MessagePublisher {
 				LOGGER.debug("Attempt {} to send message", attempt);
 			}
 			try {
+				byte[] data = MAPPER.writeValueAsBytes(event);
 				Channel channel = provideChannel();
-				ObjectMapper mapper = new ObjectMapper();
-				mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-				byte[] data = mapper.writeValueAsBytes(event);
 				channel.basicPublish(publisherConfiguration.exchange, publisherConfiguration.routingKey, publisherConfiguration.basicProperties, data);
 				return;
 			} catch (JsonProcessingException e) {

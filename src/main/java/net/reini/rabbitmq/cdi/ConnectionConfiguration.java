@@ -25,6 +25,8 @@ public @interface ConnectionConfiguration {
      * <p>The profile name of this configuration. If a profile is specified, this
      * configuration is only used if the system property
      * {@link ConnectionConfiguration#PROFILE_PROPERTY} is set to the specified value (e.g. test, staging, ...).</p>
+     * 
+     * @return the default profile name
      */
     String profile() default DEFAULT_PROFILE;
 

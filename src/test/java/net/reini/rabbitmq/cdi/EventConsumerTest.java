@@ -1,5 +1,6 @@
 package net.reini.rabbitmq.cdi;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
 import javax.enterprise.event.Event;
@@ -22,7 +23,7 @@ public class EventConsumerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		consumer = new EventConsumer(eventControl, eventPool);
+		consumer = new EventConsumer(TestEvent.class, eventControl, eventPool);
 		event = new TestEvent();
 	}
 
@@ -32,6 +33,8 @@ public class EventConsumerTest {
 		
 		when(eventPool.get()).thenReturn(event);
 		
-		consumer.buildEvent(messageBody);
+		TestEvent eventObject = (TestEvent)consumer.buildEvent(messageBody);
+		assertEquals("theId", eventObject.getId());
+		assertTrue( eventObject.isBooleanValue());
 	}
 }

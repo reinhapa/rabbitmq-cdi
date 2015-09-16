@@ -1,33 +1,15 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.5.3"
-    }
-}
-
 apply plugin: 'java'
 apply plugin: 'signing'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
 
-sourceCompatibility = 1.8
-version = '1.0-SNAPSHOT'
 group = 'net.reini'
+archivesBaseName = 'rabbitmq-cdi'
+version = '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
 
 defaultTasks 'build'
-
-jar {
-    manifest {
-        attributes 'Implementation-Title': 'RabbitMQ CDI extension',
-                   'Implementation-Version': version,
-                   'Built-By': System.getProperty('user.name'),
-                   'Built-Date': new Date(),
-                   'Built-JDK': System.getProperty('java.version'),
-                   'Built-Gradle': gradle.gradleVersion
-    }
-}
 
 repositories {
     mavenCentral()
@@ -35,7 +17,6 @@ repositories {
 
 dependencies {
     compile 'javax.enterprise:cdi-api:1.2'
-    compile 'javax.json:javax.json-api:1.0'
     compile 'org.slf4j:slf4j-api:1.7.12'
     compile 'com.rabbitmq:amqp-client:3.5.4'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.3.2'
@@ -46,7 +27,6 @@ dependencies {
     testRuntime 'junit:junit:4.+'
     testRuntime 'org.mockito:mockito-core:1.+'
 
-    testRuntime 'org.glassfish:javax.json:1.+'
     testRuntime 'ch.qos.logback:logback-classic:1.+'
 }
 
@@ -67,7 +47,7 @@ artifacts {
 
 
 signing {
-    required { !project.version.contains("-SNAPSHOT") }
+    required { !project.version.contains('-SNAPSHOT') }
     sign configurations.archives
 }
 
@@ -75,45 +55,56 @@ test {
     systemProperties 'property': 'value'
 }
 
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'RabbitMQ CDI extension',
+                   'Implementation-Version': version,
+                   'Built-By': System.getProperty('user.name'),
+                   'Built-Date': new Date(),
+                   'Built-JDK': System.getProperty('java.version'),
+                   'Built-Gradle': gradle.gradleVersion
+    }
+}
+
 uploadArchives {
     repositories.mavenDeployer {
-        repository(url: "~/m2")
-        snapshotRepository(url: "~/m2")
-
         beforeDeployment { 
             MavenDeployment deployment -> signing.signPom(deployment)
         }
 
-        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-//            authentication(userName: ossrhUsername, password: ossrhPassword)
+        repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
+            authentication(userName: ossrhUsername, password: ossrhPassword)
         }
 
-        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-//            authentication(userName: ossrhUsername, password: ossrhPassword)
+        snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
+            authentication(userName: ossrhUsername, password: ossrhPassword)
         }
 
         pom.project {
             name 'Example Application'
             packaging 'jar'
-            description 'Enables CDI based usage of RabbitMQ within a JavaEE application.'
+            description 'Enables CDI based usage of RabbitMQ within a JavaEE 7 application.'
+            url 'https://github.com/reinhapa/rabbitmq-cdi'
+            
+            scm {
+                connection 'scm:git:https://github.com/reinhapa/rabbitmq-cdi.git'
+                developerConnection 'scm:git:https://github.com/reinhapa/rabbitmq-cdi.git'
+                url 'https://github.com/reinhapa/rabbitmq-cdi'
+            }
+
 			licenses {
                 license {
-                    name "MIT License"
-                    url "http://www.opensource.org/licenses/mit-license.php"
-                    distribution "repo"
+                    name 'MIT License'
+                    url 'http://www.opensource.org/licenses/mit-license.php'
+                    distribution 'repo'
                 }
 			}
-            url "https://github.com/reinhapa/rabbitmq-cdi.git"
-            scm {
-                connection "scm:git:https://github.com/reinhapa/rabbitmq-cdi.git"
-                developerConnection "scm:git:https://github.com/reinhapa/rabbitmq-cdi.git"
-                url "https://github.com/reinhapa/rabbitmq-cdi"
-            }
+
             developers {
                 developer {
-                    id "reinhapa"
-                    name "Patrick Reinhart"
-                    email "patrick@reini.net"
+                    id 'reinhapa'
+                    name 'Patrick Reinhart'
+                    email 'patrick@reini.net'
                 }
             }
         }
