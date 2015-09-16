@@ -7,8 +7,21 @@ import net.reini.rabbitmq.cdi.EventPublisher.PublisherConfiguration;
 
 public interface MessagePublisher extends AutoCloseable {
 
-	void publish(Object event, PublisherConfiguration publisherConfiguration)
-			throws IOException, TimeoutException;
+	/**
+	 * Publishes the given event using the given publisher configuration
+	 * template.
+	 * 
+	 * @param event
+	 *            the event being published to RabbitMQ
+	 * @param publisherConfiguration
+	 *            the default publisher configuration
+	 * @throws IOException
+	 *             if the channel can not be opened correctly or the actual send
+	 *             fails.
+	 * @throws TimeoutException
+	 *             if a timeout while sending occurs
+	 */
+	void publish(Object event, PublisherConfiguration publisherConfiguration) throws IOException, TimeoutException;
 
 	/**
 	 * Closes the publisher by closing its underlying channel.

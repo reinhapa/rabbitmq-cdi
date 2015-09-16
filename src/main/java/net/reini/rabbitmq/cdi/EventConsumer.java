@@ -42,7 +42,7 @@ public class EventConsumer implements Consumer {
 		try {
 			event = MAPPER.readValue(messageBody, eventType);
 		} catch (IOException e) {
-			LOGGER.error("Unable to read JSON event object returning default", e);
+			LOGGER.error("Unable to read JSON event from message: ".concat(new String(messageBody)), e);
 			event = eventPool.get();
 		}
 		return event;
@@ -51,9 +51,12 @@ public class EventConsumer implements Consumer {
 	@Override
 	public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
 			throws IOException {
-		Object event = buildEvent(body);
-		if (event != null) {
+		String contentType = properties.getContentType();
+		if ("application/json".equals(contentType)) {
+			Object event = buildEvent(body);
 			eventControl.fire(event);
+		} else {
+			LOGGER.error("Unable to process unknown message content type: {}", contentType);
 		}
 	}
 

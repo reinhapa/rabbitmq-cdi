@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -90,7 +91,8 @@ public class GenericPublisher implements MessagePublisher {
 			try {
 				byte[] data = MAPPER.writeValueAsBytes(event);
 				Channel channel = provideChannel();
-				channel.basicPublish(publisherConfiguration.exchange, publisherConfiguration.routingKey, publisherConfiguration.basicProperties, data);
+				BasicProperties basicProperties = publisherConfiguration.basicProperties.builder().contentType("application/json").build();
+				channel.basicPublish(publisherConfiguration.exchange, publisherConfiguration.routingKey, basicProperties, data);
 				return;
 			} catch (JsonProcessingException e) {
 				LOGGER.error("Unable to serialize {} due to: {}", event, e.getMessage());
