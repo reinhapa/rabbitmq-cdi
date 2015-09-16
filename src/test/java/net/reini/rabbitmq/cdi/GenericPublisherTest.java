@@ -1,11 +1,15 @@
 package net.reini.rabbitmq.cdi;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import net.reini.rabbitmq.cdi.EventPublisher.PublisherConfiguration;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -13,8 +17,6 @@ import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-
-import net.reini.rabbitmq.cdi.EventPublisher.PublisherConfiguration;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GenericPublisherTest {
@@ -41,12 +43,15 @@ public class GenericPublisherTest {
 		BasicProperties props = new BasicProperties();
 		PublisherConfiguration publisherConfiguration = new PublisherConfiguration("exchange", "routingKey",
 				Boolean.FALSE, props);
+		ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
+		
 
 		when(connectionFactory.newConnection()).thenReturn(connection);
 		when(connection.createChannel()).thenReturn(channel);
 
 		publisher.publish(event, publisherConfiguration);
 		
-		verify(channel).basicPublish("exchange", "routingKey", props, "{\"id\":\"theId\",\"booleanValue\":true}".getBytes());
+		verify(channel).basicPublish(eq("exchange"), eq("routingKey"), propsCaptor.capture(), eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
+		assertEquals("application/json", propsCaptor.getValue().getContentType());
 	}
 }
