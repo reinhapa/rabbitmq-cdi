@@ -45,7 +45,7 @@ import com.rabbitmq.client.MessageProperties;
  * this in a context listener on application startup <b>after</b> your CDI
  * framework was initialized.</p>
  *
- * @author christian.bick
+ * @author Patrick Reinhart
  */
 @Singleton
 public abstract class EventBinder {
@@ -62,8 +62,13 @@ public abstract class EventBinder {
     @Inject
     ConnectionConfigurator connectionConfigurator;
 
-    Set<QueueBinding> queueBindings =  new HashSet<>();
-    Set<ExchangeBinding> exchangeBindings =  new HashSet<>();
+    Set<QueueBinding> queueBindings;
+    Set<ExchangeBinding> exchangeBindings;
+
+    public EventBinder() {
+      exchangeBindings = new HashSet<>();
+      queueBindings = new HashSet<>();
+    }
 
     /**
      * <p>Extend {@link EventBinder} and implement this method to
@@ -189,7 +194,7 @@ public abstract class EventBinder {
     /**
      * Configures and stores the binding between and event class and a queue.
      *
-     * @author christian.bick
+     * @author Patrick Reinhart
      */
     public class QueueBinding {
         private final Class<?> eventType;
@@ -225,7 +230,7 @@ public abstract class EventBinder {
     /**
      * Configures and stores the binding between an event class and an exchange.
      *
-     * @author christian.bick
+     * @author Patrick Reinhart
      */
     public class ExchangeBinding {
         private final Class<?> eventType;

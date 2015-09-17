@@ -1,8 +1,7 @@
 /**
+ * Contains the CDI to RabbitMQ bridge implementer classes. 
  * 
+ * @author Patrick Reinhart
  */
-/**
- * @author pr
- *
- */
+
 package net.reini.rabbitmq.cdi;

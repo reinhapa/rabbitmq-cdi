@@ -108,7 +108,7 @@ public class EventPublisher {
 	 * A publisher configuration stores all important settings and options used
 	 * for publishing and event.
 	 *
-	 * @author christian.bick
+	 * @author Patrick Reinhart
 	 */
 	public static class PublisherConfiguration {
 		public PublisherConfiguration(String exchange, String routingKey, Boolean persistent,
