@@ -20,38 +20,41 @@ import com.rabbitmq.client.ConnectionFactory;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GenericPublisherTest {
-	@Mock
-	private ConnectionFactory connectionFactory;
-	@Mock
-	private Connection connection;
-	@Mock
-	private Channel channel;
+    @Mock
+    private ConnectionFactory connectionFactory;
+    @Mock
+    private Connection connection;
+    @Mock
+    private Channel channel;
 
-	private GenericPublisher publisher;
-	private TestEvent event;
+    private GenericPublisher publisher;
+    private TestEvent event;
 
-	@Before
-	public void setUp() throws Exception {
-		publisher = new GenericPublisher(connectionFactory);
-		event = new TestEvent();
-		event.id = "theId";
-		event.booleanValue = true;
-	}
+    @Before
+    public void setUp() throws Exception {
+	publisher = new GenericPublisher(connectionFactory);
+	event = new TestEvent();
+	event.id = "theId";
+	event.booleanValue = true;
+    }
 
-	@Test
-	public void test() throws Exception {
-		BasicProperties props = new BasicProperties();
-		PublisherConfiguration publisherConfiguration = new PublisherConfiguration("exchange", "routingKey",
-				Boolean.FALSE, props);
-		ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
-		
+    @Test
+    public void test() throws Exception {
+	BasicProperties props = new BasicProperties();
+	PublisherConfiguration publisherConfiguration = new PublisherConfiguration(
+		"exchange", "routingKey", false, props);
+	ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor
+		.forClass(BasicProperties.class);
 
-		when(connectionFactory.newConnection()).thenReturn(connection);
-		when(connection.createChannel()).thenReturn(channel);
+	when(connectionFactory.newConnection()).thenReturn(connection);
+	when(connection.createChannel()).thenReturn(channel);
 
-		publisher.publish(event, publisherConfiguration);
-		
-		verify(channel).basicPublish(eq("exchange"), eq("routingKey"), propsCaptor.capture(), eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
-		assertEquals("application/json", propsCaptor.getValue().getContentType());
-	}
+	publisher.publish(event, publisherConfiguration);
+
+	verify(channel).basicPublish(eq("exchange"), eq("routingKey"),
+		propsCaptor.capture(),
+		eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
+	assertEquals("application/json", propsCaptor.getValue()
+		.getContentType());
+    }
 }

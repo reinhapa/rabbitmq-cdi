@@ -12,12 +12,12 @@ import com.rabbitmq.client.ConnectionFactory;
  * @author Patrick Reinhart
  */
 public class ConsumerContainerProvider {
-	@Inject
-	ConnectionFactory connectionFactory;
+    @Inject
+    ConnectionFactory connectionFactory;
 
-	@Produces
-	@Singleton
-	public ConsumerContainer provideConsumerContainer() {
-		return new ConsumerContainer(connectionFactory);
-	}
+    @Produces
+    @Singleton
+    public ConsumerContainer provideConsumerContainer() {
+	return new ConsumerContainer(connectionFactory);
+    }
 }
