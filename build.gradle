@@ -3,13 +3,12 @@ apply plugin: 'signing'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
 
+defaultTasks 'build'
+sourceCompatibility = 1.8
+
 group = 'net.reini'
 archivesBaseName = 'rabbitmq-cdi'
 version = '1.0.0-SNAPSHOT'
-
-sourceCompatibility = 1.8
-
-defaultTasks 'build'
 
 repositories {
     mavenCentral()
@@ -45,14 +44,9 @@ artifacts {
     archives javadocJar
 }
 
-
 signing {
     required { !project.version.contains('-SNAPSHOT') }
     sign configurations.archives
-}
-
-test {
-    systemProperties 'property': 'value'
 }
 
 jar {
