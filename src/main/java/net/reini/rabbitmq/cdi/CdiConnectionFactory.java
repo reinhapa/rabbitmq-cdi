@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PreDestroy;
-import javax.inject.Singleton;
+import javax.enterprise.context.ApplicationScoped;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,8 @@ import com.rabbitmq.client.ShutdownSignalException;
  * 
  * @author Patrick Reinhart
  */
-@Singleton
+// @Singleton
+@ApplicationScoped
 public class CdiConnectionFactory extends ConnectionFactory {
 
   private enum State {
