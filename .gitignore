@@ -1,4 +1,5 @@
 /bin/
+/bin_test/
 /.gradle/
 /.settings/
 /.classpath

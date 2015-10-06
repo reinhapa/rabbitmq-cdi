@@ -89,9 +89,9 @@ public abstract class EventBinder {
    * 
    * <pre>
    * public class MyEventBinder extends EventBinder {
-   *   &#64;Override
+   *   &#064;Override
    *   protected void bindEvents() {
-   *     bind(MyEvent.class).toExchange("my.exchange").withRoutingKey("my.routing.Key");
+   *     bind(MyEvent.class).toExchange(&quot;my.exchange&quot;).withRoutingKey(&quot;my.routing.Key&quot;);
    *   }
    * }
    * </pre>
@@ -152,12 +152,12 @@ public abstract class EventBinder {
   }
 
   void bindExchange(ExchangeBinding exchangeBinding) {
-    EventPublisher.PublisherConfiguration configuration = new EventPublisher.PublisherConfiguration(
-        exchangeBinding.exchange, exchangeBinding.routingKey, exchangeBinding.persistent,
-        exchangeBinding.basicProperties);
+    PublisherConfiguration configuration =
+        new PublisherConfiguration(exchangeBinding.exchange, exchangeBinding.routingKey,
+            exchangeBinding.persistent, exchangeBinding.basicProperties);
     eventPublisher.addEvent(exchangeBinding.eventType, configuration);
-    LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
-        exchangeBinding.eventType.getSimpleName());
+    LOGGER.info("Binding between exchange {} and event type {} activated",
+        exchangeBinding.exchange, exchangeBinding.eventType.getSimpleName());
   }
 
   /**
@@ -181,7 +181,7 @@ public abstract class EventBinder {
    * @param event The event
    * @return The binding builder
    */
-  public EventBindingBuilder bind(Class<?> event) {
+  public EventBindingBuilder bind(Class<? extends RabbitMqEvent> event) {
     return new EventBindingBuilder(event);
   }
 

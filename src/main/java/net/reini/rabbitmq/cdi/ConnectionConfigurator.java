@@ -1,12 +1,11 @@
 package net.reini.rabbitmq.cdi;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import com.rabbitmq.client.ConnectionFactory;
 
-// @Singleton
-@ApplicationScoped
+@Singleton
 public class ConnectionConfigurator {
   @Inject
   ConnectionFactory connectionFactory;

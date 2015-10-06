@@ -3,8 +3,6 @@ package net.reini.rabbitmq.cdi;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import net.reini.rabbitmq.cdi.EventPublisher.PublisherConfiguration;
-
 public interface MessagePublisher extends AutoCloseable {
 
   /**
