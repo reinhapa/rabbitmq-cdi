@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
+import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.inject.Singleton;
 
 import org.slf4j.Logger;
@@ -65,6 +67,9 @@ public class CdiConnectionFactory extends ConnectionFactory {
 
   private volatile Connection connection;
   private volatile State state;
+  
+  @Resource
+  ManagedExecutorService executorService;
 
   public CdiConnectionFactory() {
     super();
@@ -215,7 +220,7 @@ public class CdiConnectionFactory extends ConnectionFactory {
       String host = getHost();
       try {
         LOGGER.info("Trying to establish connection to {}:{}", host, port);
-        connection = super.newConnection();
+        connection = super.newConnection(executorService);
         connection.addShutdownListener(connectionShutdownListener);
         LOGGER.info("Established connection to {}:{}", host, port);
         changeState(State.CONNECTED);

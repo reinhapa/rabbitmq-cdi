@@ -36,6 +36,10 @@ public class EventConsumer implements Consumer {
     this.eventPool = eventPool;
   }
 
+  Channel getChannel() {
+    return channel;
+  }
+
   void setChannel(Channel channel) {
     this.channel = channel;
   }
@@ -62,6 +66,7 @@ public class EventConsumer implements Consumer {
   public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties,
       byte[] body) throws IOException {
     long deliveryTag = envelope.getDeliveryTag();
+    LOGGER.debug("Handle delivery: consumerTag: {}, deliveryTag: {}", consumerTag, deliveryTag);
     try {
       String contentType = properties.getContentType();
       if ("application/json".equals(contentType)) {
@@ -94,17 +99,27 @@ public class EventConsumer implements Consumer {
   }
 
   @Override
-  public void handleConsumeOk(String consumerTag) {}
+  public void handleConsumeOk(String consumerTag) {
+    LOGGER.debug("Consumer {}: Received consume OK", consumerTag);
+  }
 
   @Override
-  public void handleCancelOk(String consumerTag) {}
+  public void handleCancelOk(String consumerTag) {
+    LOGGER.debug("Consumer {}: Received cancel OK", consumerTag);
+  }
 
   @Override
-  public void handleCancel(String consumerTag) throws IOException {}
+  public void handleCancel(String consumerTag) throws IOException {
+    LOGGER.debug("Consumer {}: Received cancel", consumerTag);
+  }
 
   @Override
-  public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {}
+  public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {
+    LOGGER.debug("Consumer {}: Received shutdown signal: {}", consumerTag, sig.getMessage());
+  }
 
   @Override
-  public void handleRecoverOk(String consumerTag) {}
+  public void handleRecoverOk(String consumerTag) {
+    LOGGER.debug("Consumer {}: Received recover OK", consumerTag);
+  }
 }
