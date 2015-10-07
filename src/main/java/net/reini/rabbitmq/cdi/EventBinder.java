@@ -181,7 +181,7 @@ public abstract class EventBinder {
    * @param event The event
    * @return The binding builder
    */
-  public EventBindingBuilder bind(Class<? extends RabbitMqEvent> event) {
+  public EventBindingBuilder bind(Class<?> event) {
     return new EventBindingBuilder(event);
   }
 
