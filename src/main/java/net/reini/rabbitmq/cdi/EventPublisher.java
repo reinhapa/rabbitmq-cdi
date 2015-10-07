@@ -57,14 +57,14 @@ public class EventPublisher {
     Class<?> eventType = event.getClass();
     PublisherConfiguration publisherConfiguration = publisherConfigurations.get(eventType);
     if (publisherConfiguration == null) {
-      LOGGER.debug("No publisher configured for event of type {}", eventType);
+      LOGGER.trace("No publisher configured for event {}", event);
     } else {
       try (MessagePublisher publisher = providePublisher(eventType)) {
-        LOGGER.debug("Publishing event of type {}", eventType);
+        LOGGER.debug("Start publishing event {}...", event);
         publisher.publish(event, publisherConfiguration);
-        LOGGER.debug("Successfully published event of type {}", eventType);
+        LOGGER.debug("Published event successfully");
       } catch (IOException | TimeoutException e) {
-        LOGGER.error("Failed to publish event {}", eventType, e);
+        LOGGER.error("Failed to publish event {}", event, e);
       }
     }
   }
