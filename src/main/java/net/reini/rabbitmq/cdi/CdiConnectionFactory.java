@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
-import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.inject.Singleton;
 
 import org.slf4j.Logger;
@@ -67,9 +65,6 @@ public class CdiConnectionFactory extends ConnectionFactory {
 
   private volatile Connection connection;
   private volatile State state;
-  
-  @Resource
-  ManagedExecutorService executorService;
 
   public CdiConnectionFactory() {
     super();
@@ -218,16 +213,11 @@ public class CdiConnectionFactory extends ConnectionFactory {
       }
       Integer port = Integer.valueOf(getPort());
       String host = getHost();
-      try {
-        LOGGER.info("Trying to establish connection to {}:{}", host, port);
-        connection = super.newConnection(executorService);
-        connection.addShutdownListener(connectionShutdownListener);
-        LOGGER.info("Established connection to {}:{}", host, port);
-        changeState(State.CONNECTED);
-      } catch (IOException e) {
-        LOGGER.error("Failed to establish connection to {}:{}", host, port);
-        throw e;
-      }
+      LOGGER.debug("Trying to establish connection to {}:{}", host, port);
+      connection = super.newConnection();
+      connection.addShutdownListener(connectionShutdownListener);
+      LOGGER.debug("Established connection to {}:{}", host, port);
+      changeState(State.CONNECTED);
     }
   }
 
@@ -256,7 +246,7 @@ public class CdiConnectionFactory extends ConnectionFactory {
           establishConnection();
           return;
         } catch (IOException | TimeoutException e) {
-          LOGGER.info("Next reconnect attempt in {} ms",
+          LOGGER.debug("Next reconnect attempt in {} ms",
               Integer.valueOf(CONNECTION_ESTABLISH_INTERVAL_IN_MS));
           try {
             Thread.sleep(CONNECTION_ESTABLISH_INTERVAL_IN_MS);

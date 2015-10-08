@@ -1,10 +1,9 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +15,11 @@ class ConsumerContainer {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerContainer.class);
 
   private final CdiConnectionFactory connectionFactory;
-  private final List<ConsumerHolder> consumerHolders;
+  private final CopyOnWriteArrayList<ConsumerHolder> consumerHolders;
 
   ConsumerContainer(CdiConnectionFactory connectionFactory) {
     this.connectionFactory = connectionFactory;
-    this.consumerHolders = Collections.synchronizedList(new ArrayList<>());
+    this.consumerHolders = new CopyOnWriteArrayList<>();
     connectionFactory.registerListener(new ContainerConnectionListener());
   }
 
@@ -71,52 +70,51 @@ class ConsumerContainer {
   final class ConsumerHolder {
     private final boolean autoAck;
     private final String queueName;
+    private final AtomicBoolean active;
     private final EventConsumer consumer;
 
-    private boolean active;
     private Channel channel;
 
     ConsumerHolder(EventConsumer consumer, String queueName, boolean autoAck) {
       this.consumer = consumer;
       this.queueName = queueName;
       this.autoAck = autoAck;
+      this.active = new AtomicBoolean();
     }
 
     void deactivate() {
-      LOGGER.info("Deactivating consumer of class {}", consumer.getClass());
-      if (channel != null) {
-        try {
-          LOGGER.info("Closing channel for consumer of class {}", consumer.getClass());
-          channel.close();
-          LOGGER.info("Closed channel for consumer of class {}", consumer.getClass());
-        } catch (Exception e) {
-          LOGGER.info("Aborted closing channel for consumer of class {} (already closing)",
-              consumer.getClass());
-          // Ignore exception: In this case the channel is for sure
-          // not usable any more
+      if (active.compareAndSet(true, false)) {
+        LOGGER.info("Deactivating consumer of class {}", consumer.getClass());
+        if (channel != null) {
+          try {
+            LOGGER.info("Closing channel for consumer of class {}", consumer.getClass());
+            channel.close();
+            LOGGER.info("Closed channel for consumer of class {}", consumer.getClass());
+          } catch (Exception e) {
+            LOGGER.info("Aborted closing channel for consumer of class {} (already closing)",
+                consumer.getClass());
+            // Ignore exception: In this case the channel is for sure
+            // not usable any more
+          }
+          channel = null;
+          consumer.setChannel(channel);
         }
-        channel = null;
-        consumer.setChannel(channel);
+        LOGGER.info("Deactivated consumer of class {}", consumer.getClass());
       }
-      active = false;
-      LOGGER.info("Deactivated consumer of class {}", consumer.getClass());
     }
 
     void activate() {
-      LOGGER.info("Activating consumer of class {}", consumer.getClass());
-      // Make sure the consumer is not active before starting it
-      if (active) {
-        deactivate();
-      }
-      // Start the consumer
-      try {
-        channel = createChannel();
-        consumer.setChannel(channel);
-        channel.basicConsume(queueName, autoAck, consumer);
-        active = true;
-        LOGGER.info("Activated consumer of class {}", consumer.getClass());
-      } catch (IOException | TimeoutException e) {
-        LOGGER.error("Failed to activate consumer of class {}", consumer.getClass(), e);
+      if (active.compareAndSet(false, true)) {
+        LOGGER.info("Activating consumer of class {}", consumer.getClass());
+        // Start the consumer
+        try {
+          channel = createChannel();
+          consumer.setChannel(channel);
+          channel.basicConsume(queueName, autoAck, consumer);
+          LOGGER.info("Activated consumer of class {}", consumer.getClass());
+        } catch (IOException | TimeoutException e) {
+          LOGGER.error("Failed to activate consumer of class {}", consumer.getClass(), e);
+        }
       }
     }
   }

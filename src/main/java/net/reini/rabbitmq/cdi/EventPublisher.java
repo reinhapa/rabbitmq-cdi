@@ -64,7 +64,7 @@ public class EventPublisher {
         publisher.publish(event, publisherConfiguration);
         LOGGER.debug("Published event successfully");
       } catch (IOException | TimeoutException e) {
-        LOGGER.error("Failed to publish event {}", event, e);
+        throw new RuntimeException("Failed to publish event to RabbitMQ",e);
       }
     }
   }

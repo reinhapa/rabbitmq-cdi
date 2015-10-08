@@ -81,14 +81,14 @@ public class EventConsumer implements Consumer {
             "Consumer {}: Message {} could not be handled due to an exception during message processing",
             consumerTag, deliveryTag, t);
         channel.basicNack(deliveryTag, false, false);
-        LOGGER.warn("Consumer {}: Nacked message {}", consumerTag, deliveryTag, t);
+        LOGGER.warn("Nacked message: consumerTag: {}, deliveryTag: {}", consumerTag, deliveryTag, t);
       }
       return;
     }
     if (!autoAck) {
       try {
         channel.basicAck(deliveryTag, false);
-        LOGGER.debug("Consumer {}: Acked message {}", consumerTag, deliveryTag);
+        LOGGER.debug("Acked message: consumerTag: {}, deliveryTag: {}", consumerTag, deliveryTag);
       } catch (IOException e) {
         LOGGER.error(
             "Consumer {}: Message {} was processed but could not be acknowledged due to an exception when sending the acknowledgement",
