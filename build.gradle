@@ -83,8 +83,8 @@ uploadArchives {
             url 'https://github.com/reinhapa/rabbitmq-cdi'
             
             scm {
-                connection 'scm:git:https://github.com/reinhapa/rabbitmq-cdi.git'
-                developerConnection 'scm:git:https://github.com/reinhapa/rabbitmq-cdi.git'
+                connection 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
+                developerConnection 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
                 url 'https://github.com/reinhapa/rabbitmq-cdi'
             }
 
