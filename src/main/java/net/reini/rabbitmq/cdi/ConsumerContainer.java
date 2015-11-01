@@ -84,12 +84,12 @@ class ConsumerContainer {
 
     void deactivate() {
       if (active.compareAndSet(true, false)) {
-        LOGGER.info("Deactivating consumer of class {}", consumer.getClass());
+        LOGGER.debug("Deactivating consumer of class {}", consumer.getClass());
         if (channel != null) {
           try {
-            LOGGER.info("Closing channel for consumer of class {}", consumer.getClass());
+            LOGGER.debug("Closing channel for consumer of class {}", consumer.getClass());
             channel.close();
-            LOGGER.info("Closed channel for consumer of class {}", consumer.getClass());
+            LOGGER.debug("Closed channel for consumer of class {}", consumer.getClass());
           } catch (Exception e) {
             LOGGER.info("Aborted closing channel for consumer of class {} (already closing)",
                 consumer.getClass());
@@ -105,7 +105,7 @@ class ConsumerContainer {
 
     void activate() {
       if (active.compareAndSet(false, true)) {
-        LOGGER.info("Activating consumer of class {}", consumer.getClass());
+        LOGGER.debug("Activating consumer of class {}", consumer.getClass());
         // Start the consumer
         try {
           channel = createChannel();
