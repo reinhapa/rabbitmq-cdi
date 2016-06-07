@@ -1,4 +1,14 @@
-# Provides a JavaEE Event <-> RabbitMQ bridge.
+= Provides a JavaEE Event <-> RabbitMQ bridge.
+Patrick Reinhart <https://github.com/reinhapa[@reinhapa]>
+:project-full-path: reinhapa/junit-compat
+:github-branch: master
+
+image:https://img.shields.io/badge/license-MIT-blue.svg["MIT License", link="https://github.com/{project-full-path}/blob/github-branch}/LICENSE"]
+image:https://img.shields.io/badge/Java-8-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
+image:https://img.shields.io/travis/{project-full-path}/{github-branch}.svg["Build Status", link="https://travis-ci.org/{project-full-path}"]
+image:https://img.shields.io/codecov/c/github/{project-full-path}/{github-branch}.svg["Code Coverage", link="https://codecov.io/github/{project-full-path}?branch={github-branch}"]
+
+image:https://codecov.io/github/{project-full-path}/branch.svg?branch={github-branch}[codecov.io]
 
 This project contains all needed classes to bind a JavaEE enterprise event to a
 RabbitMQ exchange for outgoing events. Inbound events can also be bound on the
@@ -11,7 +21,8 @@ compatible PoJo object and vice versa.
 
 First you need to define a event objects using standard Java Bean syntax:
 
-```
+[source,java]
+----
 public class EventOne {
   private boolean enabled;
 
@@ -23,8 +34,7 @@ public class EventOne {
     this.enabled = enabled;
   }
 }
-```
-```
+
 public class EventTwo {
   private String value;
 
@@ -36,12 +46,13 @@ public class EventTwo {
     this.value = value;
   }
 }
-```
+---
 
 
 As second step you have to define the bindings:
 
-```
+[source,java]
+----
 public class RabbitBinder extends EventBinder {
   @Override
   protected void bindEvents() {
@@ -49,12 +60,13 @@ public class RabbitBinder extends EventBinder {
     bind(EventTwo.class).toQueue("test.queue");
   }
 }
-```
+----
 
 As last step you need to initialize the bindings either within in a singleton
 startup bean or servlet:
 
-```
+[source,java]
+----
 @Singleton
 @Startup
 public class BindingInitializer {
@@ -73,12 +85,13 @@ public class BindingInitializer {
     }
   }
 }
-```
+----
 
 
 Now the events can be used within your JavaEE 7 container:
 
-```
+[source,java]
+----
 public class EventDemoBean {
   @Inject
   private Event<EventOne> eventOnes;
@@ -94,5 +107,5 @@ public class EventDemoBean {
     // do some work
   }
 }
-```
+----
 
