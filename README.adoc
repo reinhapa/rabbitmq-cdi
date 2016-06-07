@@ -1,6 +1,6 @@
 = Provides a JavaEE Event <-> RabbitMQ bridge.
 Patrick Reinhart <https://github.com/reinhapa[@reinhapa]>
-:project-full-path: reinhapa/junit-compat
+:project-full-path: reinhapa/rabbitmq-cdi
 :github-branch: master
 
 image:https://img.shields.io/badge/license-MIT-blue.svg["MIT License", link="https://github.com/{project-full-path}/blob/github-branch}/LICENSE"]
