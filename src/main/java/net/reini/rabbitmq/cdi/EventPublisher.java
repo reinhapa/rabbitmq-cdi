@@ -12,8 +12,6 @@ import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.ConnectionFactory;
-
 /**
  * Publishes events to exchanges of a broker.
  *
@@ -23,13 +21,13 @@ import com.rabbitmq.client.ConnectionFactory;
 public class EventPublisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventPublisher.class);
 
-  @Inject
-  ConnectionFactory connectionFactory;
-
+  private final ConnectionProducer connectionProducer;
   private final Map<Class<?>, PublisherConfiguration> publisherConfigurations;
   private final ThreadLocal<Map<Class<?>, MessagePublisher>> publishers;
 
-  public EventPublisher() {
+  @Inject
+  public EventPublisher(ConnectionProducer connectionProducer) {
+    this.connectionProducer = connectionProducer;
     this.publisherConfigurations = new HashMap<>();
     this.publishers = new ThreadLocal<>();
   }
@@ -85,7 +83,7 @@ public class EventPublisher {
     }
     MessagePublisher publisher = localPublishers.get(eventType);
     if (publisher == null) {
-      publisher = new GenericPublisher(connectionFactory);
+      publisher = new GenericPublisher(connectionProducer);
       localPublishers.put(eventType, publisher);
     }
     return publisher;

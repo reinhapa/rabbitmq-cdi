@@ -62,8 +62,8 @@ public class RabbitBinder extends EventBinder {
 }
 ----
 
-As last step you need to initialize the bindings either within in a singleton
-startup bean or servlet:
+As last step you need to initialize the binder either within in a singleton
+startup bean or servlet after having also configured the connection settings:
 
 [source,java]
 ----
@@ -72,13 +72,11 @@ startup bean or servlet:
 public class BindingInitializer {
   @Inject
   private RabbitBinder binder;
-  @Inject
-  private ConnectionFactory connectionFactory;
 
   @PostConstruct
   public void initialize() {
     try {
-      connectionFactory.setHost("somehost.somedomain");
+      binder.configuration().setHost("somehost.somedomain").setUsername("myuser").setPassword("mypassword");
       binder.initialize();
     } catch (IOException e) {
       LoggerFactory.getLogger(getClass()).error("Unable to initialize", e);

@@ -15,12 +15,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GenericPublisherTest {
   @Mock
-  private ConnectionFactory connectionFactory;
+  private ConnectionProducer connectionProducer;
   @Mock
   private Connection connection;
   @Mock
@@ -31,7 +30,7 @@ public class GenericPublisherTest {
 
   @Before
   public void setUp() throws Exception {
-    publisher = new GenericPublisher(connectionFactory);
+    publisher = new GenericPublisher(connectionProducer);
     event = new TestEvent();
     event.id = "theId";
     event.booleanValue = true;
@@ -44,7 +43,7 @@ public class GenericPublisherTest {
         new PublisherConfiguration("exchange", "routingKey", false, props);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
-    when(connectionFactory.newConnection()).thenReturn(connection);
+    when(connectionProducer.newConnection()).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.publish(event, publisherConfiguration);

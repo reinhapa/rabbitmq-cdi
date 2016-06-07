@@ -14,10 +14,10 @@ import com.rabbitmq.client.Connection;
 class ConsumerContainer {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerContainer.class);
 
-  private final CdiConnectionFactory connectionFactory;
+  private final ConnectionProducer connectionFactory;
   private final CopyOnWriteArrayList<ConsumerHolder> consumerHolders;
 
-  ConsumerContainer(CdiConnectionFactory connectionFactory) {
+  ConsumerContainer(ConnectionProducer connectionFactory) {
     this.connectionFactory = connectionFactory;
     this.consumerHolders = new CopyOnWriteArrayList<>();
     connectionFactory.registerListener(new ContainerConnectionListener());
