@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
@@ -13,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Address;
 import com.rabbitmq.client.MessageProperties;
 
 /**
@@ -58,19 +60,20 @@ import com.rabbitmq.client.MessageProperties;
 public abstract class EventBinder {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventBinder.class);
 
-  @Inject
-  Event<Object> remoteEventControl;
-  @Inject
-  Instance<Object> remoteEventPool;
-  @Inject
-  ConsumerContainer consumerContainer;
-  @Inject
-  EventPublisher eventPublisher;
-  @Inject
-  ConnectionConfigurator connectionConfigurator;
+  private final Set<QueueBinding> queueBindings;
+  private final Set<ExchangeBinding> exchangeBindings;
 
-  Set<QueueBinding> queueBindings;
-  Set<ExchangeBinding> exchangeBindings;
+  @Inject
+  private Event<Object> remoteEventControl;
+  @Inject
+  private Instance<Object> remoteEventPool;
+  @Inject
+  private EventPublisher eventPublisher;
+  @Inject
+  private ConnectionProducer connectionProducer;
+
+  private ConsumerContainer consumerContainer;
+  private BinderConfiguration configuration;
 
   public EventBinder() {
     exchangeBindings = new HashSet<>();
@@ -78,14 +81,11 @@ public abstract class EventBinder {
   }
 
   /**
-   * <p>
    * Extend {@link EventBinder} and implement this method to create the event bindings for your
    * application.
-   * </p>
-   *
    * <p>
+   *
    * <b>Binder example:</b>
-   * </p>
    * 
    * <pre>
    * public class MyEventBinder extends EventBinder {
@@ -98,31 +98,50 @@ public abstract class EventBinder {
    */
   protected abstract void bindEvents();
 
+
   /**
+   * Returns the configuration object for the event binder, in order to configure the connection specific part.
    * <p>
+   *
+   * <b>Configuration example:</b>
+   * 
+   * <pre>
+   * binder.configuration().setHost("somehost.somedomain").setUsername("user").setPassword("password");
+   * </pre>
+   * 
+   * @return the configuration object
+   */
+  public BinderConfiguration configuration() {
+    return configuration;
+  }
+
+  /**
    * Initializes the event binder and effectively enables all bindings created in
    * {@link #bindEvents()}.
-   * </p>
-   *
    * <p>
-   * Inject your event binder implementation at the beginning of your application's lifecycle and
+   *
+   * Inject your event binder implementation at the beginning of your application's life cycle and
    * call this method. In web applications, a good place for this is a ServletContextListener.
-   * </p>
    *
    * <p>
    * After this method was successfully called, consumers are registered at the target broker for
    * every queue binding. Also, for every exchange binding messages are going to be published to the
    * target broker.
-   * </p>
    *
    * @throws IOException if the initialization failed due to a broker related issue
    */
   public void initialize() throws IOException {
     bindEvents();
-    connectionConfigurator.configureFactory(getClass());
     processQueueBindings();
     consumerContainer.startAllConsumers();
     processExchangeBindings();
+  }
+
+
+  @PostConstruct
+  void initializeConsumerContainer() {
+    consumerContainer = new ConsumerContainer(connectionProducer);
+    configuration = new BinderConfiguration();
   }
 
   void processExchangeBindings() {
@@ -152,31 +171,24 @@ public abstract class EventBinder {
   }
 
   void bindExchange(ExchangeBinding exchangeBinding) {
-    PublisherConfiguration configuration =
-        new PublisherConfiguration(exchangeBinding.exchange, exchangeBinding.routingKey,
-            exchangeBinding.persistent, exchangeBinding.basicProperties);
+    PublisherConfiguration configuration = new PublisherConfiguration(exchangeBinding.exchange,
+        exchangeBinding.routingKey, exchangeBinding.persistent, exchangeBinding.basicProperties);
     eventPublisher.addEvent(exchangeBinding.eventType, configuration);
-    LOGGER.info("Binding between exchange {} and event type {} activated",
-        exchangeBinding.exchange, exchangeBinding.eventType.getSimpleName());
+    LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
+        exchangeBinding.eventType.getSimpleName());
   }
 
   /**
-   * <p>
    * Starting point for binding an event.
-   * </p>
    *
    * <p>
    * <b>Binding fired events to be published to an exchange:</b>
-   * </p>
    * <p>
    * bind(MyEvent.class).toExchange("my.exchange");
-   * </p>
    * <p>
    * <b>Binding consuming from a queue to fire an event:</b>
-   * </p>
    * <p>
    * bind(MyEvent.class).toQueue("my.queue");
-   * </p>
    *
    * @param event The event
    * @return The binding builder
@@ -296,6 +308,64 @@ public abstract class EventBinder {
       this.basicProperties = basicProperties;
       LOGGER.info("Publisher properties for event type {} set to {}", eventType.getSimpleName(),
           basicProperties.toString());
+      return this;
+    }
+  }
+
+  public final class BinderConfiguration {
+
+    /**
+     * Adds a broker host name used when establishing a connection.
+     * 
+     * @param hostName a broker host name without a port  
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setHost(String hostName) {
+      connectionProducer.getConnectionFactory().setHost(hostName);
+      return this;
+    }
+    
+    /**
+     * Set the user name.
+     * 
+     * @param username the AMQP user name to use when connecting to the broker
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setUserName(String username) {
+      connectionProducer.getConnectionFactory().setUsername(username);
+      return this;
+    }
+    
+    /**
+     * Set the password.
+     * 
+     * @param password the password to use when connecting to the broker
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setPassword(String password) {
+      connectionProducer.getConnectionFactory().setPassword(password);
+      return this;
+    }
+
+    /**
+     * Set the virtual host.
+     * 
+     * @param virtualHost the virtual host to use when connecting to the broker
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setVirtualHost(String virtualHost) {
+      connectionProducer.getConnectionFactory().setVirtualHost(virtualHost);
+      return this;
+    }
+
+    /**
+     * Adds a broker host address used when establishing a connection.
+     * 
+     * @param hostAddress the broker host address
+     * @return the binder configuration object
+     */
+    public BinderConfiguration addHost(Address hostAddress) {
+      connectionProducer.getBrokerHosts().add(hostAddress);
       return this;
     }
   }

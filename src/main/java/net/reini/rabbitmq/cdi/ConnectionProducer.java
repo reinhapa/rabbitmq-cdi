@@ -1,20 +1,20 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PreDestroy;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rabbitmq.client.Address;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.ShutdownListener;
 import com.rabbitmq.client.ShutdownSignalException;
 
 /**
@@ -30,7 +30,7 @@ import com.rabbitmq.client.ShutdownSignalException;
  * @author Patrick Reinhart
  */
 @Singleton
-public class CdiConnectionFactory extends ConnectionFactory {
+public class ConnectionProducer {
 
   private enum State {
     /**
@@ -53,27 +53,29 @@ public class CdiConnectionFactory extends ConnectionFactory {
     CLOSED
   }
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(CdiConnectionFactory.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionProducer.class);
 
   public static final int CONNECTION_HEARTBEAT_IN_SEC = 3;
   public static final int CONNECTION_TIMEOUT_IN_MS = 1000;
   public static final int CONNECTION_ESTABLISH_INTERVAL_IN_MS = 500;
 
-  private final ShutdownListener connectionShutdownListener;
+  private final ConnectionFactory connectionFactory;
   private final List<ConnectionListener> connectionListeners;
   private final Object operationOnConnectionMonitor;
+  private final List<Address> brokerHosts;
 
   private volatile Connection connection;
   private volatile State state;
 
-  public CdiConnectionFactory() {
-    super();
+  @Inject
+  public ConnectionProducer() {
+    connectionFactory = new ConnectionFactory();
     state = State.NEVER_CONNECTED;
     operationOnConnectionMonitor = new Object();
-    setRequestedHeartbeat(CONNECTION_HEARTBEAT_IN_SEC);
-    setConnectionTimeout(CONNECTION_TIMEOUT_IN_MS);
-    connectionListeners = Collections.synchronizedList(new LinkedList<>());
-    connectionShutdownListener = new ConnectionShutDownListener();
+    connectionListeners = new CopyOnWriteArrayList<>();
+    connectionFactory.setRequestedHeartbeat(CONNECTION_HEARTBEAT_IN_SEC);
+    connectionFactory.setConnectionTimeout(CONNECTION_TIMEOUT_IN_MS);
+    brokerHosts = new CopyOnWriteArrayList<>();
   }
 
   /**
@@ -89,7 +91,6 @@ public class CdiConnectionFactory extends ConnectionFactory {
    * 
    * @return The connection
    */
-  @Override
   public Connection newConnection() throws IOException, TimeoutException {
     // Throw an exception if there is an attempt to retrieve a connection
     // from a closed factory
@@ -165,6 +166,15 @@ public class CdiConnectionFactory extends ConnectionFactory {
     connectionListeners.remove(connectionListener);
   }
 
+  List<Address> getBrokerHosts() {
+    return brokerHosts;
+  }
+  
+  
+  ConnectionFactory getConnectionFactory() {
+    return connectionFactory;
+  }
+
   /**
    * Changes the factory state and notifies all connection listeners.
    *
@@ -199,8 +209,8 @@ public class CdiConnectionFactory extends ConnectionFactory {
   }
 
   /**
-   * Establishes a new connection.
-   *
+   * Establishes a new connection with the given {@code addresses}.
+   * 
    * @throws IOException if establishing a new connection fails
    * @throws TimeoutException if establishing a new connection times out
    */
@@ -211,49 +221,44 @@ public class CdiConnectionFactory extends ConnectionFactory {
       } else if (state == State.CONNECTED) {
         LOGGER.warn("Establishing new connection although a connection is already established");
       }
-      Integer port = Integer.valueOf(getPort());
-      String host = getHost();
-      LOGGER.debug("Trying to establish connection to {}:{}", host, port);
-      connection = super.newConnection();
-      connection.addShutdownListener(connectionShutdownListener);
-      LOGGER.debug("Established connection to {}:{}", host, port);
+      List<Address> addrs = getBrokerHosts();
+      if (addrs.isEmpty()) {
+        addrs.add(new Address(connectionFactory.getHost(), connectionFactory.getPort()));
+      }
+      LOGGER.debug("Trying to establish connection to on of: {}", addrs);
+      connection = connectionFactory.newConnection(brokerHosts.toArray(new Address[addrs.size()]));
+      connection.addShutdownListener(cause -> shutdownCompleted(cause));
+      LOGGER.debug("Established connection successfully");
       changeState(State.CONNECTED);
     }
   }
 
-  /**
-   * A listener to register on the parent factory to be notified about connection shutdowns.
-   */
-  private class ConnectionShutDownListener implements ShutdownListener {
-    @Override
-    public void shutdownCompleted(ShutdownSignalException cause) {
-      // Only hard error means loss of connection
-      if (!cause.isHardError()) {
+  void shutdownCompleted(ShutdownSignalException cause) {
+    // Only hard error means loss of connection
+    if (!cause.isHardError()) {
+      return;
+    }
+    synchronized (operationOnConnectionMonitor) {
+      // No action to be taken if factory is already closed
+      // or already connecting
+      if (state == State.CLOSED || state == State.CONNECTING) {
         return;
       }
-
-      synchronized (operationOnConnectionMonitor) {
-        // No action to be taken if factory is already closed
-        // or already connecting
-        if (state == State.CLOSED || state == State.CONNECTING) {
-          return;
-        }
-        changeState(State.CONNECTING);
-      }
-      LOGGER.error("Connection to {}:{} lost", getHost(), Integer.valueOf(getPort()));
-      while (state == State.CONNECTING) {
+      changeState(State.CONNECTING);
+    }
+    LOGGER.error("Connection lost");
+    while (state == State.CONNECTING) {
+      try {
+        establishConnection();
+        return;
+      } catch (IOException | TimeoutException e) {
+        LOGGER.debug("Next reconnect attempt in {} ms",
+            Integer.valueOf(CONNECTION_ESTABLISH_INTERVAL_IN_MS));
         try {
-          establishConnection();
+          Thread.sleep(CONNECTION_ESTABLISH_INTERVAL_IN_MS);
+        } catch (InterruptedException ie) {
+          // that's fine, simply stop here
           return;
-        } catch (IOException | TimeoutException e) {
-          LOGGER.debug("Next reconnect attempt in {} ms",
-              Integer.valueOf(CONNECTION_ESTABLISH_INTERVAL_IN_MS));
-          try {
-            Thread.sleep(CONNECTION_ESTABLISH_INTERVAL_IN_MS);
-          } catch (InterruptedException ie) {
-            // that's fine, simply stop here
-            return;
-          }
         }
       }
     }

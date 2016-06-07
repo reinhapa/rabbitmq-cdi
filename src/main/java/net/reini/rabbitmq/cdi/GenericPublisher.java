@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
 
 public class GenericPublisher implements MessagePublisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(GenericPublisher.class);
@@ -22,12 +21,12 @@ public class GenericPublisher implements MessagePublisher {
   public static final int DEFAULT_RETRY_ATTEMPTS = 3;
   public static final int DEFAULT_RETRY_INTERVAL = 1000;
 
-  private final ConnectionFactory connectionFactory;
+  private final ConnectionProducer connectionProducer;
 
   private Channel channel;
 
-  public GenericPublisher(ConnectionFactory connectionFactory) {
-    this.connectionFactory = connectionFactory;
+  public GenericPublisher(ConnectionProducer connectionProducer) {
+    this.connectionProducer = connectionProducer;
   }
 
   /**
@@ -39,7 +38,7 @@ public class GenericPublisher implements MessagePublisher {
    */
   protected Channel provideChannel() throws IOException, TimeoutException {
     if (channel == null || !channel.isOpen()) {
-      Connection connection = connectionFactory.newConnection();
+      Connection connection = connectionProducer.newConnection();
       channel = connection.createChannel();
     }
     return channel;
