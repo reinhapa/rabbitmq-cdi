@@ -46,7 +46,7 @@ public class EventTwo {
     this.value = value;
   }
 }
----
+----
 
 
 As second step you have to define the bindings:
