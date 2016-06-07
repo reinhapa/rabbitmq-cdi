@@ -1,4 +1,4 @@
-= Provides a JavaEE Event <-> RabbitMQ bridge.
+= Provides a JavaEE Event <--> RabbitMQ bridge.
 Patrick Reinhart <https://github.com/reinhapa[@reinhapa]>
 :project-full-path: reinhapa/rabbitmq-cdi
 :github-branch: master
