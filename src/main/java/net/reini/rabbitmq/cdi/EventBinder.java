@@ -331,7 +331,7 @@ public abstract class EventBinder {
      * @param username the AMQP user name to use when connecting to the broker
      * @return the binder configuration object
      */
-    public BinderConfiguration setUserName(String username) {
+    public BinderConfiguration setUsername(String username) {
       connectionProducer.getConnectionFactory().setUsername(username);
       return this;
     }
