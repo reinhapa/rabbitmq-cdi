@@ -38,8 +38,8 @@ repositories {
     mavenCentral()
 }
 
-asciidoctor { 
-    attributes 'version' : version
+asciidoctorj { 
+    version '1.5.4'
 }
 
 dependencies {
