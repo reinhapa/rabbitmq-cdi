@@ -9,8 +9,10 @@ package net.reini.rabbitmq.cdi;
 public abstract class AbstractMessageConverter implements MessageConverter {
 
     /**
-     * Transform a object in a array de bytes to send a message.
+     * Transform a object in a array de bytes to send a message. 
+     * If a error occurs a {@link MessageConverterException} is throws.
      * 
+     * @param object Object
      * @return Array of bytes
      * @throws MessageConverterException If the conversion fails
      */
@@ -21,6 +23,13 @@ public abstract class AbstractMessageConverter implements MessageConverter {
             throw new MessageConverterException(e);
         }
     }
-    
+
+    /**
+     * Transform a object in a array de bytes to send a message.
+     * 
+     * @param object Object
+     * @return Array of bytes
+     * @throws Exception
+     */
     public abstract byte[] toBytesInner(Object object) throws Exception;
 }
