@@ -45,6 +45,8 @@ import com.rabbitmq.client.MessageProperties;
  * protected void bindEvents() {
  *   bind(MyEvent.class).toExchange(&quot;myExchange&quot;).withRoutingKey(&quot;myRoutingKey&quot;)
  *       .withPublisherTransactions();
+ *   bind(MyEvent.class).toExchange(&quot;myExchange&quot;).withRoutingKey(&quot;myRoutingKey&quot;).withConverter(new MyCustomConverter())
+ *       .withPublisherTransactions();
  * }
  * </pre>
  *
@@ -172,7 +174,7 @@ public abstract class EventBinder {
 
   void bindExchange(ExchangeBinding exchangeBinding) {
     PublisherConfiguration configuration = new PublisherConfiguration(exchangeBinding.exchange,
-        exchangeBinding.routingKey, exchangeBinding.persistent, exchangeBinding.basicProperties);
+        exchangeBinding.routingKey, exchangeBinding.persistent, exchangeBinding.basicProperties, exchangeBinding.messageConverter);
     eventPublisher.addEvent(exchangeBinding.eventType, configuration);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
         exchangeBinding.eventType.getSimpleName());
@@ -275,6 +277,7 @@ public abstract class EventBinder {
 
     private boolean persistent;
     private String routingKey;
+    private MessageConverter messageConverter;
     private AMQP.BasicProperties basicProperties;
 
     ExchangeBinding(Class<?> eventType, String exchange) {
@@ -296,6 +299,18 @@ public abstract class EventBinder {
       this.routingKey = routingKey;
       LOGGER.info("Routing key for event type {} set to {}", eventType.getSimpleName(), routingKey);
       return this;
+    }
+    
+    /**
+     * Sets the message converter to be user for message publishing.
+     * 
+     * @param messageConverter The message converter 
+     * @return the exchange binding
+     */
+    public ExchangeBinding withConverter(MessageConverter messageConverter){
+        this.messageConverter = messageConverter;
+        LOGGER.info("Message converter for event type {} set to {}", eventType.getSimpleName(), messageConverter.getClass().getName());
+        return this;
     }
 
     /**

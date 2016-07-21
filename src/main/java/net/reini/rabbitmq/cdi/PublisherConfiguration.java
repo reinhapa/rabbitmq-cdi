@@ -21,10 +21,21 @@ final class PublisherConfiguration {
     this.routingKey = routingKey;
     this.persistent = persistent;
     this.basicProperties = basicProperties;
+    this.messageConverter = new JacksonMessageConverter();
+  }
+  
+  PublisherConfiguration(String exchange, String routingKey, boolean persistent,
+          AMQP.BasicProperties basicProperties, MessageConverter messageConverter) {
+    this.exchange = exchange;
+    this.routingKey = routingKey;
+    this.persistent = persistent;
+    this.basicProperties = basicProperties;
+    this.messageConverter = messageConverter;
   }
 
   final boolean persistent;
   final String exchange;
   final String routingKey;
   final AMQP.BasicProperties basicProperties;
+  final MessageConverter messageConverter;
 }

@@ -7,16 +7,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.AMQP.BasicProperties.Builder;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 
 public class GenericPublisher implements MessagePublisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(GenericPublisher.class);
-  private static final ObjectMapper MAPPER =
-      new ObjectMapper().disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
   public static final int DEFAULT_RETRY_ATTEMPTS = 3;
   public static final int DEFAULT_RETRY_INTERVAL = 1000;
@@ -81,9 +78,13 @@ public class GenericPublisher implements MessagePublisher {
         LOGGER.debug("Attempt {} to send message", Integer.valueOf(attempt));
       }
       try {
-        byte[] data = MAPPER.writeValueAsBytes(event);
-        BasicProperties basicProperties = publisherConfiguration.basicProperties.builder()
-            .contentType("application/json").build();
+        MessageConverter messageConverter = publisherConfiguration.messageConverter;
+        byte[] data = messageConverter.toBytes(event);
+        Builder builder = publisherConfiguration.basicProperties.builder();
+        if(messageConverter.contentType()!=null){
+            builder.contentType(messageConverter.contentType());
+        }
+        BasicProperties basicProperties = builder.build();
         provideChannel().basicPublish(publisherConfiguration.exchange,
             publisherConfiguration.routingKey, basicProperties, data);
         return;
