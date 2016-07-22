@@ -8,8 +8,6 @@ import javax.enterprise.inject.Instance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Consumer;
@@ -18,19 +16,17 @@ import com.rabbitmq.client.ShutdownSignalException;
 
 public class EventConsumer implements Consumer {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventConsumer.class);
-  private static final ObjectMapper MAPPER =
-      new ObjectMapper().disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
   private final boolean autoAck;
-  private final Class<?> eventType;
+  private final Decoder<?> decoder;
   private final Event<Object> eventControl;
   private final Instance<Object> eventPool;
 
   private Channel channel;
 
-  EventConsumer(Class<?> eventType, boolean autoAck, Event<Object> eventControl,
+  EventConsumer(Decoder<?> decoder, boolean autoAck, Event<Object> eventControl,
       Instance<Object> eventPool) {
-    this.eventType = eventType;
+    this.decoder = decoder;
     this.autoAck = autoAck;
     this.eventControl = eventControl;
     this.eventPool = eventPool;
@@ -54,9 +50,9 @@ public class EventConsumer implements Consumer {
   Object buildEvent(byte[] messageBody) {
     Object event;
     try {
-      event = MAPPER.readValue(messageBody, eventType);
-    } catch (IOException e) {
-      LOGGER.error("Unable to read JSON event from message: ".concat(new String(messageBody)), e);
+      event = decoder.decode(messageBody);
+    } catch (DecodeException e) {
+      LOGGER.error("Unable to read decode event from message: ".concat(new String(messageBody)), e);
       event = eventPool.get();
     }
     return event;
@@ -69,7 +65,7 @@ public class EventConsumer implements Consumer {
     LOGGER.debug("Handle delivery: consumerTag: {}, deliveryTag: {}", consumerTag, deliveryTag);
     try {
       String contentType = properties.getContentType();
-      if ("application/json".equals(contentType)) {
+      if (decoder.willDecode(contentType)) {
         Object event = buildEvent(body);
         eventControl.fire(event);
       } else {
@@ -81,7 +77,8 @@ public class EventConsumer implements Consumer {
             "Consumer {}: Message {} could not be handled due to an exception during message processing",
             consumerTag, deliveryTag, t);
         channel.basicNack(deliveryTag, false, false);
-        LOGGER.warn("Nacked message: consumerTag: {}, deliveryTag: {}", consumerTag, deliveryTag, t);
+        LOGGER.warn("Nacked message: consumerTag: {}, deliveryTag: {}", consumerTag, deliveryTag,
+            t);
       }
       return;
     }
