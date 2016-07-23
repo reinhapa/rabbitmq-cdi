@@ -6,7 +6,6 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.AMQP.BasicProperties.Builder;
 import com.rabbitmq.client.Channel;
@@ -71,6 +70,7 @@ public class GenericPublisher implements MessagePublisher {
   }
 
   @Override
+  @SuppressWarnings({"rawtypes", "unchecked"})
   public void publish(Object event, PublisherConfiguration publisherConfiguration)
       throws IOException, TimeoutException {
     for (int attempt = 1; attempt <= DEFAULT_RETRY_ATTEMPTS; attempt++) {
@@ -78,17 +78,17 @@ public class GenericPublisher implements MessagePublisher {
         LOGGER.debug("Attempt {} to send message", Integer.valueOf(attempt));
       }
       try {
-        MessageConverter messageConverter = publisherConfiguration.messageConverter;
-        byte[] data = messageConverter.toBytes(event);
+        Encoder messageEncoder = publisherConfiguration.messageEncoder;
+        byte[] data = messageEncoder.encode(event);
         Builder builder = publisherConfiguration.basicProperties.builder();
-        if(messageConverter.contentType()!=null){
-            builder.contentType(messageConverter.contentType());
+        if (messageEncoder.contentType() != null) {
+          builder.contentType(messageEncoder.contentType());
         }
         BasicProperties basicProperties = builder.build();
         provideChannel().basicPublish(publisherConfiguration.exchange,
             publisherConfiguration.routingKey, basicProperties, data);
         return;
-      } catch (JsonProcessingException e) {
+      } catch (EncodeException e) {
         LOGGER.error("Unable to serialize {} due to: {}", event, e.getMessage());
       } catch (IOException e) {
         handleIoException(attempt, e);
