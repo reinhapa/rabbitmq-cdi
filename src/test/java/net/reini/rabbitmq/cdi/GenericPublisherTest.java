@@ -5,6 +5,8 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.text.MessageFormat;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,5 +53,37 @@ public class GenericPublisherTest {
     verify(channel).basicPublish(eq("exchange"), eq("routingKey"), propsCaptor.capture(),
         eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
     assertEquals("application/json", propsCaptor.getValue().getContentType());
+  }
+
+  @Test
+  public void testCustomMessageConverter() throws Exception {
+    BasicProperties props = new BasicProperties();
+    PublisherConfiguration publisherConfiguration =
+        new PublisherConfiguration("exchange", "routingKey", false, props, new CustomEncoder());
+    ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
+
+    when(connectionProducer.newConnection()).thenReturn(connection);
+    when(connection.createChannel()).thenReturn(channel);
+
+    publisher.publish(event, publisherConfiguration);
+
+    verify(channel).basicPublish(eq("exchange"), eq("routingKey"), propsCaptor.capture(),
+        eq("Id: theId, BooleanValue: true".getBytes()));
+    assertEquals("text/plain", propsCaptor.getValue().getContentType());
+  }
+
+  public static class CustomEncoder implements Encoder<TestEvent> {
+
+    @Override
+    public String contentType() {
+      return "text/plain";
+    }
+
+    @Override
+    public byte[] encode(TestEvent event) throws EncodeException {
+      final String str =
+          MessageFormat.format("Id: {0}, BooleanValue: {1}", event.getId(), event.isBooleanValue());
+      return str.getBytes();
+    }
   }
 }

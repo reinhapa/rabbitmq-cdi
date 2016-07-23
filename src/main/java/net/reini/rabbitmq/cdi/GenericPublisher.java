@@ -6,17 +6,13 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.AMQP.BasicProperties.Builder;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 
 public class GenericPublisher implements MessagePublisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(GenericPublisher.class);
-  private static final ObjectMapper MAPPER =
-      new ObjectMapper().disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
   public static final int DEFAULT_RETRY_ATTEMPTS = 3;
   public static final int DEFAULT_RETRY_INTERVAL = 1000;
@@ -74,6 +70,7 @@ public class GenericPublisher implements MessagePublisher {
   }
 
   @Override
+  @SuppressWarnings({"rawtypes", "unchecked"})
   public void publish(Object event, PublisherConfiguration publisherConfiguration)
       throws IOException, TimeoutException {
     for (int attempt = 1; attempt <= DEFAULT_RETRY_ATTEMPTS; attempt++) {
@@ -81,13 +78,17 @@ public class GenericPublisher implements MessagePublisher {
         LOGGER.debug("Attempt {} to send message", Integer.valueOf(attempt));
       }
       try {
-        byte[] data = MAPPER.writeValueAsBytes(event);
-        BasicProperties basicProperties = publisherConfiguration.basicProperties.builder()
-            .contentType("application/json").build();
+        Encoder messageEncoder = publisherConfiguration.messageEncoder;
+        byte[] data = messageEncoder.encode(event);
+        Builder builder = publisherConfiguration.basicProperties.builder();
+        if (messageEncoder.contentType() != null) {
+          builder.contentType(messageEncoder.contentType());
+        }
+        BasicProperties basicProperties = builder.build();
         provideChannel().basicPublish(publisherConfiguration.exchange,
             publisherConfiguration.routingKey, basicProperties, data);
         return;
-      } catch (JsonProcessingException e) {
+      } catch (EncodeException e) {
         LOGGER.error("Unable to serialize {} due to: {}", event, e.getMessage());
       } catch (IOException e) {
         handleIoException(attempt, e);

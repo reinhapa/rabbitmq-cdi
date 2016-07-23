@@ -45,6 +45,8 @@ import com.rabbitmq.client.MessageProperties;
  * protected void bindEvents() {
  *   bind(MyEvent.class).toExchange(&quot;myExchange&quot;).withRoutingKey(&quot;myRoutingKey&quot;)
  *       .withPublisherTransactions();
+ *   bind(MyEvent.class).toExchange(&quot;myExchange&quot;).withRoutingKey(&quot;myRoutingKey&quot;)
+ *       .withEncoder(new MyCustomEncoder()).withPublisherTransactions();
  * }
  * </pre>
  *
@@ -174,8 +176,9 @@ public abstract class EventBinder {
   }
 
   void bindExchange(ExchangeBinding<?> exchangeBinding) {
-    PublisherConfiguration cfg = new PublisherConfiguration(exchangeBinding.exchange,
-        exchangeBinding.routingKey, exchangeBinding.persistent, exchangeBinding.basicProperties);
+    PublisherConfiguration cfg =
+        new PublisherConfiguration(exchangeBinding.exchange, exchangeBinding.routingKey,
+            exchangeBinding.persistent, exchangeBinding.basicProperties, exchangeBinding.encoder);
     eventPublisher.addEvent(exchangeBinding.eventType, cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
         exchangeBinding.eventType.getSimpleName());
@@ -272,7 +275,7 @@ public abstract class EventBinder {
     /**
      * Sets the message decoder to be used for message decoding.
      * 
-     * @param messageConverter The message decoder instance
+     * @param messageDecoder The message decoder instance
      * @return the queue binding
      */
     public QueueBinding<T> withDecoder(Decoder<T> messageDecoder) {
@@ -291,6 +294,7 @@ public abstract class EventBinder {
 
     private boolean persistent;
     private String routingKey;
+    private Encoder<T> encoder;
     private AMQP.BasicProperties basicProperties;
 
     ExchangeBinding(Class<T> eventType, String exchange) {
@@ -311,6 +315,19 @@ public abstract class EventBinder {
     public ExchangeBinding<T> withRoutingKey(String key) {
       this.routingKey = key;
       LOGGER.info("Routing key for event type {} set to {}", eventType.getSimpleName(), key);
+      return this;
+    }
+
+    /**
+     * Sets the message encoder to be used for message encoding.
+     * 
+     * @param messageEncoder The message encoder instance
+     * @return the exchange binding
+     */
+    public ExchangeBinding<T> withEncoder(Encoder<T> messageEncoder) {
+      this.encoder = messageEncoder;
+      LOGGER.info("Encoder for event type {} set to {}", eventType.getSimpleName(),
+          encoder.getClass().getName());
       return this;
     }
 

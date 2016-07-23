@@ -13,6 +13,7 @@ import com.rabbitmq.client.AMQP;
  * event.
  *
  * @author Patrick Reinhart
+ * @param <T> Message type
  */
 final class PublisherConfiguration {
   PublisherConfiguration(String exchange, String routingKey, boolean persistent,
@@ -21,10 +22,21 @@ final class PublisherConfiguration {
     this.routingKey = routingKey;
     this.persistent = persistent;
     this.basicProperties = basicProperties;
+    this.messageEncoder = new JsonEncoder<>();
+  }
+  
+  PublisherConfiguration(String exchange, String routingKey, boolean persistent,
+          AMQP.BasicProperties basicProperties, Encoder<?> encoder) {
+    this.exchange = exchange;
+    this.routingKey = routingKey;
+    this.persistent = persistent;
+    this.basicProperties = basicProperties;
+    this.messageEncoder = encoder;
   }
 
   final boolean persistent;
   final String exchange;
   final String routingKey;
   final AMQP.BasicProperties basicProperties;
+  final Encoder<?> messageEncoder;
 }
