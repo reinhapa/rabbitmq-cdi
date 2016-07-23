@@ -62,8 +62,8 @@ import com.rabbitmq.client.MessageProperties;
 public abstract class EventBinder {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventBinder.class);
 
-  private final Set<QueueBinding> queueBindings;
-  private final Set<ExchangeBinding> exchangeBindings;
+  private final Set<QueueBinding<?>> queueBindings;
+  private final Set<ExchangeBinding<?>> exchangeBindings;
 
   @Inject
   private Event<Object> remoteEventControl;
@@ -93,7 +93,8 @@ public abstract class EventBinder {
    * public class MyEventBinder extends EventBinder {
    *   &#064;Override
    *   protected void bindEvents() {
-   *     bind(MyEvent.class).toExchange(&quot;my.exchange&quot;).withRoutingKey(&quot;my.routing.Key&quot;);
+   *     bind(MyEvent.class).toExchange(&quot;my.exchange&quot;).withRoutingKey(&quot;my.routing.Key&quot;)
+   *         .withDecoder(new MyDecoder());
    *   }
    * }
    * </pre>
@@ -102,13 +103,15 @@ public abstract class EventBinder {
 
 
   /**
-   * Returns the configuration object for the event binder, in order to configure the connection specific part.
+   * Returns the configuration object for the event binder, in order to configure the connection
+   * specific part.
    * <p>
    *
    * <b>Configuration example:</b>
    * 
    * <pre>
-   * binder.configuration().setHost("somehost.somedomain").setUsername("user").setPassword("password");
+   * binder.configuration().setHost("somehost.somedomain").setUsername("user")
+   *     .setPassword("password");
    * </pre>
    * 
    * @return the configuration object
@@ -147,35 +150,35 @@ public abstract class EventBinder {
   }
 
   void processExchangeBindings() {
-    for (ExchangeBinding exchangeBinding : exchangeBindings) {
+    for (ExchangeBinding<?> exchangeBinding : exchangeBindings) {
       bindExchange(exchangeBinding);
     }
     exchangeBindings.clear();
   }
 
   void processQueueBindings() {
-    for (QueueBinding queueBinding : queueBindings) {
+    for (QueueBinding<?> queueBinding : queueBindings) {
       bindQueue(queueBinding);
     }
     queueBindings.clear();
   }
 
-  void bindQueue(QueueBinding queueBinding) {
+  void bindQueue(QueueBinding<?> queueBinding) {
     @SuppressWarnings("unchecked")
     Event<Object> eventControl = (Event<Object>) remoteEventControl.select(queueBinding.eventType);
     @SuppressWarnings("unchecked")
     Instance<Object> eventPool = (Instance<Object>) remoteEventPool.select(queueBinding.eventType);
     EventConsumer consumer =
-        new EventConsumer(queueBinding.eventType, queueBinding.autoAck, eventControl, eventPool);
+        new EventConsumer(queueBinding.decoder, queueBinding.autoAck, eventControl, eventPool);
     consumerContainer.addConsumer(consumer, queueBinding.queue, queueBinding.autoAck);
     LOGGER.info("Binding between queue {} and event type {} activated", queueBinding.queue,
         queueBinding.eventType.getSimpleName());
   }
 
-  void bindExchange(ExchangeBinding exchangeBinding) {
-    PublisherConfiguration configuration = new PublisherConfiguration(exchangeBinding.exchange,
+  void bindExchange(ExchangeBinding<?> exchangeBinding) {
+    PublisherConfiguration cfg = new PublisherConfiguration(exchangeBinding.exchange,
         exchangeBinding.routingKey, exchangeBinding.persistent, exchangeBinding.basicProperties, exchangeBinding.messageConverter);
-    eventPublisher.addEvent(exchangeBinding.eventType, configuration);
+    eventPublisher.addEvent(exchangeBinding.eventType, cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
         exchangeBinding.eventType.getSimpleName());
   }
@@ -195,14 +198,14 @@ public abstract class EventBinder {
    * @param event The event
    * @return The binding builder
    */
-  public EventBindingBuilder bind(Class<?> event) {
-    return new EventBindingBuilder(event);
+  public <M> EventBindingBuilder<M> bind(Class<M> event) {
+    return new EventBindingBuilder<>(event);
   }
 
-  public final class EventBindingBuilder {
-    private final Class<?> eventType;
+  public final class EventBindingBuilder<T> {
+    private final Class<T> eventType;
 
-    EventBindingBuilder(Class<?> eventType) {
+    EventBindingBuilder(Class<T> eventType) {
       this.eventType = eventType;
     }
 
@@ -213,8 +216,8 @@ public abstract class EventBinder {
      * @param queue The queue
      * @return the queue binding
      */
-    public QueueBinding toQueue(String queue) {
-      return new QueueBinding(eventType, queue);
+    public QueueBinding<T> toQueue(String queue) {
+      return new QueueBinding<>(eventType, queue);
     }
 
     /**
@@ -224,22 +227,24 @@ public abstract class EventBinder {
      * @param exchange The exchange
      * @return the exchange binding
      */
-    public ExchangeBinding toExchange(String exchange) {
-      return new ExchangeBinding(eventType, exchange);
+    public ExchangeBinding<T> toExchange(String exchange) {
+      return new ExchangeBinding<>(eventType, exchange);
     }
   }
 
   /**
    * Configures and stores the binding between and event class and a queue.
    */
-  public final class QueueBinding {
-    private final Class<?> eventType;
+  public final class QueueBinding<T> {
+    private final Class<T> eventType;
     private final String queue;
     private boolean autoAck;
+    private Decoder<T> decoder;
 
-    QueueBinding(Class<?> eventType, String queue) {
+    QueueBinding(Class<T> eventType, String queue) {
       this.eventType = eventType;
       this.queue = queue;
+      this.decoder = new JsonDecoder<>(eventType);
       queueBindings.add(this);
       LOGGER.info("Binding created between queue {} and event type {}", queue,
           eventType.getSimpleName());
@@ -260,19 +265,30 @@ public abstract class EventBinder {
      * 
      * @return the queue binding
      */
-    public QueueBinding autoAck() {
+    public QueueBinding<T> autoAck() {
       this.autoAck = true;
       LOGGER.info("Auto acknowledges enabled for event type {}", eventType.getSimpleName());
       return this;
     }
 
+    /**
+     * Sets the message decoder to be used for message decoding.
+     * 
+     * @param messageConverter The message decoder instance
+     * @return the queue binding
+     */
+    public QueueBinding<T> withDecoder(Decoder<T> messageDecoder) {
+      this.decoder = messageDecoder;
+      LOGGER.info("Decoder set to {} for event type {}", messageDecoder, eventType.getSimpleName());
+      return this;
+    }
   }
 
   /**
    * Configures and stores the binding between an event class and an exchange.
    */
-  public final class ExchangeBinding {
-    private final Class<?> eventType;
+  public final class ExchangeBinding<T> {
+    private final Class<T> eventType;
     private final String exchange;
 
     private boolean persistent;
@@ -280,7 +296,7 @@ public abstract class EventBinder {
     private MessageConverter messageConverter;
     private AMQP.BasicProperties basicProperties;
 
-    ExchangeBinding(Class<?> eventType, String exchange) {
+    ExchangeBinding(Class<T> eventType, String exchange) {
       basicProperties = MessageProperties.BASIC;
       this.eventType = eventType;
       this.exchange = exchange;
@@ -292,12 +308,12 @@ public abstract class EventBinder {
     /**
      * Sets the routing key to be used for message publishing.
      *
-     * @param routingKey The routing key
+     * @param key The routing key
      * @return the exchange binding
      */
-    public ExchangeBinding withRoutingKey(String routingKey) {
-      this.routingKey = routingKey;
-      LOGGER.info("Routing key for event type {} set to {}", eventType.getSimpleName(), routingKey);
+    public ExchangeBinding<T> withRoutingKey(String key) {
+      this.routingKey = key;
+      LOGGER.info("Routing key for event type {} set to {}", eventType.getSimpleName(), key);
       return this;
     }
     
@@ -316,13 +332,13 @@ public abstract class EventBinder {
     /**
      * Sets the given basic properties to be used for message publishing.
      *
-     * @param basicProperties The basic properties
+     * @param properties The basic properties
      * @return the exchange binding
      */
-    public ExchangeBinding withProperties(AMQP.BasicProperties basicProperties) {
-      this.basicProperties = basicProperties;
+    public ExchangeBinding<T> withProperties(AMQP.BasicProperties properties) {
+      this.basicProperties = properties;
       LOGGER.info("Publisher properties for event type {} set to {}", eventType.getSimpleName(),
-          basicProperties.toString());
+          properties.toString());
       return this;
     }
   }
@@ -332,14 +348,14 @@ public abstract class EventBinder {
     /**
      * Adds a broker host name used when establishing a connection.
      * 
-     * @param hostName a broker host name without a port  
+     * @param hostName a broker host name without a port
      * @return the binder configuration object
      */
     public BinderConfiguration setHost(String hostName) {
       connectionProducer.getConnectionFactory().setHost(hostName);
       return this;
     }
-    
+
     /**
      * Set the user name.
      * 
@@ -350,7 +366,7 @@ public abstract class EventBinder {
       connectionProducer.getConnectionFactory().setUsername(username);
       return this;
     }
-    
+
     /**
      * Set the password.
      * 
