@@ -56,7 +56,7 @@ public class RabbitBinder extends EventBinder {
   @Override
   protected void bindEvents() {
     bind(EventOne.class).toExchange("test.from").withRoutingKey("test.key");
-    bind(EventOne.class).toExchange("test.from").withRoutingKey("test.key").withConverter(new MyCustomMessageConverter());
+    bind(EventOne.class).toExchange("test.from").withRoutingKey("test.key").withEncoder(new MyCustomEncoder());
     bind(EventTwo.class).toQueue("test.queue");
   }
 }

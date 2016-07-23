@@ -54,12 +54,12 @@ public class GenericPublisherTest {
         eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
     assertEquals("application/json", propsCaptor.getValue().getContentType());
   }
-  
+
   @Test
   public void testCustomMessageConverter() throws Exception {
     BasicProperties props = new BasicProperties();
     PublisherConfiguration publisherConfiguration =
-        new PublisherConfiguration("exchange", "routingKey", false, props, new CustomMessageConverter());
+        new PublisherConfiguration("exchange", "routingKey", false, props, new CustomEncoder());
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionProducer.newConnection()).thenReturn(connection);
@@ -71,19 +71,19 @@ public class GenericPublisherTest {
         eq("Id: theId, BooleanValue: true".getBytes()));
     assertEquals("text/plain", propsCaptor.getValue().getContentType());
   }
-  
-  public static class CustomMessageConverter extends AbstractMessageConverter {
 
-    @Override
-    public byte[] toBytesInner(Object object) throws Exception {
-      final TestEvent event = (TestEvent) object;
-      final String str = MessageFormat.format("Id: {0}, BooleanValue: {1}", event.getId(), event.isBooleanValue());
-      return str.getBytes();
-    } 
+  public static class CustomEncoder implements Encoder<TestEvent> {
 
     @Override
     public String contentType() {
       return "text/plain";
+    }
+
+    @Override
+    public byte[] encode(TestEvent event) throws EncodeException {
+      final String str =
+          MessageFormat.format("Id: {0}, BooleanValue: {1}", event.getId(), event.isBooleanValue());
+      return str.getBytes();
     }
   }
 }
