@@ -275,7 +275,7 @@ public abstract class EventBinder {
     /**
      * Sets the message decoder to be used for message decoding.
      * 
-     * @param messageEncoder The message decoder instance
+     * @param messageDecoder The message decoder instance
      * @return the queue binding
      */
     public QueueBinding<T> withDecoder(Decoder<T> messageDecoder) {
