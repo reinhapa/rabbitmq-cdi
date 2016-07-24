@@ -56,11 +56,15 @@ public class RabbitBinder extends EventBinder {
   @Override
   protected void bindEvents() {
     bind(EventOne.class).toExchange("test.from").withRoutingKey("test.key");
-    bind(EventOne.class).toExchange("test.from").withRoutingKey("test.key").withEncoder(new MyCustomEncoder());
+    bind(EventOne.class).toExchange("test.from").withRoutingKey("test.key").withEncoder(new MyCustomEncoder()); // <1>
     bind(EventTwo.class).toQueue("test.queue");
+    bind(EventTwo.class).toQueue("test.queue").withDecoder(new MyCustomDecoder()).autoAck(); // <2>
   }
 }
 ----
+<1> Specifies a custom event encoder
+<2> Specifies a custom event decoder and enables auto acknowledge
+
 
 As last step you need to initialize the binder either within in a singleton
 startup bean or servlet after having also configured the connection settings:
