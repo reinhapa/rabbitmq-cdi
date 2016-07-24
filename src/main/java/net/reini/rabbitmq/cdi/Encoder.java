@@ -17,9 +17,13 @@ public interface Encoder<T> {
   byte[] encode(T object) throws EncodeException;
 
   /**
-   * Content type of converter. Example:"application/json". Could be null
+   * Content type of converter.
    * 
-   * @return Content Type
+   * <h4>Example:</h4>
+   * 
+   * {@code application/json}
+   * 
+   * @return The content type string, can be {@code null}
    */
   String contentType();
 }
