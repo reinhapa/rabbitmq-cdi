@@ -2,6 +2,7 @@ package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
@@ -279,7 +280,7 @@ public abstract class EventBinder {
      * @return the queue binding
      */
     public QueueBinding<T> withDecoder(Decoder<T> messageDecoder) {
-      this.decoder = messageDecoder;
+      this.decoder = Objects.requireNonNull(messageDecoder, "decoder must not be null");
       LOGGER.info("Decoder set to {} for event type {}", messageDecoder, eventType.getSimpleName());
       return this;
     }
@@ -301,6 +302,7 @@ public abstract class EventBinder {
       basicProperties = MessageProperties.BASIC;
       this.eventType = eventType;
       this.exchange = exchange;
+      this.encoder = new JsonEncoder<>();
       exchangeBindings.add(this);
       LOGGER.info("Binding created between exchange {} and event type {}", exchange,
           eventType.getSimpleName());
@@ -313,7 +315,7 @@ public abstract class EventBinder {
      * @return the exchange binding
      */
     public ExchangeBinding<T> withRoutingKey(String key) {
-      this.routingKey = key;
+      this.routingKey = Objects.requireNonNull(key, "key must not be null");
       LOGGER.info("Routing key for event type {} set to {}", eventType.getSimpleName(), key);
       return this;
     }
@@ -325,7 +327,7 @@ public abstract class EventBinder {
      * @return the exchange binding
      */
     public ExchangeBinding<T> withEncoder(Encoder<T> messageEncoder) {
-      this.encoder = messageEncoder;
+      this.encoder = Objects.requireNonNull(messageEncoder, "encoder must not be null");
       LOGGER.info("Encoder for event type {} set to {}", eventType.getSimpleName(),
           encoder.getClass().getName());
       return this;
@@ -338,7 +340,7 @@ public abstract class EventBinder {
      * @return the exchange binding
      */
     public ExchangeBinding<T> withProperties(AMQP.BasicProperties properties) {
-      this.basicProperties = properties;
+      this.basicProperties = Objects.requireNonNull(properties, "propeties must not be null");
       LOGGER.info("Publisher properties for event type {} set to {}", eventType.getSimpleName(),
           properties.toString());
       return this;
