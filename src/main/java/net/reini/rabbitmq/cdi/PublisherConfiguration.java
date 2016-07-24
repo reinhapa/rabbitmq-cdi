@@ -13,18 +13,14 @@ import com.rabbitmq.client.AMQP;
  * event.
  *
  * @author Patrick Reinhart
- * @param <T> Message type
  */
 final class PublisherConfiguration {
-  PublisherConfiguration(String exchange, String routingKey, boolean persistent,
-      AMQP.BasicProperties basicProperties) {
-    this.exchange = exchange;
-    this.routingKey = routingKey;
-    this.persistent = persistent;
-    this.basicProperties = basicProperties;
-    this.messageEncoder = new JsonEncoder<>();
-  }
-  
+  final boolean persistent;
+  final String exchange;
+  final String routingKey;
+  final AMQP.BasicProperties basicProperties;
+  final Encoder<?> messageEncoder;
+
   PublisherConfiguration(String exchange, String routingKey, boolean persistent,
           AMQP.BasicProperties basicProperties, Encoder<?> encoder) {
     this.exchange = exchange;
@@ -33,10 +29,4 @@ final class PublisherConfiguration {
     this.basicProperties = basicProperties;
     this.messageEncoder = encoder;
   }
-
-  final boolean persistent;
-  final String exchange;
-  final String routingKey;
-  final AMQP.BasicProperties basicProperties;
-  final Encoder<?> messageEncoder;
 }

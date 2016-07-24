@@ -42,7 +42,7 @@ public class GenericPublisherTest {
   public void test() throws Exception {
     BasicProperties props = new BasicProperties();
     PublisherConfiguration publisherConfiguration =
-        new PublisherConfiguration("exchange", "routingKey", false, props);
+        new PublisherConfiguration("exchange", "routingKey", false, props, new JsonEncoder<>());
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionProducer.newConnection()).thenReturn(connection);

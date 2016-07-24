@@ -41,7 +41,7 @@ public class EventPublisher {
    * @param configuration The configuration used when publishing and event
    * @param <T> The event type
    */
-  public <T> void addEvent(Class<T> eventType, PublisherConfiguration configuration) {
+  public void addEvent(Class<?> eventType, PublisherConfiguration configuration) {
     publisherConfigurations.put(eventType, configuration);
   }
 
@@ -62,7 +62,7 @@ public class EventPublisher {
         publisher.publish(event, publisherConfiguration);
         LOGGER.debug("Published event successfully");
       } catch (IOException | TimeoutException e) {
-        throw new RuntimeException("Failed to publish event to RabbitMQ",e);
+        throw new RuntimeException("Failed to publish event to RabbitMQ", e);
       }
     }
   }

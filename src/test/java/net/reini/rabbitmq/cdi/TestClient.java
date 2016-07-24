@@ -28,7 +28,7 @@ public class TestClient {
 			    "product.catalog_item.sync", true,
 			    new DefaultConsumer(chn) {
 				@Override
-				public void handleDelivery(String consumerTag,
+				public void handleDelivery(String tag,
 					Envelope envelope,
 					BasicProperties properties, byte[] body)
 					throws IOException {

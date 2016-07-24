@@ -70,7 +70,6 @@ public class GenericPublisher implements MessagePublisher {
   }
 
   @Override
-  @SuppressWarnings({"rawtypes", "unchecked"})
   public void publish(Object event, PublisherConfiguration publisherConfiguration)
       throws IOException, TimeoutException {
     for (int attempt = 1; attempt <= DEFAULT_RETRY_ATTEMPTS; attempt++) {
@@ -78,7 +77,8 @@ public class GenericPublisher implements MessagePublisher {
         LOGGER.debug("Attempt {} to send message", Integer.valueOf(attempt));
       }
       try {
-        Encoder messageEncoder = publisherConfiguration.messageEncoder;
+        @SuppressWarnings("unchecked")
+        Encoder<Object> messageEncoder = (Encoder<Object>) publisherConfiguration.messageEncoder;
         byte[] data = messageEncoder.encode(event);
         Builder builder = publisherConfiguration.basicProperties.builder();
         if (messageEncoder.contentType() != null) {
