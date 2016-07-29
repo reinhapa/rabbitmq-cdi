@@ -111,3 +111,9 @@ public class EventDemoBean {
 }
 ----
 
+
+== Contribute
+Contributions are always welcome. Use https://google.github.io/styleguide/javaguide.html[Google code style format] for your changes. 
+
+== License
+This project is licensed under the https://github.com/{project-full-path}/blob/{github-branch}/LICENSE[MIT license]
