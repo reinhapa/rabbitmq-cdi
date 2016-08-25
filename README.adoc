@@ -5,8 +5,8 @@ Patrick Reinhart <https://github.com/reinhapa[@reinhapa]>
 
 image:https://img.shields.io/badge/license-MIT-blue.svg["MIT License", link="https://github.com/{project-full-path}/blob/{github-branch}/LICENSE"]
 image:https://img.shields.io/badge/Java-8-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
-image:https://img.shields.io/travis/{project-full-path}/{github-branch}.svg["Build Status", link="https://travis-ci.org/{project-full-path}"]
 image:https://img.shields.io/github/release/{project-full-path}.svg["Release", link="https://github.com/{project-full-path}"]
+image:https://img.shields.io/travis/{project-full-path}/{github-branch}.svg["Build Status", link="https://travis-ci.org/{project-full-path}"]
 image:https://img.shields.io/codecov/c/github/{project-full-path}/{github-branch}.svg["Code Coverage", link="https://codecov.io/github/{project-full-path}?branch={github-branch}"]
 image:https://codecov.io/github/{project-full-path}/branch.svg?branch={github-branch}[codecov.io]
 
