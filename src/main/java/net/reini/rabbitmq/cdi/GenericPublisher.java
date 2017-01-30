@@ -6,8 +6,6 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.AMQP.BasicProperties.Builder;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 
@@ -77,16 +75,7 @@ public class GenericPublisher implements MessagePublisher {
         LOGGER.debug("Attempt {} to send message", Integer.valueOf(attempt));
       }
       try {
-        @SuppressWarnings("unchecked")
-        Encoder<Object> messageEncoder = (Encoder<Object>) publisherConfiguration.messageEncoder;
-        byte[] data = messageEncoder.encode(event);
-        Builder builder = publisherConfiguration.basicProperties.builder();
-        if (messageEncoder.contentType() != null) {
-          builder.contentType(messageEncoder.contentType());
-        }
-        BasicProperties basicProperties = builder.build();
-        provideChannel().basicPublish(publisherConfiguration.exchange,
-            publisherConfiguration.routingKey, basicProperties, data);
+        publisherConfiguration.publish(provideChannel(),event);
         return;
       } catch (EncodeException e) {
         LOGGER.error("Unable to serialize {} due to: {}", event, e.getMessage());

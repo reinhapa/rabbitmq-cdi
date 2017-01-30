@@ -226,7 +226,7 @@ public class ConnectionProducer {
         addrs.add(new Address(connectionFactory.getHost(), connectionFactory.getPort()));
       }
       LOGGER.debug("Trying to establish connection to on of: {}", addrs);
-      connection = connectionFactory.newConnection(brokerHosts.toArray(new Address[addrs.size()]));
+      connection = connectionFactory.newConnection(brokerHosts.toArray(new Address[0]));
       connection.addShutdownListener(cause -> shutdownCompleted(cause));
       LOGGER.debug("Established connection successfully");
       changeState(State.CONNECTED);

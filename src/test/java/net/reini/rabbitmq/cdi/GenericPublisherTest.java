@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.AMQP.BasicProperties.Builder;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 
@@ -40,9 +41,9 @@ public class GenericPublisherTest {
 
   @Test
   public void test() throws Exception {
-    BasicProperties props = new BasicProperties();
+    Builder builder = new Builder();
     PublisherConfiguration publisherConfiguration =
-        new PublisherConfiguration("exchange", "routingKey", false, props, new JsonEncoder<>());
+        new PublisherConfiguration("exchange", "routingKey", builder, new JsonEncoder<>());
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionProducer.newConnection()).thenReturn(connection);
@@ -57,9 +58,9 @@ public class GenericPublisherTest {
 
   @Test
   public void testCustomMessageConverter() throws Exception {
-    BasicProperties props = new BasicProperties();
+    Builder builder = new Builder();
     PublisherConfiguration publisherConfiguration =
-        new PublisherConfiguration("exchange", "routingKey", false, props, new CustomEncoder());
+        new PublisherConfiguration("exchange", "routingKey", builder, new CustomEncoder());
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionProducer.newConnection()).thenReturn(connection);

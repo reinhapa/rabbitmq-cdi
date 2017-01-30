@@ -14,7 +14,8 @@ import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.AMQP.BasicProperties.Builder;
 import com.rabbitmq.client.Address;
 import com.rabbitmq.client.MessageProperties;
 
@@ -179,7 +180,7 @@ public abstract class EventBinder {
   void bindExchange(ExchangeBinding<?> exchangeBinding) {
     PublisherConfiguration cfg =
         new PublisherConfiguration(exchangeBinding.exchange, exchangeBinding.routingKey,
-            exchangeBinding.persistent, exchangeBinding.basicProperties, exchangeBinding.encoder);
+            exchangeBinding.basicPropertiesBuilder, exchangeBinding.encoder);
     eventPublisher.addEvent(exchangeBinding.eventType, cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
         exchangeBinding.eventType.getSimpleName());
@@ -293,16 +294,15 @@ public abstract class EventBinder {
     private final Class<T> eventType;
     private final String exchange;
 
-    private boolean persistent;
     private String routingKey;
     private Encoder<T> encoder;
-    private AMQP.BasicProperties basicProperties;
+    private Builder basicPropertiesBuilder;
 
     ExchangeBinding(Class<T> eventType, String exchange) {
-      basicProperties = MessageProperties.BASIC;
       this.eventType = eventType;
       this.exchange = exchange;
       this.encoder = new JsonEncoder<>();
+      basicPropertiesBuilder = MessageProperties.BASIC.builder();
       exchangeBindings.add(this);
       LOGGER.info("Binding created between exchange {} and event type {}", exchange,
           eventType.getSimpleName());
@@ -339,8 +339,9 @@ public abstract class EventBinder {
      * @param properties The basic properties
      * @return the exchange binding
      */
-    public ExchangeBinding<T> withProperties(AMQP.BasicProperties properties) {
-      this.basicProperties = Objects.requireNonNull(properties, "propeties must not be null");
+    public ExchangeBinding<T> withProperties(BasicProperties properties) {
+      this.basicPropertiesBuilder =
+          Objects.requireNonNull(properties, "propeties must not be null").builder();
       LOGGER.info("Publisher properties for event type {} set to {}", eventType.getSimpleName(),
           properties.toString());
       return this;
