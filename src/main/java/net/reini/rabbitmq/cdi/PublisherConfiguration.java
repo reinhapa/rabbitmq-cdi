@@ -22,7 +22,7 @@ final class PublisherConfiguration {
   final Encoder<?> messageEncoder;
 
   PublisherConfiguration(String exchange, String routingKey, boolean persistent,
-          AMQP.BasicProperties basicProperties, Encoder<?> encoder) {
+      AMQP.BasicProperties basicProperties, Encoder<?> encoder) {
     this.exchange = exchange;
     this.routingKey = routingKey;
     this.persistent = persistent;

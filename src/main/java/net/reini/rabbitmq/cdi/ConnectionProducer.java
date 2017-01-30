@@ -169,8 +169,8 @@ public class ConnectionProducer {
   List<Address> getBrokerHosts() {
     return brokerHosts;
   }
-  
-  
+
+
   ConnectionFactory getConnectionFactory() {
     return connectionFactory;
   }
