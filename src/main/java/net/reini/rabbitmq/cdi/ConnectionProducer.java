@@ -1,12 +1,12 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PreDestroy;
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.slf4j.Logger;
@@ -59,23 +59,22 @@ public class ConnectionProducer {
   public static final int CONNECTION_TIMEOUT_IN_MS = 1000;
   public static final int CONNECTION_ESTABLISH_INTERVAL_IN_MS = 500;
 
-  private final ConnectionFactory connectionFactory;
-  private final List<ConnectionListener> connectionListeners;
   private final Object operationOnConnectionMonitor;
-  private final List<Address> brokerHosts;
+  private final ConnectionFactory connectionFactory;
+  private final Set<Address> brokerHosts;
+  private final Set<ConnectionListener> connectionListeners;
 
   private volatile Connection connection;
   private volatile State state;
 
-  @Inject
   public ConnectionProducer() {
     connectionFactory = new ConnectionFactory();
-    state = State.NEVER_CONNECTED;
     operationOnConnectionMonitor = new Object();
-    connectionListeners = new CopyOnWriteArrayList<>();
+    brokerHosts = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    connectionListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    state = State.NEVER_CONNECTED;
     connectionFactory.setRequestedHeartbeat(CONNECTION_HEARTBEAT_IN_SEC);
     connectionFactory.setConnectionTimeout(CONNECTION_TIMEOUT_IN_MS);
-    brokerHosts = new CopyOnWriteArrayList<>();
   }
 
   /**
@@ -166,7 +165,7 @@ public class ConnectionProducer {
     connectionListeners.remove(connectionListener);
   }
 
-  List<Address> getBrokerHosts() {
+  Set<Address> getBrokerHosts() {
     return brokerHosts;
   }
 
@@ -221,7 +220,7 @@ public class ConnectionProducer {
       } else if (state == State.CONNECTED) {
         LOGGER.warn("Establishing new connection although a connection is already established");
       }
-      List<Address> addrs = getBrokerHosts();
+      Set<Address> addrs = getBrokerHosts();
       if (addrs.isEmpty()) {
         addrs.add(new Address(connectionFactory.getHost(), connectionFactory.getPort()));
       }
