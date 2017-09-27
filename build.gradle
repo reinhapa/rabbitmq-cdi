@@ -39,7 +39,7 @@ repositories {
 }
 
 asciidoctorj { 
-    version '1.5.4'
+    version '1.5.5'
 }
 
 dependencies {
@@ -90,7 +90,8 @@ jar {
                    'Build-Revision': versioning.info.commit,
                    'Specification-Title': project.name,
                    'Specification-Version': project.version,
-                   'Specification-Vendor': 'reini.net'
+                   'Specification-Vendor': 'reini.net',
+                   'Automatic-Module-Name': "net.reini.rabbitmq.cdi"
         metaInf {
             from file('.')
             include 'LICENSE'
