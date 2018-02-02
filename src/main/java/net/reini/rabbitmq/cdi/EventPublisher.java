@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import javax.enterprise.event.Observes;
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.slf4j.Logger;
@@ -21,16 +20,8 @@ import org.slf4j.LoggerFactory;
 public class EventPublisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventPublisher.class);
 
-  private final ConnectionProducer connectionProducer;
-  private final Map<Class<?>, PublisherConfiguration> publisherConfigurations;
-  private final ThreadLocal<Map<Class<?>, MessagePublisher>> publishers;
-
-  @Inject
-  public EventPublisher(ConnectionProducer connectionProducer) {
-    this.connectionProducer = connectionProducer;
-    this.publisherConfigurations = new HashMap<>();
-    this.publishers = new ThreadLocal<>();
-  }
+  private final Map<Class<?>, PublisherConfiguration> publisherConfigurations  = new HashMap<>();
+  private final ThreadLocal<Map<Class<?>, MessagePublisher>> publishers  = new ThreadLocal<>();
 
   /**
    * Adds events of the given type to the CDI events to which the event publisher listens in order
@@ -57,7 +48,7 @@ public class EventPublisher {
     if (publisherConfiguration == null) {
       LOGGER.trace("No publisher configured for event {}", event);
     } else {
-      try (MessagePublisher publisher = providePublisher(eventType)) {
+      try (MessagePublisher publisher = providePublisher(eventType, publisherConfiguration)) {
         LOGGER.debug("Start publishing event {}...", event);
         publisher.publish(event, publisherConfiguration);
         LOGGER.debug("Published event successfully");
@@ -75,7 +66,7 @@ public class EventPublisher {
    * @param eventType The event type
    * @return The provided publisher
    */
-  MessagePublisher providePublisher(Class<?> eventType) {
+  MessagePublisher providePublisher( Class<?> eventType, PublisherConfiguration publisherConfiguration ) {
     Map<Class<?>, MessagePublisher> localPublishers = publishers.get();
     if (localPublishers == null) {
       localPublishers = new HashMap<>();
@@ -83,7 +74,7 @@ public class EventPublisher {
     }
     MessagePublisher publisher = localPublishers.get(eventType);
     if (publisher == null) {
-      publisher = new GenericPublisher(connectionProducer);
+      publisher = new GenericPublisher(publisherConfiguration.getConnectionProducer());
       localPublishers.put(eventType, publisher);
     }
     return publisher;

@@ -29,7 +29,6 @@ import com.rabbitmq.client.ShutdownSignalException;
  * 
  * @author Patrick Reinhart
  */
-@Singleton
 public class ConnectionProducer {
 
   private enum State {
@@ -121,7 +120,6 @@ public class ConnectionProducer {
    * connection may remain established and ghost threads may reside.
    * </p>
    */
-  @PreDestroy
   public void close() {
     synchronized (operationOnConnectionMonitor) {
       if (state == State.CLOSED) {

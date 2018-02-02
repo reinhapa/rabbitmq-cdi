@@ -23,12 +23,14 @@ final class PublisherConfiguration {
   private final Encoder<?> messageEncoder;
   private final String exchange;
   private final String routingKey;
+  private final ConnectionProducer connectionProducer;
 
   PublisherConfiguration(String exchange, String routingKey, Builder basicPropertiesBuilder,
-      Encoder<?> encoder) {
+      Encoder<?> encoder, ConnectionProducer connectionProducer) {
     this.exchange = exchange;
     this.routingKey = routingKey;
     this.messageEncoder = encoder;
+    this.connectionProducer = connectionProducer;
     String contentType = messageEncoder.contentType();
     if (contentType != null) {
       basicPropertiesBuilder.contentType(contentType);
@@ -40,5 +42,11 @@ final class PublisherConfiguration {
     @SuppressWarnings("unchecked")
     byte[] data = ((Encoder<Object>) messageEncoder).encode(event);
     channel.basicPublish(exchange, routingKey, basicProperties, data);
+  }
+
+
+  public ConnectionProducer getConnectionProducer()
+  {
+    return this.connectionProducer;
   }
 }

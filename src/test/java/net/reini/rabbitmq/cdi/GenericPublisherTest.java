@@ -43,7 +43,7 @@ public class GenericPublisherTest {
   public void test() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration publisherConfiguration =
-        new PublisherConfiguration("exchange", "routingKey", builder, new JsonEncoder<>());
+        new PublisherConfiguration("exchange", "routingKey", builder, new JsonEncoder<>(), connectionProducer);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionProducer.newConnection()).thenReturn(connection);
@@ -60,7 +60,7 @@ public class GenericPublisherTest {
   public void testCustomMessageConverter() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration publisherConfiguration =
-        new PublisherConfiguration("exchange", "routingKey", builder, new CustomEncoder());
+        new PublisherConfiguration("exchange", "routingKey", builder, new CustomEncoder(), connectionProducer);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionProducer.newConnection()).thenReturn(connection);
