@@ -8,6 +8,7 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.New;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -180,7 +181,7 @@ public abstract class EventBinder {
   void bindExchange(ExchangeBinding<?> exchangeBinding) {
     PublisherConfiguration cfg =
         new PublisherConfiguration(exchangeBinding.exchange, exchangeBinding.routingKey,
-            exchangeBinding.basicPropertiesBuilder, exchangeBinding.encoder);
+            exchangeBinding.basicPropertiesBuilder, exchangeBinding.encoder, connectionProducer);
     eventPublisher.addEvent(exchangeBinding.eventType, cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
         exchangeBinding.eventType.getSimpleName());
@@ -404,5 +405,17 @@ public abstract class EventBinder {
       connectionProducer.getBrokerHosts().add(hostAddress);
       return this;
     }
+
+    /**
+     * Register a <code>ConnectionListener</code> for monitoring connection.
+     *
+     * @param listener the listener for the connection
+     * @return the binder configuration object
+     */
+    public BinderConfiguration registerListener(ConnectionListener listener) {
+      connectionProducer.registerListener( listener );
+      return this;
+    }
+
   }
 }
