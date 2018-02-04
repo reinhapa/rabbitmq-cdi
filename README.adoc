@@ -57,11 +57,20 @@ As second step you have to define the bindings:
 public class RabbitBinder extends EventBinder {
   @Override
   protected void bindEvents() {
-    bind(EventOne.class).toExchange("test.from").withRoutingKey("test.key");
-    bind(EventOne.class).toExchange("test.from").withRoutingKey("test.key").withEncoder(new MyCustomEncoder()); // <1>
+    bind(EventOne.class)
+      .toExchange("test.from")
+      .withRoutingKey("test.key");
+    bind(EventOne.class)
+      .toExchange("test.from")
+      .withRoutingKey("test.key")
+      .withEncoder(new MyCustomEncoder()); // <1>
 
-    bind(EventTwo.class).toQueue("test.queue");
-    bind(EventTwo.class).toQueue("test.queue").withDecoder(new MyCustomDecoder()).autoAck(); // <2>
+    bind(EventTwo.class)
+      .toQueue("test.queue");
+    bind(EventTwo.class)
+      .toQueue("test.queue")
+      .withDecoder(new MyCustomDecoder())
+      .autoAck(); // <2>
   }
 }
 ----
