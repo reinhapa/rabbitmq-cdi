@@ -6,10 +6,10 @@ import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +60,7 @@ import com.rabbitmq.client.MessageProperties;
  *
  * @author Patrick Reinhart
  */
-@Singleton
+@Dependent
 public abstract class EventBinder {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventBinder.class);
 
@@ -351,13 +351,31 @@ public abstract class EventBinder {
   public final class BinderConfiguration {
 
     /**
+     * @deprecated Use {@link #addHost(String)} instead
+     */
+    @Deprecated
+    public BinderConfiguration setHost(String hostName) {
+      return addHost(Address.parseAddress(hostName));
+    }
+
+    /**
      * Adds a broker host name used when establishing a connection.
      * 
-     * @param hostName a broker host name without a port
+     * @param hostName a broker host name with optional port
      * @return the binder configuration object
      */
-    public BinderConfiguration setHost(String hostName) {
-      connectionProducer.getConnectionFactory().setHost(hostName);
+    public BinderConfiguration addHost(String hostName) {
+      return addHost(Address.parseAddress(hostName));
+    }
+
+    /**
+     * Adds a broker host address used when establishing a connection.
+     * 
+     * @param hostAddress the broker host address
+     * @return the binder configuration object
+     */
+    public BinderConfiguration addHost(Address hostAddress) {
+      connectionProducer.getBrokerHosts().add(hostAddress);
       return this;
     }
 
@@ -391,17 +409,6 @@ public abstract class EventBinder {
      */
     public BinderConfiguration setVirtualHost(String virtualHost) {
       connectionProducer.getConnectionFactory().setVirtualHost(virtualHost);
-      return this;
-    }
-
-    /**
-     * Adds a broker host address used when establishing a connection.
-     * 
-     * @param hostAddress the broker host address
-     * @return the binder configuration object
-     */
-    public BinderConfiguration addHost(Address hostAddress) {
-      connectionProducer.getBrokerHosts().add(hostAddress);
       return this;
     }
   }

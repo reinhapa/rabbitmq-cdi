@@ -1,13 +1,12 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PreDestroy;
-import javax.inject.Singleton;
+import javax.enterprise.context.Dependent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +28,7 @@ import com.rabbitmq.client.ShutdownSignalException;
  * 
  * @author Patrick Reinhart
  */
-@Singleton
+@Dependent
 public class ConnectionProducer {
 
   private enum State {
@@ -70,8 +69,8 @@ public class ConnectionProducer {
   public ConnectionProducer() {
     connectionFactory = new ConnectionFactory();
     operationOnConnectionMonitor = new Object();
-    brokerHosts = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    connectionListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    brokerHosts = ConcurrentHashMap.newKeySet();
+    connectionListeners = ConcurrentHashMap.newKeySet();
     state = State.NEVER_CONNECTED;
     connectionFactory.setRequestedHeartbeat(CONNECTION_HEARTBEAT_IN_SEC);
     connectionFactory.setConnectionTimeout(CONNECTION_TIMEOUT_IN_MS);
