@@ -59,6 +59,7 @@ public class RabbitBinder extends EventBinder {
   protected void bindEvents() {
     bind(EventOne.class).toExchange("test.from").withRoutingKey("test.key");
     bind(EventOne.class).toExchange("test.from").withRoutingKey("test.key").withEncoder(new MyCustomEncoder()); // <1>
+
     bind(EventTwo.class).toQueue("test.queue");
     bind(EventTwo.class).toQueue("test.queue").withDecoder(new MyCustomDecoder()).autoAck(); // <2>
   }
@@ -82,7 +83,10 @@ public class BindingInitializer {
   @PostConstruct
   public void initialize() {
     try {
-      binder.configuration().addHost("somehost.somedomain").setUsername("myuser").setPassword("mypassword");
+      binder.configuration()
+        .addHost("somehost.somedomain")
+        .setUsername("myuser")
+        .setPassword("mypassword");
       binder.initialize();
     } catch (IOException e) {
       LoggerFactory.getLogger(getClass()).error("Unable to initialize", e);
@@ -92,8 +96,8 @@ public class BindingInitializer {
 ----
 
 
-In case you have to support two different servers, create a binder implementation for each host and initialize
-them in one single binding initializer:
+In case you have to support two different servers, create a binder implementation
+for each host and initialize them in one single binding initializer:
 
 [source,java]
 ----
@@ -108,8 +112,14 @@ public class BindingInitializer {
   @PostConstruct
   public void initialize() {
     try {
-      binderOne.configuration().addtHost("hostOne.somedomain").setUsername("myuser").setPassword("mypassword");
-      binderTwo.configuration().addtHost("hostTwo.somedomain").setUsername("myuser").setPassword("mypassword");
+      binderOne.configuration()
+        .addHost("hostOne.somedomain")
+        .setUsername("myuser")
+        .setPassword("mypassword");
+      binderTwo.configuration()
+        .addHost("hostTwo.somedomain")
+        .setUsername("myuser")
+        .setPassword("mypassword");
       
       binderOne.initialize();
       binderTwo.initialize();
