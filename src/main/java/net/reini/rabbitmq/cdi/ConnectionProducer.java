@@ -120,6 +120,7 @@ public class ConnectionProducer {
    * connection may remain established and ghost threads may reside.
    * </p>
    */
+  @PreDestroy
   public void close() {
     synchronized (operationOnConnectionMonitor) {
       if (state == State.CLOSED) {
