@@ -7,7 +7,7 @@ buildscript {
 
     dependencies {
         classpath 'org.asciidoctor:asciidoctor-gradle-plugin:1.5.3'
-        classpath 'net.nemerosa:versioning:1.7.1'
+        classpath 'net.nemerosa:versioning:2.6.1'
     }
 }
 
@@ -39,7 +39,7 @@ repositories {
 }
 
 asciidoctorj { 
-    version '1.5.5'
+    version '1.5.6'
 }
 
 dependencies {
