@@ -58,24 +58,24 @@ public class RabbitBinder extends EventBinder {
   @Override
   protected void bindEvents() {
     bind(EventOne.class)
-      .toExchange("test.from")
-      .withRoutingKey("test.key");
+      .toExchange("test.exchange.one"); // <1>
     bind(EventOne.class)
-      .toExchange("test.from")
+      .toExchange("test.exchange.two")
       .withRoutingKey("test.key")
-      .withEncoder(new MyCustomEncoder()); // <1>
+      .withEncoder(new MyCustomEncoder()); // <2>
 
     bind(EventTwo.class)
       .toQueue("test.queue");
     bind(EventTwo.class)
       .toQueue("test.queue")
       .withDecoder(new MyCustomDecoder())
-      .autoAck(); // <2>
+      .autoAck(); // <3>
   }
 }
 ----
-<1> Specifies a custom event encoder
-<2> Specifies a custom event decoder and enables auto acknowledge
+<1> Uses an empty routing key for exchange 'test.exchange.one'
+<2> Specifies a custom event encoder
+<3> Specifies a custom event decoder and enables auto acknowledge
 
 
 As last step you need to initialize the binder either within in a singleton

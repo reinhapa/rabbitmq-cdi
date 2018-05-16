@@ -302,6 +302,7 @@ public abstract class EventBinder {
       this.eventType = eventType;
       this.exchange = exchange;
       this.encoder = new JsonEncoder<>();
+      routingKey = "";
       basicPropertiesBuilder = MessageProperties.BASIC.builder();
       exchangeBindings.add(this);
       LOGGER.info("Binding created between exchange {} and event type {}", exchange,
