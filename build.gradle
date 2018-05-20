@@ -43,6 +43,7 @@ asciidoctorj {
 }
 
 dependencies {
+    compile 'javax.annotation:javax.annotation-api:1.3.2'
     compile 'javax.enterprise:cdi-api:1.2'
     compile 'javax.enterprise.concurrent:javax.enterprise.concurrent-api:1.0'
     compile 'org.slf4j:slf4j-api:1.7.12'
