@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Event;
+import javax.enterprise.event.TransactionPhase;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 
@@ -181,7 +183,8 @@ public abstract class EventBinder {
     PublisherConfiguration cfg =
         new PublisherConfiguration(exchangeBinding.exchange, exchangeBinding.routingKey,
             exchangeBinding.basicPropertiesBuilder, exchangeBinding.encoder);
-    eventPublisher.addEvent(exchangeBinding.eventType, cfg);
+    eventPublisher
+        .addEvent(EventKey.of(exchangeBinding.eventType, exchangeBinding.transactionPhase), cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
         exchangeBinding.eventType.getSimpleName());
   }
@@ -202,14 +205,22 @@ public abstract class EventBinder {
    * @return The binding builder
    */
   public <M> EventBindingBuilder<M> bind(Class<M> event) {
-    return new EventBindingBuilder<>(event);
+    EventBindingBuilder<M> builder =
+        new EventBindingBuilder<>(event, queueBindings::add, exchangeBindings::add);
+
+    return builder;
   }
 
-  public final class EventBindingBuilder<T> {
+  public static final class EventBindingBuilder<T> {
     private final Class<T> eventType;
+    private final Consumer<QueueBinding<T>> queueBindingConsumer;
+    private final Consumer<ExchangeBinding<T>> exchangeBindingConsumer;
 
-    EventBindingBuilder(Class<T> eventType) {
+    EventBindingBuilder(Class<T> eventType, Consumer<QueueBinding<T>> queueBindingConsumer,
+        Consumer<ExchangeBinding<T>> exchangeBindingConsumer) {
       this.eventType = eventType;
+      this.queueBindingConsumer = queueBindingConsumer;
+      this.exchangeBindingConsumer = exchangeBindingConsumer;
     }
 
     /**
@@ -220,7 +231,9 @@ public abstract class EventBinder {
      * @return the queue binding
      */
     public QueueBinding<T> toQueue(String queue) {
-      return new QueueBinding<>(eventType, queue);
+      QueueBinding<T> binding = new QueueBinding<>(eventType, queue);
+      queueBindingConsumer.accept(binding);
+      return binding;
     }
 
     /**
@@ -231,14 +244,16 @@ public abstract class EventBinder {
      * @return the exchange binding
      */
     public ExchangeBinding<T> toExchange(String exchange) {
-      return new ExchangeBinding<>(eventType, exchange);
+      ExchangeBinding<T> binding = new ExchangeBinding<>(eventType, exchange);
+      exchangeBindingConsumer.accept(binding);
+      return binding;
     }
   }
 
   /**
    * Configures and stores the binding between and event class and a queue.
    */
-  public final class QueueBinding<T> {
+  public static final class QueueBinding<T> {
     private final Class<T> eventType;
     private final String queue;
     private boolean autoAck;
@@ -248,9 +263,23 @@ public abstract class EventBinder {
       this.eventType = eventType;
       this.queue = queue;
       this.decoder = new JsonDecoder<>(eventType);
-      queueBindings.add(this);
       LOGGER.info("Binding created between queue {} and event type {}", queue,
           eventType.getSimpleName());
+    }
+
+    @Override
+    public int hashCode() {
+      return eventType.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      } else if (!(obj instanceof QueueBinding)) {
+        return false;
+      }
+      return eventType.equals(((QueueBinding<?>) obj).eventType);
     }
 
     /**
@@ -290,23 +319,39 @@ public abstract class EventBinder {
   /**
    * Configures and stores the binding between an event class and an exchange.
    */
-  public final class ExchangeBinding<T> {
+  public static final class ExchangeBinding<T> {
     private final Class<T> eventType;
     private final String exchange;
 
     private String routingKey;
     private Encoder<T> encoder;
     private Builder basicPropertiesBuilder;
+    private TransactionPhase transactionPhase;
 
     ExchangeBinding(Class<T> eventType, String exchange) {
       this.eventType = eventType;
       this.exchange = exchange;
       this.encoder = new JsonEncoder<>();
       routingKey = "";
+      transactionPhase = TransactionPhase.IN_PROGRESS;
       basicPropertiesBuilder = MessageProperties.BASIC.builder();
-      exchangeBindings.add(this);
       LOGGER.info("Binding created between exchange {} and event type {}", exchange,
           eventType.getSimpleName());
+    }
+
+    @Override
+    public int hashCode() {
+      return eventType.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      } else if (!(obj instanceof ExchangeBinding)) {
+        return false;
+      }
+      return eventType.equals(((ExchangeBinding<?>) obj).eventType);
     }
 
     /**
@@ -347,10 +392,21 @@ public abstract class EventBinder {
           properties.toString());
       return this;
     }
+
+    /**
+     * Sets the event observation phase to the given transaction phase on which the event will be
+     * published to the configured exchange.
+     *
+     * @param phase The transaction phase for the event to publish
+     * @return the exchange binding
+     */
+    public ExchangeBinding<T> inPhase(TransactionPhase phase) {
+      this.transactionPhase = Objects.requireNonNull(phase, "phase must not be null");
+      return this;
+    }
   }
 
   public final class BinderConfiguration {
-
     /**
      * @deprecated Use {@link #addHost(String)} instead
      */
