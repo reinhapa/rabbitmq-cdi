@@ -1,37 +1,26 @@
 import java.text.SimpleDateFormat
 
-buildscript {
-    repositories {
-        jcenter()
-    }
-
-    dependencies {
-        classpath 'org.asciidoctor:asciidoctor-gradle-plugin:1.5.3'
-        classpath 'net.nemerosa:versioning:2.6.1'
-    }
+plugins {
+    id "java"
+    id "signing"
+    id "eclipse"
+    id "jacoco"
+    id "maven"
+    id "org.asciidoctor.convert" version "1.5.7"
+    id "net.nemerosa.versioning" version "2.7.1"
 }
-
-configurations {
-    asciidoclet
-}
-
-apply plugin: 'java'
-apply plugin: 'signing'
-apply plugin: 'eclipse'
-apply plugin: 'jacoco'
-apply plugin: 'maven'
-apply plugin: 'org.asciidoctor.convert'
-apply plugin: 'net.nemerosa.versioning'
-
-group = 'net.reini'
 
 defaultTasks 'build'
-
 
 Date buildTimeAndDate = new Date()
 ext {
     buildDate = new SimpleDateFormat('yyyy-MM-dd').format(buildTimeAndDate)
     buildTime = new SimpleDateFormat('HH:mm:ss.SSSZ').format(buildTimeAndDate)
+}
+
+
+configurations {
+    asciidoclet
 }
 
 repositories {
