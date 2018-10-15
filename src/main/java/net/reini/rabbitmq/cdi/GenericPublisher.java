@@ -17,6 +17,7 @@ public class GenericPublisher implements MessagePublisher {
 
   private final ConnectionProducer connectionProducer;
 
+  private Connection connection;
   private Channel channel;
 
   public GenericPublisher(ConnectionProducer connectionProducer) {
@@ -25,14 +26,17 @@ public class GenericPublisher implements MessagePublisher {
 
   /**
    * Initializes a channel if there is not already an open channel.
-   *
+   * 
+   * @param config the connection configuration
    * @return The initialized or already open channel.
    * @throws IOException if the channel cannot be initialized
    * @throws TimeoutException if the channel can not be opened within the timeout period
    */
-  protected Channel provideChannel() throws IOException, TimeoutException {
+  protected Channel provideChannel(ConnectionConfig config) throws IOException, TimeoutException {
+    if (connection == null) {
+      connection = connectionProducer.newConnection(config);
+    }
     if (channel == null || !channel.isOpen()) {
-      Connection connection = connectionProducer.newConnection();
       channel = connection.createChannel();
     }
     return channel;
@@ -75,7 +79,7 @@ public class GenericPublisher implements MessagePublisher {
         LOGGER.debug("Attempt {} to send message", Integer.valueOf(attempt));
       }
       try {
-        publisherConfiguration.publish(provideChannel(),event);
+        publisherConfiguration.publish(provideChannel(publisherConfiguration.getConfig()), event);
         return;
       } catch (EncodeException e) {
         LOGGER.error("Unable to serialize {} due to: {}", event, e.getMessage());

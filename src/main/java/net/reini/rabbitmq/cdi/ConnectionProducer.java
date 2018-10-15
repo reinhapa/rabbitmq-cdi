@@ -1,17 +1,17 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PreDestroy;
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.ApplicationScoped;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.Address;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.ShutdownSignalException;
@@ -28,7 +28,7 @@ import com.rabbitmq.client.ShutdownSignalException;
  * 
  * @author Patrick Reinhart
  */
-@Dependent
+@ApplicationScoped
 public class ConnectionProducer {
 
   private enum State {
@@ -52,77 +52,128 @@ public class ConnectionProducer {
     CLOSED
   }
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionProducer.class);
+  private static final class ConnectionState {
+    private final ConnectionConfig config;
+    private final Set<ConnectionListener> connectionListeners;
 
-  public static final int CONNECTION_HEARTBEAT_IN_SEC = 3;
-  public static final int CONNECTION_TIMEOUT_IN_MS = 1000;
-  public static final int CONNECTION_ESTABLISH_INTERVAL_IN_MS = 500;
+    private volatile Connection connection;
+    private volatile State state;
 
-  private final Object operationOnConnectionMonitor;
-  private final ConnectionFactory connectionFactory;
-  private final Set<Address> brokerHosts;
-  private final Set<ConnectionListener> connectionListeners;
 
-  private volatile Connection connection;
-  private volatile State state;
-
-  public ConnectionProducer() {
-    connectionFactory = new ConnectionFactory();
-    operationOnConnectionMonitor = new Object();
-    brokerHosts = ConcurrentHashMap.newKeySet();
-    connectionListeners = ConcurrentHashMap.newKeySet();
-    state = State.NEVER_CONNECTED;
-    connectionFactory.setRequestedHeartbeat(CONNECTION_HEARTBEAT_IN_SEC);
-    connectionFactory.setConnectionTimeout(CONNECTION_TIMEOUT_IN_MS);
-  }
-
-  /**
-   * <p>
-   * Gets a new connection from the factory. As this factory only provides one connection for every
-   * process, the connection is established on the first call of this method. Every subsequent call
-   * will return the same instance of the first established connection.
-   * </p>
-   * 
-   * <p>
-   * In case a connection is lost, the factory will try to reestablish a new connection.
-   * </p>
-   * 
-   * @return The connection
-   */
-  public Connection newConnection() throws IOException, TimeoutException {
-    // Throw an exception if there is an attempt to retrieve a connection
-    // from a closed factory
-    if (state == State.CLOSED) {
-      throw new IOException("Attempt to retrieve a connection from a closed connection factory");
+    ConnectionState(ConnectionConfig config) {
+      this.config = config;
+      state = State.NEVER_CONNECTED;
+      connectionListeners = ConcurrentHashMap.newKeySet();
     }
-    // Try to establish a connection if there was no connection attempt so
-    // far
-    if (state == State.NEVER_CONNECTED) {
-      establishConnection();
-    }
-    // Retrieve the connection if it is established
-    if (connection != null && connection.isOpen()) {
-      return connection;
-    }
-    // Throw an exception if no established connection could not be
-    // retrieved
-    LOGGER.error("Unable to retrieve connection");
-    throw new IOException("Unable to retrieve connection");
-  }
 
-  /**
-   * <p>
-   * Closes the connection factory and interrupts all threads associated to it.
-   * </p>
-   * 
-   * <p>
-   * Note: Make sure to close the connection factory when not used any more as otherwise the
-   * connection may remain established and ghost threads may reside.
-   * </p>
-   */
-  @PreDestroy
-  public void close() {
-    synchronized (operationOnConnectionMonitor) {
+    /**
+     * Changes the factory state and notifies all connection listeners.
+     *
+     * @param newState The new connection factory state
+     */
+    void changeState(State newState) {
+      state = newState;
+      notifyListenersOnStateChange();
+    }
+
+    /**
+     * Notifies all connection listener about a state change.
+     */
+    void notifyListenersOnStateChange() {
+      LOGGER.debug("Notifying connection listeners about state change to {}", state);
+
+      for (ConnectionListener listener : connectionListeners) {
+        switch (state) {
+          case CONNECTED:
+            listener.onConnectionEstablished(connection);
+            break;
+          case CONNECTING:
+            listener.onConnectionLost(connection);
+            break;
+          case CLOSED:
+            listener.onConnectionClosed(connection);
+            break;
+          default:
+            break;
+        }
+      }
+    }
+
+    Connection newConnection() throws IOException, TimeoutException {
+      // Throw an exception if there is an attempt to retrieve a connection
+      // from a closed factory
+      if (state == State.CLOSED) {
+        throw new IOException("Attempt to retrieve a connection from a closed connection factory");
+      }
+      // Try to establish a connection if there was no connection attempt so
+      // far
+      if (state == State.NEVER_CONNECTED) {
+        establishConnection();
+      }
+      // Retrieve the connection if it is established
+      if (connection != null && connection.isOpen()) {
+        return connection;
+      }
+      // Throw an exception if no established connection could not be
+      // retrieved
+      LOGGER.error("Unable to retrieve connection");
+      throw new IOException("Unable to retrieve connection");
+    }
+
+    /**
+     * Establishes a new connection with the given {@code addresses}.
+     * 
+     * @throws IOException if establishing a new connection fails
+     * @throws TimeoutException if establishing a new connection times out
+     */
+    synchronized void establishConnection() throws IOException, TimeoutException {
+      if (state == State.CLOSED) {
+        throw new IOException("Attempt to establish a connection with a closed connection factory");
+      } else if (state == State.CONNECTED) {
+        LOGGER.warn("Establishing new connection although a connection is already established");
+      }
+      LOGGER.debug("Trying to establish connection using {}", config);
+      ConnectionFactory connectionFactory = new ConnectionFactory();
+      connectionFactory.setRequestedHeartbeat(CONNECTION_HEARTBEAT_IN_SEC);
+      connectionFactory.setConnectionTimeout(CONNECTION_TIMEOUT_IN_MS);
+      connection = config.createConnection(connectionFactory);
+      connection.addShutdownListener(cause -> shutdownCompleted(cause));
+      LOGGER.debug("Established connection successfully");
+      changeState(State.CONNECTED);
+    }
+
+    void shutdownCompleted(ShutdownSignalException cause) {
+      // Only hard error means loss of connection
+      if (!cause.isHardError()) {
+        return;
+      }
+      synchronized (this) {
+        // No action to be taken if factory is already closed
+        // or already connecting
+        if (state == State.CLOSED || state == State.CONNECTING) {
+          return;
+        }
+        changeState(State.CONNECTING);
+      }
+      LOGGER.error("Connection lost");
+      while (state == State.CONNECTING) {
+        try {
+          establishConnection();
+          return;
+        } catch (IOException | TimeoutException e) {
+          LOGGER.debug("Next reconnect attempt in {} ms",
+              Integer.valueOf(CONNECTION_ESTABLISH_INTERVAL_IN_MS));
+          try {
+            Thread.sleep(CONNECTION_ESTABLISH_INTERVAL_IN_MS);
+          } catch (InterruptedException ie) {
+            // that's fine, simply stop here
+            return;
+          }
+        }
+      }
+    }
+
+    synchronized void close() {
       if (state == State.CLOSED) {
         LOGGER.warn("Attempt to close connection factory which is already closed");
         return;
@@ -145,120 +196,73 @@ public class ConnectionProducer {
     }
   }
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionProducer.class);
+
+  public static final int CONNECTION_HEARTBEAT_IN_SEC = 3;
+  public static final int CONNECTION_TIMEOUT_IN_MS = 1000;
+  public static final int CONNECTION_ESTABLISH_INTERVAL_IN_MS = 500;
+
+  private final Map<ConnectionConfig, ConnectionState> connectionStates;
+
+
+  public ConnectionProducer() {
+    connectionStates = new ConcurrentHashMap<>();
+  }
+
+  /**
+   * <p>
+   * Gets a new connection from the factory. As this factory only provides one connection for every
+   * process, the connection is established on the first call of this method. Every subsequent call
+   * will return the same instance of the first established connection.
+   * </p>
+   * 
+   * <p>
+   * In case a connection is lost, the factory will try to reestablish a new connection.
+   * </p>
+   * 
+   * @return The connection
+   */
+  public Connection newConnection(ConnectionConfig config) throws IOException, TimeoutException {
+    return connectionStates.computeIfAbsent(config, ConnectionState::new).newConnection();
+  }
+
+  /**
+   * <p>
+   * Closes the connection factory and interrupts all threads associated to it.
+   * </p>
+   * 
+   * <p>
+   * Note: Make sure to close the connection factory when not used any more as otherwise the
+   * connection may remain established and ghost threads may reside.
+   * </p>
+   */
+  @PreDestroy
+  public void close() {
+    connectionStates.values().forEach(ConnectionState::close);
+  }
+
   /**
    * Registers a connection listener at the factory which is notified about changes of connection
    * states.
    * 
-   * @param connectionListener The connection listener
+   * @param listener The connection listener
    */
-  public void registerListener(ConnectionListener connectionListener) {
-    connectionListeners.add(connectionListener);
+  public void registerListener(ConnectionConfig config, ConnectionListener listener) {
+    ConnectionState state = connectionStates.get(config);
+    if (state != null) {
+      state.connectionListeners.add(listener);
+    }
   }
 
   /**
    * Removes a connection listener from the factory.
    *
-   * @param connectionListener The connection listener
+   * @param listener The connection listener
    */
-  public void removeConnectionListener(ConnectionListener connectionListener) {
-    connectionListeners.remove(connectionListener);
-  }
-
-  Set<Address> getBrokerHosts() {
-    return brokerHosts;
-  }
-
-
-  ConnectionFactory getConnectionFactory() {
-    return connectionFactory;
-  }
-
-  /**
-   * Changes the factory state and notifies all connection listeners.
-   *
-   * @param newState The new connection factory state
-   */
-  void changeState(State newState) {
-    state = newState;
-    notifyListenersOnStateChange();
-  }
-
-  /**
-   * Notifies all connection listener about a state change.
-   */
-  void notifyListenersOnStateChange() {
-    LOGGER.debug("Notifying connection listeners about state change to {}", state);
-
-    for (ConnectionListener listener : connectionListeners) {
-      switch (state) {
-        case CONNECTED:
-          listener.onConnectionEstablished(connection);
-          break;
-        case CONNECTING:
-          listener.onConnectionLost(connection);
-          break;
-        case CLOSED:
-          listener.onConnectionClosed(connection);
-          break;
-        default:
-          break;
-      }
-    }
-  }
-
-  /**
-   * Establishes a new connection with the given {@code addresses}.
-   * 
-   * @throws IOException if establishing a new connection fails
-   * @throws TimeoutException if establishing a new connection times out
-   */
-  void establishConnection() throws IOException, TimeoutException {
-    synchronized (operationOnConnectionMonitor) {
-      if (state == State.CLOSED) {
-        throw new IOException("Attempt to establish a connection with a closed connection factory");
-      } else if (state == State.CONNECTED) {
-        LOGGER.warn("Establishing new connection although a connection is already established");
-      }
-      Set<Address> addrs = getBrokerHosts();
-      if (addrs.isEmpty()) {
-        addrs.add(new Address(connectionFactory.getHost(), connectionFactory.getPort()));
-      }
-      LOGGER.debug("Trying to establish connection to on of: {}", addrs);
-      connection = connectionFactory.newConnection(brokerHosts.toArray(new Address[0]));
-      connection.addShutdownListener(cause -> shutdownCompleted(cause));
-      LOGGER.debug("Established connection successfully");
-      changeState(State.CONNECTED);
-    }
-  }
-
-  void shutdownCompleted(ShutdownSignalException cause) {
-    // Only hard error means loss of connection
-    if (!cause.isHardError()) {
-      return;
-    }
-    synchronized (operationOnConnectionMonitor) {
-      // No action to be taken if factory is already closed
-      // or already connecting
-      if (state == State.CLOSED || state == State.CONNECTING) {
-        return;
-      }
-      changeState(State.CONNECTING);
-    }
-    LOGGER.error("Connection lost");
-    while (state == State.CONNECTING) {
-      try {
-        establishConnection();
-        return;
-      } catch (IOException | TimeoutException e) {
-        LOGGER.debug("Next reconnect attempt in {} ms",
-            Integer.valueOf(CONNECTION_ESTABLISH_INTERVAL_IN_MS));
-        try {
-          Thread.sleep(CONNECTION_ESTABLISH_INTERVAL_IN_MS);
-        } catch (InterruptedException ie) {
-          // that's fine, simply stop here
-          return;
-        }
-      }
+  public void removeConnectionListener(ConnectionConfig config, ConnectionListener listener) {
+    ConnectionState state = connectionStates.get(config);
+    if (state != null) {
+      state.connectionListeners.remove(listener);
     }
   }
 }

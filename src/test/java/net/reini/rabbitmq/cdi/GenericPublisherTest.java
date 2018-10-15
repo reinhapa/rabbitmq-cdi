@@ -22,6 +22,8 @@ import com.rabbitmq.client.Connection;
 @RunWith(MockitoJUnitRunner.class)
 public class GenericPublisherTest {
   @Mock
+  private ConnectionConfig config;
+  @Mock
   private ConnectionProducer connectionProducer;
   @Mock
   private Connection connection;
@@ -43,10 +45,10 @@ public class GenericPublisherTest {
   public void test() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration publisherConfiguration =
-        new PublisherConfiguration("exchange", "routingKey", builder, new JsonEncoder<>());
+        new PublisherConfiguration(config, "exchange", "routingKey", builder, new JsonEncoder<>());
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
-    when(connectionProducer.newConnection()).thenReturn(connection);
+    when(connectionProducer.newConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.publish(event, publisherConfiguration);
@@ -60,10 +62,10 @@ public class GenericPublisherTest {
   public void testCustomMessageConverter() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration publisherConfiguration =
-        new PublisherConfiguration("exchange", "routingKey", builder, new CustomEncoder());
+        new PublisherConfiguration(config, "exchange", "routingKey", builder, new CustomEncoder());
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
-    when(connectionProducer.newConnection()).thenReturn(connection);
+    when(connectionProducer.newConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.publish(event, publisherConfiguration);
@@ -81,6 +83,7 @@ public class GenericPublisherTest {
     }
 
     @Override
+    @SuppressWarnings("boxing")
     public byte[] encode(TestEvent event) throws EncodeException {
       final String str =
           MessageFormat.format("Id: {0}, BooleanValue: {1}", event.getId(), event.isBooleanValue());

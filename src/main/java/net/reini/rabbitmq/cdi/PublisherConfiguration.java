@@ -1,9 +1,3 @@
-/**
- * File Name: PublisherConfiguration.java
- * 
- * Copyright (c) 2015 BISON Schweiz AG, All Rights Reserved.
- */
-
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
@@ -19,13 +13,16 @@ import com.rabbitmq.client.Channel;
  * @author Patrick Reinhart
  */
 final class PublisherConfiguration {
+  private final ConnectionConfig config;
   private final BasicProperties basicProperties;
   private final Encoder<?> messageEncoder;
   private final String exchange;
   private final String routingKey;
 
-  PublisherConfiguration(String exchange, String routingKey, Builder basicPropertiesBuilder,
+  PublisherConfiguration(ConnectionConfig config, String exchange, String routingKey,
+      Builder basicPropertiesBuilder,
       Encoder<?> encoder) {
+    this.config = config;
     this.exchange = exchange;
     this.routingKey = routingKey;
     this.messageEncoder = encoder;
@@ -34,6 +31,18 @@ final class PublisherConfiguration {
       basicPropertiesBuilder.contentType(contentType);
     }
     basicProperties = basicPropertiesBuilder.build();
+  }
+
+  /**
+   * @return the connection configuration
+   */
+  ConnectionConfig getConfig() {
+    return config;
+  }
+
+  @Override
+  public String toString() {
+    return config.toString();
   }
 
   void publish(Channel channel, Object event) throws EncodeException, IOException {

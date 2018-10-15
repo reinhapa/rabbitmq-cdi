@@ -2,7 +2,9 @@ package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import javax.enterprise.event.Observes;
@@ -22,14 +24,14 @@ public class EventPublisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventPublisher.class);
 
   private final ConnectionProducer connectionProducer;
-  private final Map<Class<?>, PublisherConfiguration> publisherConfigurations;
+  private final Map<Class<?>, Set<PublisherConfiguration>> publisherConfigurations;
   private final ThreadLocal<Map<Class<?>, MessagePublisher>> publishers;
 
   @Inject
   public EventPublisher(ConnectionProducer connectionProducer) {
     this.connectionProducer = connectionProducer;
     this.publisherConfigurations = new HashMap<>();
-    this.publishers = new ThreadLocal<>();
+    this.publishers = ThreadLocal.withInitial(HashMap::new);
   }
 
   /**
@@ -39,10 +41,9 @@ public class EventPublisher {
    *
    * @param eventType The event type
    * @param configuration The configuration used when publishing and event
-   * @param <T> The event type
    */
   public void addEvent(Class<?> eventType, PublisherConfiguration configuration) {
-    publisherConfigurations.put(eventType, configuration);
+    publisherConfigurations.computeIfAbsent(eventType, key -> new HashSet<>()).add(configuration);
   }
 
   /**
@@ -53,17 +54,25 @@ public class EventPublisher {
    */
   public void publishEvent(@Observes Object event) {
     Class<?> eventType = event.getClass();
-    PublisherConfiguration publisherConfiguration = publisherConfigurations.get(eventType);
-    if (publisherConfiguration == null) {
+    Set<PublisherConfiguration> configurations = publisherConfigurations.get(eventType);
+    if (configurations == null) {
       LOGGER.trace("No publisher configured for event {}", event);
     } else {
       try (MessagePublisher publisher = providePublisher(eventType)) {
-        LOGGER.debug("Start publishing event {}...", event);
-        publisher.publish(event, publisherConfiguration);
-        LOGGER.debug("Published event successfully");
+        configurations.forEach(configuration -> doPublish(event, publisher, configuration));
       } catch (IOException | TimeoutException e) {
         throw new RuntimeException("Failed to publish event to RabbitMQ", e);
       }
+    }
+  }
+
+  void doPublish(Object event, MessagePublisher publisher, PublisherConfiguration configuration) {
+    try {
+      LOGGER.debug("Start publishing event {} ({})...", event, configuration);
+      publisher.publish(event, configuration);
+      LOGGER.debug("Published event successfully");
+    } catch (IOException | TimeoutException e) {
+      LOGGER.error("Failed to publish event {} ({})", event, configuration, e);
     }
   }
 
@@ -77,15 +86,7 @@ public class EventPublisher {
    */
   MessagePublisher providePublisher(Class<?> eventType) {
     Map<Class<?>, MessagePublisher> localPublishers = publishers.get();
-    if (localPublishers == null) {
-      localPublishers = new HashMap<>();
-      publishers.set(localPublishers);
-    }
-    MessagePublisher publisher = localPublishers.get(eventType);
-    if (publisher == null) {
-      publisher = new GenericPublisher(connectionProducer);
-      localPublishers.put(eventType, publisher);
-    }
-    return publisher;
+    return localPublishers.computeIfAbsent(eventType,
+        key -> new GenericPublisher(connectionProducer));
   }
 }

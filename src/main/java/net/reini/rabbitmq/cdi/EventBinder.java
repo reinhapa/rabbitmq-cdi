@@ -76,8 +76,8 @@ public abstract class EventBinder {
   @Inject
   private ConnectionProducer connectionProducer;
 
-  private ConsumerContainer consumerContainer;
   private BinderConfiguration configuration;
+  private ConsumerContainer consumerContainer;
 
   public EventBinder() {
     exchangeBindings = new HashSet<>();
@@ -147,8 +147,8 @@ public abstract class EventBinder {
 
   @PostConstruct
   void initializeConsumerContainer() {
-    consumerContainer = new ConsumerContainer(connectionProducer);
     configuration = new BinderConfiguration();
+    consumerContainer = new ConsumerContainer(configuration.config, connectionProducer);
   }
 
   void processExchangeBindings() {
@@ -170,17 +170,16 @@ public abstract class EventBinder {
     Event<Object> eventControl = (Event<Object>) remoteEventControl.select(queueBinding.eventType);
     @SuppressWarnings("unchecked")
     Instance<Object> eventPool = (Instance<Object>) remoteEventPool.select(queueBinding.eventType);
-    EventConsumer consumer =
-        new EventConsumer(queueBinding.decoder, queueBinding.autoAck, eventControl, eventPool);
+    EventConsumer consumer = new EventConsumer(queueBinding.decoder, eventControl, eventPool);
     consumerContainer.addConsumer(consumer, queueBinding.queue, queueBinding.autoAck);
     LOGGER.info("Binding between queue {} and event type {} activated", queueBinding.queue,
         queueBinding.eventType.getSimpleName());
   }
 
   void bindExchange(ExchangeBinding<?> exchangeBinding) {
-    PublisherConfiguration cfg =
-        new PublisherConfiguration(exchangeBinding.exchange, exchangeBinding.routingKey,
-            exchangeBinding.basicPropertiesBuilder, exchangeBinding.encoder);
+    PublisherConfiguration cfg = new PublisherConfiguration(configuration.config,
+        exchangeBinding.exchange, exchangeBinding.routingKey,
+        exchangeBinding.basicPropertiesBuilder, exchangeBinding.encoder);
     eventPublisher.addEvent(exchangeBinding.eventType, cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
         exchangeBinding.eventType.getSimpleName());
@@ -350,6 +349,11 @@ public abstract class EventBinder {
   }
 
   public final class BinderConfiguration {
+    private final ConnectionConfig config;
+
+    BinderConfiguration() {
+      config = new ConnectionConfig();
+    }
 
     /**
      * @deprecated Use {@link #addHost(String)} instead
@@ -376,7 +380,7 @@ public abstract class EventBinder {
      * @return the binder configuration object
      */
     public BinderConfiguration addHost(Address hostAddress) {
-      connectionProducer.getBrokerHosts().add(hostAddress);
+      config.addHost(hostAddress);
       return this;
     }
 
@@ -387,7 +391,7 @@ public abstract class EventBinder {
      * @return the binder configuration object
      */
     public BinderConfiguration setUsername(String username) {
-      connectionProducer.getConnectionFactory().setUsername(username);
+      config.setUsername(username);
       return this;
     }
 
@@ -398,7 +402,7 @@ public abstract class EventBinder {
      * @return the binder configuration object
      */
     public BinderConfiguration setPassword(String password) {
-      connectionProducer.getConnectionFactory().setPassword(password);
+      config.setPassword(password);
       return this;
     }
 
@@ -409,7 +413,7 @@ public abstract class EventBinder {
      * @return the binder configuration object
      */
     public BinderConfiguration setVirtualHost(String virtualHost) {
-      connectionProducer.getConnectionFactory().setVirtualHost(virtualHost);
+      config.setVirtualHost(virtualHost);
       return this;
     }
   }

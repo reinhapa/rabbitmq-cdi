@@ -1,5 +1,6 @@
 package net.reini.rabbitmq.cdi;
 
+import static net.reini.rabbitmq.cdi.ConsumerImpl.*;
 import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
@@ -14,13 +15,15 @@ import com.rabbitmq.client.Connection;
 class ConsumerContainer {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerContainer.class);
 
+  private final ConnectionConfig config;
   private final ConnectionProducer connectionFactory;
   private final CopyOnWriteArrayList<ConsumerHolder> consumerHolders;
 
-  ConsumerContainer(ConnectionProducer connectionFactory) {
-    this.connectionFactory = connectionFactory;
+  ConsumerContainer(ConnectionConfig config, ConnectionProducer connectionProducer) {
+    this.config = config;
+    this.connectionFactory = connectionProducer;
     this.consumerHolders = new CopyOnWriteArrayList<>();
-    connectionFactory.registerListener(new ContainerConnectionListener());
+    connectionProducer.registerListener(config, new ContainerConnectionListener());
   }
 
   /**
@@ -32,7 +35,7 @@ class ConsumerContainer {
    */
   protected Channel createChannel() throws IOException, TimeoutException {
     LOGGER.debug("Creating channel");
-    Connection connection = connectionFactory.newConnection();
+    Connection connection = connectionFactory.newConnection(config);
     Channel channel = connection.createChannel();
     LOGGER.debug("Created channel");
     return channel;
@@ -97,7 +100,6 @@ class ConsumerContainer {
             // not usable any more
           }
           channel = null;
-          consumer.setChannel(channel);
         }
         LOGGER.info("Deactivated consumer of class {}", consumer.getClass());
       }
@@ -109,8 +111,8 @@ class ConsumerContainer {
         // Start the consumer
         try {
           channel = createChannel();
-          consumer.setChannel(channel);
-          channel.basicConsume(queueName, autoAck, consumer);
+          channel.basicConsume(queueName, autoAck,
+              autoAck ? create(consumer) : createAcknowledged(consumer, channel));
           LOGGER.info("Activated consumer of class {}", consumer.getClass());
         } catch (IOException | TimeoutException e) {
           LOGGER.error("Failed to activate consumer of class {}", consumer.getClass(), e);

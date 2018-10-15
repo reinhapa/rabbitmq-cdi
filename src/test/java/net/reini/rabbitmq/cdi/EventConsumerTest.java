@@ -1,6 +1,8 @@
 package net.reini.rabbitmq.cdi;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import javax.enterprise.event.Event;
@@ -10,14 +12,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Envelope;
-import com.rabbitmq.client.ShutdownSignalException;
 
+@SuppressWarnings("boxing")
 @RunWith(MockitoJUnitRunner.class)
 public class EventConsumerTest {
   @Mock
@@ -31,15 +31,7 @@ public class EventConsumerTest {
 
   @Before
   public void setUp() throws Exception {
-    consumer = new EventConsumer(decoder, true, eventControl, eventPool);
-  }
-
-  @Test
-  public void testGetSetChannel() throws Exception {
-    Channel channel = Mockito.mock(Channel.class);
-    assertNull(consumer.getChannel());
-    consumer.setChannel(channel);
-    assertEquals(channel, consumer.getChannel());
+    consumer = new EventConsumer(decoder, eventControl, eventPool);
   }
 
   @Test
@@ -66,38 +58,28 @@ public class EventConsumerTest {
   }
 
   @Test
-  public void testHandleConsumeOk() throws Exception {
-    consumer.handleConsumeOk(null);
-  }
-
-  @Test
-  public void testHandleCancelOk() throws Exception {
-    consumer.handleCancelOk(null);
-  }
-
-  @Test
-  public void testHandleCancel() throws Exception {
-    consumer.handleCancel(null);
-  }
-
-  @Test
-  public void testHandleShutdownSignal() throws Exception {
-    ShutdownSignalException sig = new ShutdownSignalException(false, false, null, null);
-
-    consumer.handleShutdownSignal(null, sig);
-  }
-
-  @Test
-  public void testHandleRecoverOk() throws Exception {
-    consumer.handleRecoverOk(null);
-  }
-
-  @Test
-  public void testHandleDelivery() throws Exception {
+  public void testHandleDelivery_not_decodeable() throws Exception {
+    TestEvent event = new TestEvent();
     byte[] body = "the message".getBytes();
     Envelope envelope = new Envelope(123L, false, null, null);
     BasicProperties properties = new BasicProperties();
 
-    consumer.handleDelivery("consumerTag", envelope, properties, body);
+    when(decoder.willDecode(null)).thenReturn(false);
+    when(decoder.decode(body)).thenReturn(event);
+
+    assertFalse(consumer.consume("consumerTag", envelope, properties, body));
+  }
+
+  @Test
+  public void testHandleDelivery() throws Exception {
+    TestEvent event = new TestEvent();
+    byte[] body = "the message".getBytes();
+    Envelope envelope = new Envelope(123L, false, null, null);
+    BasicProperties properties = new BasicProperties();
+
+    when(decoder.willDecode(null)).thenReturn(true);
+    when(decoder.decode(body)).thenReturn(event);
+
+    assertTrue(consumer.consume("consumerTag", envelope, properties, body));
   }
 }
