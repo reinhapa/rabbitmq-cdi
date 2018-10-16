@@ -2,10 +2,13 @@ package net.reini.rabbitmq.cdi;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.function.BiConsumer;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,26 +32,33 @@ public class GenericPublisherTest {
   private Connection connection;
   @Mock
   private Channel channel;
+  @Mock
+  BiConsumer<?, PublishException> errorHandler;
 
   private GenericPublisher publisher;
   private TestEvent event;
 
   @Before
   public void setUp() throws Exception {
-    publisher = new GenericPublisher(connectionProducer);
+    publisher = new GenericPublisher(connectionProducer) {
+      @Override
+      protected void sleepBeforeRetry() {
+        // no delay
+      }
+    };
     event = new TestEvent();
     event.id = "theId";
     event.booleanValue = true;
   }
 
   @Test
-  public void test() throws Exception {
+  public void testPublish() throws Exception {
     Builder builder = new Builder();
-    PublisherConfiguration publisherConfiguration =
-        new PublisherConfiguration(config, "exchange", "routingKey", builder, new JsonEncoder<>());
+    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
+        "routingKey", builder, new JsonEncoder<>(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
-    when(connectionProducer.newConnection(config)).thenReturn(connection);
+    when(connectionProducer.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.publish(event, publisherConfiguration);
@@ -58,14 +68,32 @@ public class GenericPublisherTest {
     assertEquals("application/json", propsCaptor.getValue().getContentType());
   }
 
-  @Test
-  public void testCustomMessageConverter() throws Exception {
+  @Test(expected = PublishException.class)
+  public void testPublish_with_error() throws Exception {
     Builder builder = new Builder();
-    PublisherConfiguration publisherConfiguration =
-        new PublisherConfiguration(config, "exchange", "routingKey", builder, new CustomEncoder());
+    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
+        "routingKey", builder, new JsonEncoder<>(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
-    when(connectionProducer.newConnection(config)).thenReturn(connection);
+    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connection.createChannel()).thenReturn(channel);
+    doThrow(new IOException("someError")).when(channel).basicPublish(eq("exchange"),
+        eq("routingKey"), propsCaptor.capture(),
+        eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
+
+    publisher.publish(event, publisherConfiguration);
+
+    assertEquals("application/json", propsCaptor.getValue().getContentType());
+  }
+
+  @Test
+  public void testPublish_with_custom_MessageConverter() throws Exception {
+    Builder builder = new Builder();
+    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
+        "routingKey", builder, new CustomEncoder(), errorHandler);
+    ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
+
+    when(connectionProducer.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.publish(event, publisherConfiguration);
@@ -76,7 +104,6 @@ public class GenericPublisherTest {
   }
 
   public static class CustomEncoder implements Encoder<TestEvent> {
-
     @Override
     public String contentType() {
       return "text/plain";

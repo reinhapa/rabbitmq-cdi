@@ -36,7 +36,7 @@ dependencies {
     compile 'javax.enterprise:cdi-api:1.2'
     compile 'javax.enterprise.concurrent:javax.enterprise.concurrent-api:1.0'
     compile 'org.slf4j:slf4j-api:1.7.12'
-    compile 'com.rabbitmq:amqp-client:3.5.4'
+    compile 'com.rabbitmq:amqp-client:5.4.3'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.3.2'
     
     testCompile 'junit:junit:4.12'

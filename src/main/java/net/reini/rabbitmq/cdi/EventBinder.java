@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
@@ -179,10 +180,17 @@ public abstract class EventBinder {
   void bindExchange(ExchangeBinding<?> exchangeBinding) {
     PublisherConfiguration cfg = new PublisherConfiguration(configuration.config,
         exchangeBinding.exchange, exchangeBinding.routingKey,
-        exchangeBinding.basicPropertiesBuilder, exchangeBinding.encoder);
+        exchangeBinding.basicPropertiesBuilder, exchangeBinding.encoder,
+        exchangeBinding.errorHandler);
     eventPublisher.addEvent(exchangeBinding.eventType, cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
         exchangeBinding.eventType.getSimpleName());
+  }
+
+  static <T> BiConsumer<T, PublishException> nop() {
+    return (event, cause) -> {
+      // no operation
+    };
   }
 
   /**
@@ -240,6 +248,7 @@ public abstract class EventBinder {
   public final class QueueBinding<T> {
     private final Class<T> eventType;
     private final String queue;
+
     private boolean autoAck;
     private Decoder<T> decoder;
 
@@ -296,12 +305,14 @@ public abstract class EventBinder {
     private String routingKey;
     private Encoder<T> encoder;
     private Builder basicPropertiesBuilder;
+    private BiConsumer<T, PublishException> errorHandler;
 
     ExchangeBinding(Class<T> eventType, String exchange) {
       this.eventType = eventType;
       this.exchange = exchange;
       this.encoder = new JsonEncoder<>();
       routingKey = "";
+      errorHandler = nop();
       basicPropertiesBuilder = MessageProperties.BASIC.builder();
       exchangeBindings.add(this);
       LOGGER.info("Binding created between exchange {} and event type {}", exchange,
@@ -344,6 +355,17 @@ public abstract class EventBinder {
           Objects.requireNonNull(properties, "propeties must not be null").builder();
       LOGGER.info("Publisher properties for event type {} set to {}", eventType.getSimpleName(),
           properties.toString());
+      return this;
+    }
+
+    /**
+     * Sets the given error handler to be used when a event could not be published to RabbitMQ.
+     *
+     * @param errorHandler The custom error handler
+     * @return the exchange binding
+     */
+    public ExchangeBinding<T> setErrorHandler(BiConsumer<T, PublishException> errorHandler) {
+      this.errorHandler = errorHandler == null ? nop() : errorHandler;
       return this;
     }
   }

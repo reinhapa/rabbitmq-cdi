@@ -1,6 +1,8 @@
 package net.reini.rabbitmq.cdi;
 
-import static net.reini.rabbitmq.cdi.ConsumerImpl.*;
+import static net.reini.rabbitmq.cdi.ConsumerImpl.create;
+import static net.reini.rabbitmq.cdi.ConsumerImpl.createAcknowledged;
+
 import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
@@ -16,14 +18,13 @@ class ConsumerContainer {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerContainer.class);
 
   private final ConnectionConfig config;
-  private final ConnectionProducer connectionFactory;
+  private final ConnectionProducer connectionProducer;
   private final CopyOnWriteArrayList<ConsumerHolder> consumerHolders;
 
   ConsumerContainer(ConnectionConfig config, ConnectionProducer connectionProducer) {
     this.config = config;
-    this.connectionFactory = connectionProducer;
+    this.connectionProducer = connectionProducer;
     this.consumerHolders = new CopyOnWriteArrayList<>();
-    connectionProducer.registerListener(config, new ContainerConnectionListener());
   }
 
   /**
@@ -35,8 +36,7 @@ class ConsumerContainer {
    */
   protected Channel createChannel() throws IOException, TimeoutException {
     LOGGER.debug("Creating channel");
-    Connection connection = connectionFactory.newConnection(config);
-    Channel channel = connection.createChannel();
+    Channel channel = connectionProducer.getConnection(config).createChannel();
     LOGGER.debug("Created channel");
     return channel;
   }
@@ -46,25 +46,25 @@ class ConsumerContainer {
   }
 
   public void startAllConsumers() {
+    connectionProducer.registerConnectionListener(config, new ContainerConnectionListener());
     consumerHolders.forEach(holder -> holder.activate());
   }
 
   final class ContainerConnectionListener implements ConnectionListener {
     @Override
-    public void onConnectionEstablished(Connection connection) {
-      String hostName = connection.getAddress().getHostName();
-      LOGGER.info("Connection established to {}. Activating consumers...", hostName);
+    public void onConnectionEstablished(Connection con) {
+      LOGGER.info("Connection established to {}. Activating consumers...", con);
       consumerHolders.forEach(consumer -> consumer.activate());
     }
 
     @Override
-    public void onConnectionLost(Connection connection) {
+    public void onConnectionLost(Connection con) {
       LOGGER.warn("Connection lost. Deactivating consumers");
       consumerHolders.forEach(consumer -> consumer.deactivate());
     }
 
     @Override
-    public void onConnectionClosed(Connection connection) {
+    public void onConnectionClosed(Connection con) {
       LOGGER.warn("Connection closed for ever. Deactivating consumers");
       consumerHolders.forEach(consumer -> consumer.deactivate());
     }

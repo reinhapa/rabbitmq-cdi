@@ -54,7 +54,7 @@ public class ConnectionProducer {
 
   private static final class ConnectionState {
     private final ConnectionConfig config;
-    private final Set<ConnectionListener> connectionListeners;
+    private final Set<ConnectionListener> listeners;
 
     private volatile Connection connection;
     private volatile State state;
@@ -63,7 +63,7 @@ public class ConnectionProducer {
     ConnectionState(ConnectionConfig config) {
       this.config = config;
       state = State.NEVER_CONNECTED;
-      connectionListeners = ConcurrentHashMap.newKeySet();
+      listeners = ConcurrentHashMap.newKeySet();
     }
 
     /**
@@ -82,7 +82,7 @@ public class ConnectionProducer {
     void notifyListenersOnStateChange() {
       LOGGER.debug("Notifying connection listeners about state change to {}", state);
 
-      for (ConnectionListener listener : connectionListeners) {
+      for (ConnectionListener listener : listeners) {
         switch (state) {
           case CONNECTED:
             listener.onConnectionEstablished(connection);
@@ -99,7 +99,7 @@ public class ConnectionProducer {
       }
     }
 
-    Connection newConnection() throws IOException, TimeoutException {
+    Connection getConnection() throws IOException, TimeoutException {
       // Throw an exception if there is an attempt to retrieve a connection
       // from a closed factory
       if (state == State.CLOSED) {
@@ -156,15 +156,18 @@ public class ConnectionProducer {
         changeState(State.CONNECTING);
       }
       LOGGER.error("Connection lost");
+      int attemptInterval = CONNECTION_ESTABLISH_INTERVAL_IN_MS;
       while (state == State.CONNECTING) {
         try {
           establishConnection();
           return;
         } catch (IOException | TimeoutException e) {
-          LOGGER.debug("Next reconnect attempt in {} ms",
-              Integer.valueOf(CONNECTION_ESTABLISH_INTERVAL_IN_MS));
+          LOGGER.debug("Next reconnect attempt in {} ms", Integer.valueOf(attemptInterval));
           try {
-            Thread.sleep(CONNECTION_ESTABLISH_INTERVAL_IN_MS);
+            Thread.sleep(attemptInterval);
+            if (attemptInterval < 60_0000) {
+              attemptInterval = 2 * attemptInterval;
+            }
           } catch (InterruptedException ie) {
             // that's fine, simply stop here
             return;
@@ -222,8 +225,8 @@ public class ConnectionProducer {
    * 
    * @return The connection
    */
-  public Connection newConnection(ConnectionConfig config) throws IOException, TimeoutException {
-    return connectionStates.computeIfAbsent(config, ConnectionState::new).newConnection();
+  public Connection getConnection(ConnectionConfig config) throws IOException, TimeoutException {
+    return connectionStates.computeIfAbsent(config, ConnectionState::new).getConnection();
   }
 
   /**
@@ -247,11 +250,8 @@ public class ConnectionProducer {
    * 
    * @param listener The connection listener
    */
-  public void registerListener(ConnectionConfig config, ConnectionListener listener) {
-    ConnectionState state = connectionStates.get(config);
-    if (state != null) {
-      state.connectionListeners.add(listener);
-    }
+  public void registerConnectionListener(ConnectionConfig config, ConnectionListener listener) {
+    connectionStates.computeIfAbsent(config, ConnectionState::new).listeners.add(listener);
   }
 
   /**
@@ -260,9 +260,6 @@ public class ConnectionProducer {
    * @param listener The connection listener
    */
   public void removeConnectionListener(ConnectionConfig config, ConnectionListener listener) {
-    ConnectionState state = connectionStates.get(config);
-    if (state != null) {
-      state.connectionListeners.remove(listener);
-    }
+    connectionStates.computeIfAbsent(config, ConnectionState::new).listeners.remove(listener);
   }
 }

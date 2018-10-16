@@ -1,6 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
+import java.util.function.BiConsumer;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.AMQP.BasicProperties.Builder;
@@ -12,20 +13,22 @@ import com.rabbitmq.client.Channel;
  *
  * @author Patrick Reinhart
  */
-final class PublisherConfiguration {
+final class PublisherConfiguration implements BiConsumer<Object, PublishException> {
   private final ConnectionConfig config;
   private final BasicProperties basicProperties;
   private final Encoder<?> messageEncoder;
   private final String exchange;
   private final String routingKey;
+  private final BiConsumer<?, PublishException> errorHandler;
 
   PublisherConfiguration(ConnectionConfig config, String exchange, String routingKey,
-      Builder basicPropertiesBuilder,
-      Encoder<?> encoder) {
+      Builder basicPropertiesBuilder, Encoder<?> encoder,
+      BiConsumer<?, PublishException> errorHandler) {
     this.config = config;
     this.exchange = exchange;
     this.routingKey = routingKey;
     this.messageEncoder = encoder;
+    this.errorHandler = errorHandler;
     String contentType = messageEncoder.contentType();
     if (contentType != null) {
       basicPropertiesBuilder.contentType(contentType);
@@ -49,5 +52,12 @@ final class PublisherConfiguration {
     @SuppressWarnings("unchecked")
     byte[] data = ((Encoder<Object>) messageEncoder).encode(event);
     channel.basicPublish(exchange, routingKey, basicProperties, data);
+  }
+
+  @Override
+  public void accept(Object event, PublishException publishError) {
+    @SuppressWarnings("unchecked")
+    BiConsumer<Object, PublishException> consumer = (BiConsumer<Object, PublishException>) errorHandler;
+    consumer.accept(event, publishError);
   }
 }

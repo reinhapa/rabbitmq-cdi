@@ -1,12 +1,12 @@
 package net.reini.rabbitmq.cdi;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
 
+import javax.annotation.PreDestroy;
+import javax.enterprise.event.ObserverException;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -51,6 +51,7 @@ public class EventPublisher {
    * before.
    *
    * @param event The event to publish
+   * @throws ObserverException if the event could not be delivered to RabbitMQ
    */
   public void publishEvent(@Observes Object event) {
     Class<?> eventType = event.getClass();
@@ -58,12 +59,14 @@ public class EventPublisher {
     if (configurations == null) {
       LOGGER.trace("No publisher configured for event {}", event);
     } else {
-      try (MessagePublisher publisher = providePublisher(eventType)) {
-        configurations.forEach(configuration -> doPublish(event, publisher, configuration));
-      } catch (IOException | TimeoutException e) {
-        throw new RuntimeException("Failed to publish event to RabbitMQ", e);
-      }
+      configurations.forEach(config -> doPublish(event, providePublisher(eventType), config));
+
     }
+  }
+
+  @PreDestroy
+  public void cleanUp() {
+    publishers.get().values().forEach(MessagePublisher::close);
   }
 
   void doPublish(Object event, MessagePublisher publisher, PublisherConfiguration configuration) {
@@ -71,8 +74,9 @@ public class EventPublisher {
       LOGGER.debug("Start publishing event {} ({})...", event, configuration);
       publisher.publish(event, configuration);
       LOGGER.debug("Published event successfully");
-    } catch (IOException | TimeoutException e) {
-      LOGGER.error("Failed to publish event {} ({})", event, configuration, e);
+    } catch (PublishException e) {
+      LOGGER.debug("Published event failed");
+      configuration.accept(event, e);
     }
   }
 
@@ -85,8 +89,8 @@ public class EventPublisher {
    * @return The provided publisher
    */
   MessagePublisher providePublisher(Class<?> eventType) {
-    Map<Class<?>, MessagePublisher> localPublishers = publishers.get();
-    return localPublishers.computeIfAbsent(eventType,
+    return publishers.get().computeIfAbsent(eventType,
         key -> new GenericPublisher(connectionProducer));
   }
+
 }
