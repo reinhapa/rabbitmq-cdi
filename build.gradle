@@ -1,14 +1,16 @@
 import java.text.SimpleDateFormat
 
 plugins {
-    id "java"
-    id "signing"
-    id "eclipse"
-    id "jacoco"
-    id "maven"
-    id "org.asciidoctor.convert" version "1.5.7"
-    id "net.nemerosa.versioning" version "2.7.1"
+    id 'java'
+    id 'signing'
+    id 'eclipse'
+    id 'jacoco'
+    id 'maven-publish'
+    id 'org.asciidoctor.convert' version '1.5.7'
+    id 'net.nemerosa.versioning' version '2.7.1'
 }
+
+group = 'net.reini'
 
 defaultTasks 'build'
 
@@ -17,7 +19,6 @@ ext {
     buildDate = new SimpleDateFormat('yyyy-MM-dd').format(buildTimeAndDate)
     buildTime = new SimpleDateFormat('HH:mm:ss.SSSZ').format(buildTimeAndDate)
 }
-
 
 configurations {
     asciidoclet
@@ -66,7 +67,7 @@ artifacts {
 }
 
 signing {
-    required { project.hasProperty('signing.password') && !project.version.contains('-SNAPSHOT') }
+    required { project.hasProperty('signing.password') && !project.version.endsWith('-SNAPSHOT') }
     sign configurations.archives
 }
 
@@ -74,13 +75,9 @@ jar {
     manifest {
         attributes 'Implementation-Title': 'RabbitMQ CDI extension',
                    'Implementation-Version': version,
-                   'Created-By': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})".toString(),
                    'Build-Date': buildDate,
                    'Build-Time': buildTime,
                    'Build-Revision': versioning.info.commit,
-                   'Specification-Title': project.name,
-                   'Specification-Version': project.version,
-                   'Specification-Vendor': 'reini.net',
                    'Automatic-Module-Name': "net.reini.rabbitmq.cdi"
         metaInf {
             from file('.')
@@ -108,50 +105,46 @@ javadoc {
             "title-link=http://github.com/reinhapa/[${project.name} ${project.version}]"
 }
 
-uploadArchives {
-    if (!project.hasProperty('signing.password')) {
-        println "no archives will be uploaded due missing signing password"
-        return
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+            pom {
+                name = 'RabbitMQ JavaEE 7 CDI enabler'
+                description = 'Enables CDI based usage of RabbitMQ within a JavaEE 7 application.'
+                url = 'https://github.com/reinhapa/rabbitmq-cdi'
+                scm {
+                    connection = 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
+                    developerConnection = 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
+                    url = 'https://github.com/reinhapa/rabbitmq-cdi'
+                }
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'http://www.opensource.org/licenses/mit-license.php'
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'reinhapa'
+                        name = 'Patrick Reinhart'
+                        email = 'patrick@reini.net'
+                    }
+                }
+            }
+        }
     }
-    repositories.mavenDeployer {
-        beforeDeployment { 
-            MavenDeployment deployment -> signing.signPom(deployment)
-        }
-
-        repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-        }
-
-        snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-        }
-
-        pom.project {
-            name 'RabbitMQ JavaEE 7 CDI enabler'
-            packaging 'jar'
-            description 'Enables CDI based usage of RabbitMQ within a JavaEE 7 application.'
-            url 'https://github.com/reinhapa/rabbitmq-cdi'
-            
-            scm {
-                connection 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
-                developerConnection 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
-                url 'https://github.com/reinhapa/rabbitmq-cdi'
-            }
-
-            licenses {
-                license {
-                    name 'MIT License'
-                    url 'http://www.opensource.org/licenses/mit-license.php'
-                    distribution 'repo'
-                }
-            }
-
-            developers {
-                developer {
-                    id 'reinhapa'
-                    name 'Patrick Reinhart'
-                    email 'patrick@reini.net'
-                }
+    repositories {
+        maven {
+            def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+            def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            credentials {
+                username = ossrhUsername
+                password = ossrhPassword
             }
         }
     }
