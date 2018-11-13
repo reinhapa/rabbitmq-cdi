@@ -62,7 +62,7 @@ public class EventConsumerTest {
     byte[] body = "the message".getBytes();
     Envelope envelope = new Envelope(123L, false, null, null);
     BasicProperties properties = new BasicProperties();
-    
+
     assertFalse(consumer.consume("consumerTag", envelope, properties, body));
   }
 
