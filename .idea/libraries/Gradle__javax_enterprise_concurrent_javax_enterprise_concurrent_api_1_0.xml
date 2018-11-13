@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: javax.enterprise.concurrent:javax.enterprise.concurrent-api:1.0">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/javax.enterprise.concurrent/javax.enterprise.concurrent-api/1.0/c392610c40aa3e0e7b57c47a1b561d4b3f974fac/javax.enterprise.concurrent-api-1.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/javax.enterprise.concurrent/javax.enterprise.concurrent-api/1.0/8aa8081a9aeaed2f54717e53155306a1785d5a73/javax.enterprise.concurrent-api-1.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

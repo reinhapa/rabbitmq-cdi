@@ -45,11 +45,11 @@ public class GenericPublisher implements MessagePublisher {
    * Handles an exception depending on the already used attempts to send a message. Also performs a
    * soft reset of the currently used channel.
    *
+   * @param channel Current channel that has a problem. Can be {@code null}
    * @param attempt Current attempt count
    * @param cause The thrown exception
-   * @throws T if the maximum amount of attempts is exceeded
+   * @throws PublishException if the maximum amount of attempts is exceeded
    */
-
   protected void handleIoException(Channel channel, int attempt, Throwable cause)
       throws PublishException {
     if (channel != null) {

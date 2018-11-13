@@ -223,7 +223,10 @@ public class ConnectionProducer {
    * In case a connection is lost, the factory will try to reestablish a new connection.
    * </p>
    * 
+   * @param config the connection configuration
    * @return The connection
+   * @throws IOException if the connection handling fails 
+   * @throws TimeoutException if the connection could not be established within the timeout
    */
   public Connection getConnection(ConnectionConfig config) throws IOException, TimeoutException {
     return connectionStates.computeIfAbsent(config, ConnectionState::new).getConnection();
@@ -248,6 +251,7 @@ public class ConnectionProducer {
    * Registers a connection listener at the factory which is notified about changes of connection
    * states.
    * 
+   * @param config the connection configuration
    * @param listener The connection listener
    */
   public void registerConnectionListener(ConnectionConfig config, ConnectionListener listener) {
@@ -257,6 +261,7 @@ public class ConnectionProducer {
   /**
    * Removes a connection listener from the factory.
    *
+   * @param config the connection configuration
    * @param listener The connection listener
    */
   public void removeConnectionListener(ConnectionConfig config, ConnectionListener listener) {

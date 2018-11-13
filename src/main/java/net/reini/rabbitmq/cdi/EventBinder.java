@@ -205,6 +205,7 @@ public abstract class EventBinder {
    * <p>
    * bind(MyEvent.class).toQueue("my.queue");
    *
+   * @param <M> the type of the event
    * @param event The event
    * @return The binding builder
    */
@@ -378,6 +379,10 @@ public abstract class EventBinder {
     }
 
     /**
+     * Adds the given {@code hostName} to the set of hostnames, taken when connecting.
+     *
+     * @param hostName the RabbitMQ host name to use
+     * @return the binder configuration object
      * @deprecated Use {@link #addHost(String)} instead
      */
     @Deprecated

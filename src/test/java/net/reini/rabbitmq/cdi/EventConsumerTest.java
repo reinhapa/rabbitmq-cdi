@@ -12,12 +12,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Envelope;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@SuppressWarnings("boxing")
 @RunWith(MockitoJUnitRunner.class)
 public class EventConsumerTest {
   @Mock
@@ -63,10 +62,7 @@ public class EventConsumerTest {
     byte[] body = "the message".getBytes();
     Envelope envelope = new Envelope(123L, false, null, null);
     BasicProperties properties = new BasicProperties();
-
-    when(decoder.willDecode(null)).thenReturn(false);
-    when(decoder.decode(body)).thenReturn(event);
-
+    
     assertFalse(consumer.consume("consumerTag", envelope, properties, body));
   }
 

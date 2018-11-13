@@ -1,7 +1,10 @@
+/.classpath
+/.gradle/
+/.idea/
+/.project
+/.settings/
 /bin/
 /bin_test/
-/.gradle/
-/.settings/
-/.classpath
-/.project
 /build/
+/out/
+*.iml
