@@ -81,7 +81,7 @@ public abstract class EventBinder {
   @Inject
   private ConnectionProducer connectionProducer;
 
-  private ConnectionConfigImpl configuration;
+  private ConnectionConfiguration configuration;
   private ConsumerContainer consumerContainer;
 
   public EventBinder() {
@@ -152,7 +152,7 @@ public abstract class EventBinder {
 
   @PostConstruct
   void initializeConsumerContainer() {
-    configuration = new ConnectionConfigImpl();
+    configuration = new ConnectionConfiguration();
     consumerContainer = new ConsumerContainer(configuration, connectionProducer);
   }
 
@@ -520,7 +520,7 @@ public abstract class EventBinder {
           throw new IllegalArgumentException("Multiple segments in path of AMQP URI: " + path);
         }
 
-        setVirtualHost(uriDecode(uri.getPath().substring(1)));
+        setVirtualHost(uriDecode(path.substring(1)));
       }
       return this;
     }

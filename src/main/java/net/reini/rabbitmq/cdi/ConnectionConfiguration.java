@@ -18,7 +18,7 @@ import com.rabbitmq.client.ConnectionFactory;
  *
  * @author Patrick Reinhart
  */
-class ConnectionConfigImpl implements ConnectionConfig, ConnectionConfigHolder {
+class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolder {
   private final Set<Address> brokerHosts;
 
   private boolean secure;
@@ -26,7 +26,7 @@ class ConnectionConfigImpl implements ConnectionConfig, ConnectionConfigHolder {
   private String password;
   private String virtualHost;
 
-  ConnectionConfigImpl() {
+  ConnectionConfiguration() {
     brokerHosts = ConcurrentHashMap.newKeySet();
     username = "guest";
     password = "guest";
@@ -106,10 +106,10 @@ class ConnectionConfigImpl implements ConnectionConfig, ConnectionConfigHolder {
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
-    } else if (!(obj instanceof ConnectionConfigImpl)) {
+    } else if (!(obj instanceof ConnectionConfiguration)) {
       return false;
     }
-    ConnectionConfigImpl other = (ConnectionConfigImpl) obj;
+    ConnectionConfiguration other = (ConnectionConfiguration) obj;
     return brokerHosts.equals(other.brokerHosts) && username.equals(other.username)
         && password.equals(other.password) && Objects.equals(virtualHost, other.virtualHost);
   }

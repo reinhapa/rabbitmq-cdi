@@ -14,6 +14,7 @@ import com.rabbitmq.client.ConnectionFactory;
  */
 public interface ConnectionConfig {
   /**
+   * @param connectionFactory the connection factory used to create the actual connection
    * @return a new connection using the given connection factory
    * 
    * @throws TimeoutException if a timeout occurs
