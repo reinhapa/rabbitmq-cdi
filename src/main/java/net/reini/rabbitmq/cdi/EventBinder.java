@@ -483,12 +483,12 @@ public abstract class EventBinder {
       String scheme = uri.getScheme().toLowerCase();
       if ("amqp".equals(scheme)) {
         // nothing special to do
-        if (port != -1) {
+        if (port == -1) {
           port = ConnectionFactory.DEFAULT_AMQP_PORT;
         }
       } else if ("amqps".equals(scheme)) {
         config.setSecure(true);
-        if (port != -1) {
+        if (port == -1) {
           port = ConnectionFactory.DEFAULT_AMQP_OVER_SSL_PORT;
         }
       } else {
