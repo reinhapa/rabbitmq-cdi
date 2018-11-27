@@ -1,6 +1,9 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -18,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.AMQP.BasicProperties.Builder;
 import com.rabbitmq.client.Address;
+import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.MessageProperties;
 
 /**
@@ -77,7 +81,7 @@ public abstract class EventBinder {
   @Inject
   private ConnectionProducer connectionProducer;
 
-  private BinderConfiguration configuration;
+  private ConnectionConfigImpl configuration;
   private ConsumerContainer consumerContainer;
 
   public EventBinder() {
@@ -120,7 +124,7 @@ public abstract class EventBinder {
    * @return the configuration object
    */
   public BinderConfiguration configuration() {
-    return configuration;
+    return new BinderConfiguration(configuration);
   }
 
   /**
@@ -148,8 +152,8 @@ public abstract class EventBinder {
 
   @PostConstruct
   void initializeConsumerContainer() {
-    configuration = new BinderConfiguration();
-    consumerContainer = new ConsumerContainer(configuration.config, connectionProducer);
+    configuration = new ConnectionConfigImpl();
+    consumerContainer = new ConsumerContainer(configuration, connectionProducer);
   }
 
   void processExchangeBindings() {
@@ -178,10 +182,10 @@ public abstract class EventBinder {
   }
 
   void bindExchange(ExchangeBinding<?> exchangeBinding) {
-    PublisherConfiguration cfg = new PublisherConfiguration(configuration.config,
-        exchangeBinding.exchange, exchangeBinding.routingKey,
-        exchangeBinding.basicPropertiesBuilder, exchangeBinding.encoder,
-        exchangeBinding.errorHandler);
+    PublisherConfiguration cfg =
+        new PublisherConfiguration(configuration, exchangeBinding.exchange,
+            exchangeBinding.routingKey, exchangeBinding.basicPropertiesBuilder,
+            exchangeBinding.encoder, exchangeBinding.errorHandler);
     eventPublisher.addEvent(exchangeBinding.eventType, cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
         exchangeBinding.eventType.getSimpleName());
@@ -191,6 +195,16 @@ public abstract class EventBinder {
     return (event, cause) -> {
       // no operation
     };
+  }
+
+  static String uriDecode(String value) {
+    try {
+      // URLDecode decodes '+' to a space, as for
+      // form encoding. So protect plus signs.
+      return URLDecoder.decode(value.replace("+", "%2B"), "US-ASCII");
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -228,7 +242,9 @@ public abstract class EventBinder {
      * @return the queue binding
      */
     public QueueBinding<T> toQueue(String queue) {
-      return new QueueBinding<>(eventType, queue);
+      QueueBinding<T> queueBinding = new QueueBinding<>(eventType, queue);
+      queueBindings.add(queueBinding);
+      return queueBinding;
     }
 
     /**
@@ -239,14 +255,16 @@ public abstract class EventBinder {
      * @return the exchange binding
      */
     public ExchangeBinding<T> toExchange(String exchange) {
-      return new ExchangeBinding<>(eventType, exchange);
+      ExchangeBinding<T> exchangeBinding = new ExchangeBinding<>(eventType, exchange);
+      exchangeBindings.add(exchangeBinding);
+      return exchangeBinding;
     }
   }
 
   /**
    * Configures and stores the binding between and event class and a queue.
    */
-  public final class QueueBinding<T> {
+  public static final class QueueBinding<T> {
     private final Class<T> eventType;
     private final String queue;
 
@@ -257,7 +275,6 @@ public abstract class EventBinder {
       this.eventType = eventType;
       this.queue = queue;
       this.decoder = new JsonDecoder<>(eventType);
-      queueBindings.add(this);
       LOGGER.info("Binding created between queue {} and event type {}", queue,
           eventType.getSimpleName());
     }
@@ -299,7 +316,7 @@ public abstract class EventBinder {
   /**
    * Configures and stores the binding between an event class and an exchange.
    */
-  public final class ExchangeBinding<T> {
+  public static final class ExchangeBinding<T> {
     private final Class<T> eventType;
     private final String exchange;
 
@@ -315,7 +332,6 @@ public abstract class EventBinder {
       routingKey = "";
       errorHandler = nop();
       basicPropertiesBuilder = MessageProperties.BASIC.builder();
-      exchangeBindings.add(this);
       LOGGER.info("Binding created between exchange {} and event type {}", exchange,
           eventType.getSimpleName());
     }
@@ -371,11 +387,11 @@ public abstract class EventBinder {
     }
   }
 
-  public final class BinderConfiguration {
-    private final ConnectionConfig config;
+  public final static class BinderConfiguration {
+    private final ConnectionConfigHolder config;
 
-    BinderConfiguration() {
-      config = new ConnectionConfig();
+    BinderConfiguration(ConnectionConfigHolder config) {
+      this.config = config;
     }
 
     /**
@@ -441,6 +457,71 @@ public abstract class EventBinder {
      */
     public BinderConfiguration setVirtualHost(String virtualHost) {
       config.setVirtualHost(virtualHost);
+      return this;
+    }
+
+    /**
+     * Set the connection security setting.
+     * 
+     * @param secure {@code true} to use secured connection, {@code false} otherwise
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setSecure(boolean secure) {
+      config.setSecure(secure);
+      return this;
+    }
+
+    /**
+     * Set the connection parameters using the given {@code uri}. This will reset all other
+     * settings.
+     * 
+     * @param uri the connection URI
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setConnectionUri(URI uri) {
+      int port = uri.getPort();
+      String scheme = uri.getScheme().toLowerCase();
+      if ("amqp".equals(scheme)) {
+        // nothing special to do
+        if (port != -1) {
+          port = ConnectionFactory.DEFAULT_AMQP_PORT;
+        }
+      } else if ("amqps".equals(scheme)) {
+        config.setSecure(true);
+        if (port != -1) {
+          port = ConnectionFactory.DEFAULT_AMQP_OVER_SSL_PORT;
+        }
+      } else {
+        throw new IllegalArgumentException("Wrong scheme in AMQP URI: " + uri.getScheme());
+      }
+
+      String host = uri.getHost();
+      if (host == null) {
+        host = "127.0.0.1";
+      }
+      config.setHosts(Collections.singleton(new Address(host, port)));
+
+      String userInfo = uri.getRawUserInfo();
+      if (userInfo != null) {
+        String userPass[] = userInfo.split(":");
+        if (userPass.length > 2) {
+          throw new IllegalArgumentException("Bad user info in AMQP URI: " + userInfo);
+        }
+
+        setUsername(uriDecode(userPass[0]));
+        if (userPass.length == 2) {
+          setPassword(uriDecode(userPass[1]));
+        }
+      }
+
+      String path = uri.getRawPath();
+      if (path != null && path.length() > 0) {
+        if (path.indexOf('/', 1) != -1) {
+          throw new IllegalArgumentException("Multiple segments in path of AMQP URI: " + path);
+        }
+
+        setVirtualHost(uriDecode(uri.getPath().substring(1)));
+      }
       return this;
     }
   }

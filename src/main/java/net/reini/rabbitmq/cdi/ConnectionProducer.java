@@ -1,6 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -99,7 +100,7 @@ public class ConnectionProducer {
       }
     }
 
-    Connection getConnection() throws IOException, TimeoutException {
+    Connection getConnection() throws IOException, TimeoutException, NoSuchAlgorithmException {
       // Throw an exception if there is an attempt to retrieve a connection
       // from a closed factory
       if (state == State.CLOSED) {
@@ -125,8 +126,11 @@ public class ConnectionProducer {
      * 
      * @throws IOException if establishing a new connection fails
      * @throws TimeoutException if establishing a new connection times out
+     * @throws NoSuchAlgorithmException if the security context creation for secured connection
+     *         fails
      */
-    synchronized void establishConnection() throws IOException, TimeoutException {
+    synchronized void establishConnection()
+        throws IOException, TimeoutException, NoSuchAlgorithmException {
       if (state == State.CLOSED) {
         throw new IOException("Attempt to establish a connection with a closed connection factory");
       } else if (state == State.CONNECTED) {
@@ -161,7 +165,7 @@ public class ConnectionProducer {
         try {
           establishConnection();
           return;
-        } catch (IOException | TimeoutException e) {
+        } catch (IOException | TimeoutException | NoSuchAlgorithmException e) {
           LOGGER.debug("Next reconnect attempt in {} ms", Integer.valueOf(attemptInterval));
           try {
             Thread.sleep(attemptInterval);
@@ -225,10 +229,12 @@ public class ConnectionProducer {
    * 
    * @param config the connection configuration
    * @return The connection
-   * @throws IOException if the connection handling fails 
+   * @throws IOException if the connection handling fails
    * @throws TimeoutException if the connection could not be established within the timeout
+   * @throws NoSuchAlgorithmException if the security context creation for secured connection fails
    */
-  public Connection getConnection(ConnectionConfig config) throws IOException, TimeoutException {
+  public Connection getConnection(ConnectionConfig config)
+      throws IOException, TimeoutException, NoSuchAlgorithmException {
     return connectionStates.computeIfAbsent(config, ConnectionState::new).getConnection();
   }
 
