@@ -93,9 +93,10 @@ public class BindingInitializer {
   public void initialize() {
     try {
       binder.configuration()
-        .addHost("somehost.somedomain")
-        .setUsername("myuser")
-        .setPassword("mypassword");
+        .addHost("somehost.somedomain") // <1>
+        .setUsername("myuser") // <2>
+        .setPassword("mypassword"); // <3>
+        .setSecure(true) // <4>
       binder.initialize();
     } catch (IOException e) {
       LoggerFactory.getLogger(getClass()).error("Unable to initialize", e);
@@ -103,6 +104,39 @@ public class BindingInitializer {
   }
 }
 ----
+<1> Specifies a AMQP host name (there can be added more than one here)
+<2> Specifies a connection user name
+<3> Specifies a connection password
+<4> Enables the transport layer security (TLS)
+
+
+Alternatively the connection can also be configured using a respective URI
+string:
+
+[source,java]
+----
+@Singleton
+@Startup
+public class BindingInitializer {
+  @Inject
+  private RabbitBinder binder;
+
+  @PostConstruct
+  public void initialize() {
+    try {
+      binder.configuration()
+        .setUri("amqp://user:mysecret@somehost.somedomain/virtualhost"); // <1>
+      binder.initialize();
+    } catch (IOException e) {
+      LoggerFactory.getLogger(getClass()).error("Unable to initialize", e);
+    }
+  }
+}
+----
+<1> Specifies a AMQP connection URI
+
+For more informations about the detailed URI can be found in the
+https://www.rabbitmq.com/uri-spec.html[RabbitMQ URI specification].
 
 
 In case you have to support two different servers, create a binder implementation
