@@ -10,16 +10,16 @@ image:https://img.shields.io/travis/{project-full-path}/{github-branch}.svg["Bui
 image:https://img.shields.io/codecov/c/github/{project-full-path}/{github-branch}.svg["Code Coverage", link="https://codecov.io/github/{project-full-path}?branch={github-branch}"]
 image:https://codecov.io/github/{project-full-path}/branch.svg?branch={github-branch}[codecov.io]
 
-This project contains all needed classes to bind a JavaEE enterprise event to a
-RabbitMQ exchange for outgoing events. Inbound events can also be bound on the
-respective queues and will be hand over to all JavaEE event observers.
+This project contains all needed classes to bind JavaEE enterprise events to a
+RabbitMQ exchange for outgoing events. Inbound events can also be bound to the
+respective queues and will be handed over to all JavaEE event observers.
 
 The RabbitMQ message content is done via JSON serialization of a Java Bean 
 compatible PoJo object and vice versa.
 
 ## Usage example
 
-First you need to define a event objects using standard Java Bean syntax:
+First you need to define event objects using standard Java Bean syntax:
 
 [source,java]
 ----
@@ -78,7 +78,7 @@ public class RabbitBinder extends EventBinder {
 <3> Specifies a custom event decoder and enables auto acknowledge
 
 
-As last step you need to initialize the binder either within in a singleton
+As last step you need to initialize the binder either in a singleton
 startup bean or servlet after having also configured the connection settings:
 
 [source,java]
@@ -93,9 +93,10 @@ public class BindingInitializer {
   public void initialize() {
     try {
       binder.configuration()
-        .addHost("somehost.somedomain")
-        .setUsername("myuser")
-        .setPassword("mypassword");
+        .addHost("somehost.somedomain") // <1>
+        .setUsername("myuser") // <2>
+        .setPassword("mypassword"); // <3>
+        .setSecure(true) // <4>
       binder.initialize();
     } catch (IOException e) {
       LoggerFactory.getLogger(getClass()).error("Unable to initialize", e);
@@ -103,7 +104,44 @@ public class BindingInitializer {
   }
 }
 ----
+<1> Specifies a AMQP host name (there can be added more than one here)
+<2> Specifies a connection user name
+<3> Specifies a connection password
+<4> Enables the transport layer security (TLS)
 
+
+### Alternative connection definition
+
+Alternatively the connection can also be configured using a respective URI
+string:
+
+[source,java]
+----
+@Singleton
+@Startup
+public class BindingInitializer {
+  @Inject
+  private RabbitBinder binder;
+
+  @PostConstruct
+  public void initialize() {
+    try {
+      binder.configuration()
+        .setUri("amqp://user:mysecret@somehost.somedomain/virtualhost"); // <1>
+      binder.initialize();
+    } catch (IOException e) {
+      LoggerFactory.getLogger(getClass()).error("Unable to initialize", e);
+    }
+  }
+}
+----
+<1> Specifies a AMQP connection URI
+
+More information about the detailed URI can be found in the
+https://www.rabbitmq.com/uri-spec.html[RabbitMQ URI specification].
+
+
+### Multiple server connections
 
 In case you have to support two different servers, create a binder implementation
 for each host and initialize them in one single binding initializer:
@@ -140,9 +178,11 @@ public class BindingInitializer {
 ----
 
 
-Now the events can be used within your JavaEE 7 container:
+### Usage in a container
 
-[source,java]
+Now the events can be used within your JavaEE container:
+
+source,java]
 ----
 public class EventDemoBean {
   @Inject
@@ -154,7 +194,7 @@ public class EventDemoBean {
     eventOnes.fire(eventOne);
   }
 
-  public void reveiveEvent(@Observes EventTwo eventTwo) {
+  public void receiveEvent(@Observes EventTwo eventTwo) {
     String data = eventTwo.getData();
     // do some work
   }

@@ -4,6 +4,7 @@ import static net.reini.rabbitmq.cdi.ConsumerImpl.create;
 import static net.reini.rabbitmq.cdi.ConsumerImpl.createAcknowledged;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,8 +34,9 @@ class ConsumerContainer {
    * @return The channel
    * @throws IOException if the channel cannot be created due to a connection problem
    * @throws TimeoutException if the channel cannot be created due to a timeout problem
+   * @throws NoSuchAlgorithmException if the security context creation for secured connection fails
    */
-  protected Channel createChannel() throws IOException, TimeoutException {
+  protected Channel createChannel() throws IOException, TimeoutException, NoSuchAlgorithmException {
     LOGGER.debug("Creating channel");
     Channel channel = connectionProducer.getConnection(config).createChannel();
     LOGGER.debug("Created channel");
@@ -114,7 +116,7 @@ class ConsumerContainer {
           channel.basicConsume(queueName, autoAck,
               autoAck ? create(consumer) : createAcknowledged(consumer, channel));
           LOGGER.info("Activated consumer of class {}", consumer.getClass());
-        } catch (IOException | TimeoutException e) {
+        } catch (IOException | TimeoutException | NoSuchAlgorithmException e) {
           LOGGER.error("Failed to activate consumer of class {}", consumer.getClass(), e);
         }
       }

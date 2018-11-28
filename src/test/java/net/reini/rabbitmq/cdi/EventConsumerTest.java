@@ -12,10 +12,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Envelope;
-import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EventConsumerTest {
@@ -58,7 +58,6 @@ public class EventConsumerTest {
 
   @Test
   public void testHandleDelivery_not_decodeable() throws Exception {
-    TestEvent event = new TestEvent();
     byte[] body = "the message".getBytes();
     Envelope envelope = new Envelope(123L, false, null, null);
     BasicProperties properties = new BasicProperties();
@@ -66,6 +65,7 @@ public class EventConsumerTest {
     assertFalse(consumer.consume("consumerTag", envelope, properties, body));
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void testHandleDelivery() throws Exception {
     TestEvent event = new TestEvent();

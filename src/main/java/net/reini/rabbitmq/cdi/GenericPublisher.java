@@ -1,6 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -31,8 +32,10 @@ public class GenericPublisher implements MessagePublisher {
    * @return The initialized or already open channel.
    * @throws IOException if the channel cannot be initialized
    * @throws TimeoutException if the channel can not be opened within the timeout period
+   * @throws NoSuchAlgorithmException if the security context creation for secured connection fails
    */
-  protected Channel provideChannel(ConnectionConfig config) throws IOException, TimeoutException {
+  protected Channel provideChannel(ConnectionConfig config)
+      throws IOException, TimeoutException, NoSuchAlgorithmException {
     Channel channel = channelMap.get(config);
     if (channel == null || !channel.isOpen()) {
       channel = connectionProducer.getConnection(config).createChannel();
@@ -84,7 +87,7 @@ public class GenericPublisher implements MessagePublisher {
         return;
       } catch (EncodeException e) {
         throw new PublishException("Unable to serialize event", e);
-      } catch (IOException | TimeoutException e) {
+      } catch (IOException | TimeoutException | NoSuchAlgorithmException e) {
         handleIoException(channel, attempt, e);
       }
     }

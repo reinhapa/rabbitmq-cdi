@@ -1,13 +1,14 @@
 package net.reini.rabbitmq.cdi;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
@@ -15,7 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.AMQP.BasicProperties.Builder;
@@ -27,6 +28,7 @@ import com.rabbitmq.client.Connection;
  *
  * @author Patrick Reinhart
  */
+@SuppressWarnings("boxing")
 @RunWith(MockitoJUnitRunner.class)
 public class EventPublisherTest {
   @Mock
@@ -65,10 +67,10 @@ public class EventPublisherTest {
    * 
    * @throws TimeoutException
    * @throws IOException
+   * @throws NoSuchAlgorithmException
    */
-  @SuppressWarnings("boxing")
   @Test
-  public void testPublishEvent() throws IOException, TimeoutException {
+  public void testPublishEvent() throws IOException, TimeoutException, NoSuchAlgorithmException {
     when(connectionProducer.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
     when(channel.isOpen()).thenReturn(true);
@@ -88,10 +90,11 @@ public class EventPublisherTest {
    * 
    * @throws TimeoutException
    * @throws IOException
+   * @throws NoSuchAlgorithmException
    */
-  @SuppressWarnings("boxing")
   @Test
-  public void testPublishEvent_failing() throws IOException, TimeoutException {
+  public void testPublishEvent_failing()
+      throws IOException, TimeoutException, NoSuchAlgorithmException {
     when(connectionProducer.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
     when(channel.isOpen()).thenReturn(true);
