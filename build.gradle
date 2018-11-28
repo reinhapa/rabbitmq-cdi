@@ -65,7 +65,7 @@ artifacts {
 
 signing {
     required { project.hasProperty('signing.password') && !project.version.endsWith('-SNAPSHOT') }
-    sign configurations.archives
+    sign publishing.publications
 }
 
 jar {
