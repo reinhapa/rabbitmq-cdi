@@ -37,7 +37,7 @@ interface ConnectionConfigHolder {
   void addHost(Address host);
 
   /**
-   * @param hosts the complete set of brocker hosts
+   * @param hosts the complete set of broker hosts
    */
   void setHosts(Set<Address> hosts);
 }

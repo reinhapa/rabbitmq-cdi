@@ -2,9 +2,10 @@ package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
 import javax.net.ssl.SSLContext;
@@ -19,7 +20,7 @@ import com.rabbitmq.client.ConnectionFactory;
  * @author Patrick Reinhart
  */
 class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolder {
-  private final Set<Address> brokerHosts;
+  private final List<Address> brokerHosts;
 
   private boolean secure;
   private String username;
@@ -27,7 +28,7 @@ class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolde
   private String virtualHost;
 
   ConnectionConfiguration() {
-    brokerHosts = ConcurrentHashMap.newKeySet();
+    brokerHosts = new ArrayList<>();
     username = "guest";
     password = "guest";
   }
@@ -58,13 +59,9 @@ class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolde
   }
 
   @Override
-  public void setHosts(java.util.Set<Address> hosts) {}
-
-  /**
-   * @return the brokerHosts
-   */
-  Set<Address> getBrokerHosts() {
-    return brokerHosts;
+  public void setHosts(Set<Address> hosts) {
+    brokerHosts.clear();
+    brokerHosts.addAll(hosts);
   }
 
   /**
@@ -87,9 +84,9 @@ class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolde
       connectionFactory.setVirtualHost(virtualHost);
     }
     if (brokerHosts.isEmpty()) {
-      brokerHosts.add(new Address(connectionFactory.getHost(), connectionFactory.getPort()));
+      throw new IllegalArgumentException("No broker host defined");
     }
-    return connectionFactory.newConnection(brokerHosts.toArray(new Address[0]));
+    return connectionFactory.newConnection(new ArrayList<>(brokerHosts));
   }
 
   @Override
