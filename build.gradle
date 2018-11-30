@@ -109,8 +109,8 @@ publishing {
             artifact sourcesJar
             artifact javadocJar
             pom {
-                name = 'RabbitMQ JavaEE 7 CDI enabler'
-                description = 'Enables CDI based usage of RabbitMQ within a JavaEE 7 application.'
+                name = 'RabbitMQ JavaEE/JakartaEE CDI enabler'
+                description = 'Enables CDI based usage of RabbitMQ within a JavaEE/JakartaEE application.'
                 url = 'https://github.com/reinhapa/rabbitmq-cdi'
                 scm {
                     connection = 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
@@ -129,6 +129,11 @@ publishing {
                         id = 'reinhapa'
                         name = 'Patrick Reinhart'
                         email = 'patrick@reini.net'
+                    }
+                    developer {
+                        id = 'ohumbel'
+                        name = 'Otmar Humbel'
+                        email = 'ohumbel@gmail.com'
                     }
                 }
             }
