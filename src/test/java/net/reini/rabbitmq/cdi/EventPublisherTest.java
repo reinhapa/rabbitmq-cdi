@@ -12,11 +12,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.AMQP.BasicProperties.Builder;
@@ -29,7 +29,7 @@ import com.rabbitmq.client.Connection;
  * @author Patrick Reinhart
  */
 @SuppressWarnings("boxing")
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EventPublisherTest {
   @Mock
   private ConnectionProducer connectionProducer;
@@ -46,7 +46,7 @@ public class EventPublisherTest {
   private Builder basicProperties;
   private JsonEncoder<Object> encoder;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     publisher = new EventPublisher(connectionProducer);
     basicProperties = new BasicProperties.Builder();
@@ -74,7 +74,7 @@ public class EventPublisherTest {
     when(connectionProducer.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
     when(channel.isOpen()).thenReturn(true);
-    
+
     publisher.addEvent(TestEvent.class, new PublisherConfiguration(config, "exchange", "routingKey",
         basicProperties, encoder, errorHandler));
     publisher.publishEvent(new TestEvent());

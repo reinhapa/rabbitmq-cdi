@@ -5,11 +5,11 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
@@ -23,7 +23,7 @@ import com.rabbitmq.client.ShutdownSignalException;
  * @author Patrick Reinhart
  */
 @SuppressWarnings("boxing")
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ConsumerImplTest {
   @Mock
   private EnvelopeConsumer envelopeConsumer;
@@ -33,7 +33,7 @@ public class ConsumerImplTest {
   private Consumer consumer;
   private Consumer consumerAcknowledged;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     consumer = ConsumerImpl.create(envelopeConsumer);
     consumerAcknowledged = ConsumerImpl.createAcknowledged(envelopeConsumer, channel);

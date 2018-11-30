@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
@@ -32,7 +33,7 @@ import com.rabbitmq.client.ShutdownSignalException;
 @ApplicationScoped
 public class ConnectionProducer {
 
-  private enum State {
+  enum State {
     /**
      * The factory has never established a connection so far.
      */
@@ -53,7 +54,7 @@ public class ConnectionProducer {
     CLOSED
   }
 
-  private static final class ConnectionState {
+  static final class ConnectionState {
     private final ConnectionConfig config;
     private final Set<ConnectionListener> listeners;
 
@@ -65,6 +66,10 @@ public class ConnectionProducer {
       this.config = config;
       state = State.NEVER_CONNECTED;
       listeners = ConcurrentHashMap.newKeySet();
+    }
+
+    Set<ConnectionListener> listeners() {
+      return listeners;
     }
 
     /**
@@ -100,7 +105,8 @@ public class ConnectionProducer {
       }
     }
 
-    Connection getConnection() throws IOException, TimeoutException, NoSuchAlgorithmException {
+    Connection getConnection(Supplier<ConnectionFactory> factorySupplier)
+        throws IOException, TimeoutException, NoSuchAlgorithmException {
       // Throw an exception if there is an attempt to retrieve a connection
       // from a closed factory
       if (state == State.CLOSED) {
@@ -109,7 +115,7 @@ public class ConnectionProducer {
       // Try to establish a connection if there was no connection attempt so
       // far
       if (state == State.NEVER_CONNECTED) {
-        establishConnection();
+        establishConnection(factorySupplier);
       }
       // Retrieve the connection if it is established
       if (connection != null && connection.isOpen()) {
@@ -129,7 +135,7 @@ public class ConnectionProducer {
      * @throws NoSuchAlgorithmException if the security context creation for secured connection
      *         fails
      */
-    synchronized void establishConnection()
+    synchronized void establishConnection(Supplier<ConnectionFactory> factorySupplier)
         throws IOException, TimeoutException, NoSuchAlgorithmException {
       if (state == State.CLOSED) {
         throw new IOException("Attempt to establish a connection with a closed connection factory");
@@ -137,16 +143,17 @@ public class ConnectionProducer {
         LOGGER.warn("Establishing new connection although a connection is already established");
       }
       LOGGER.debug("Trying to establish connection using {}", config);
-      ConnectionFactory connectionFactory = new ConnectionFactory();
+      ConnectionFactory connectionFactory = factorySupplier.get();
       connectionFactory.setRequestedHeartbeat(CONNECTION_HEARTBEAT_IN_SEC);
       connectionFactory.setConnectionTimeout(CONNECTION_TIMEOUT_IN_MS);
       connection = config.createConnection(connectionFactory);
-      connection.addShutdownListener(cause -> shutdownCompleted(cause));
+      connection.addShutdownListener(cause -> shutdownCompleted(cause, factorySupplier));
       LOGGER.debug("Established connection successfully");
       changeState(State.CONNECTED);
     }
 
-    void shutdownCompleted(ShutdownSignalException cause) {
+    void shutdownCompleted(ShutdownSignalException cause,
+        Supplier<ConnectionFactory> factorySupplier) {
       // Only hard error means loss of connection
       if (!cause.isHardError()) {
         return;
@@ -163,7 +170,7 @@ public class ConnectionProducer {
       int attemptInterval = CONNECTION_ESTABLISH_INTERVAL_IN_MS;
       while (state == State.CONNECTING) {
         try {
-          establishConnection();
+          establishConnection(factorySupplier);
           return;
         } catch (IOException | TimeoutException | NoSuchAlgorithmException e) {
           LOGGER.debug("Next reconnect attempt in {} ms", Integer.valueOf(attemptInterval));
@@ -209,10 +216,15 @@ public class ConnectionProducer {
   public static final int CONNECTION_TIMEOUT_IN_MS = 1000;
   public static final int CONNECTION_ESTABLISH_INTERVAL_IN_MS = 500;
 
+  private final Supplier<ConnectionFactory> factorySupplier;
   private final Map<ConnectionConfig, ConnectionState> connectionStates;
 
-
   public ConnectionProducer() {
+    this(ConnectionFactory::new);
+  }
+
+  ConnectionProducer(Supplier<ConnectionFactory> factorySupplier) {
+    this.factorySupplier = factorySupplier;
     connectionStates = new ConcurrentHashMap<>();
   }
 
@@ -235,7 +247,8 @@ public class ConnectionProducer {
    */
   public Connection getConnection(ConnectionConfig config)
       throws IOException, TimeoutException, NoSuchAlgorithmException {
-    return connectionStates.computeIfAbsent(config, ConnectionState::new).getConnection();
+    return connectionStates.computeIfAbsent(config, ConnectionState::new)
+        .getConnection(factorySupplier);
   }
 
   /**
@@ -261,7 +274,7 @@ public class ConnectionProducer {
    * @param listener The connection listener
    */
   public void registerConnectionListener(ConnectionConfig config, ConnectionListener listener) {
-    connectionStates.computeIfAbsent(config, ConnectionState::new).listeners.add(listener);
+    connectionStates.computeIfAbsent(config, ConnectionState::new).listeners().add(listener);
   }
 
   /**
@@ -271,6 +284,6 @@ public class ConnectionProducer {
    * @param listener The connection listener
    */
   public void removeConnectionListener(ConnectionConfig config, ConnectionListener listener) {
-    connectionStates.computeIfAbsent(config, ConnectionState::new).listeners.remove(listener);
+    connectionStates.computeIfAbsent(config, ConnectionState::new).listeners().remove(listener);
   }
 }

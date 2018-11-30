@@ -1,6 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -10,19 +11,19 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.function.BiConsumer;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.AMQP.BasicProperties.Builder;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class GenericPublisherTest {
   @Mock
   private ConnectionConfig config;
@@ -38,7 +39,7 @@ public class GenericPublisherTest {
   private GenericPublisher publisher;
   private TestEvent event;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     publisher = new GenericPublisher(connectionProducer) {
       @Override
@@ -68,7 +69,7 @@ public class GenericPublisherTest {
     assertEquals("application/json", propsCaptor.getValue().getContentType());
   }
 
-  @Test(expected = PublishException.class)
+  @Test
   public void testPublish_with_error() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
@@ -81,8 +82,10 @@ public class GenericPublisherTest {
         eq("routingKey"), propsCaptor.capture(),
         eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
 
-    publisher.publish(event, publisherConfiguration);
-
+    Throwable exception = assertThrows(PublishException.class, () -> {
+      publisher.publish(event, publisherConfiguration);
+    });
+    assertEquals("Unable to send message after 3 attempts", exception.getMessage());
     assertEquals("application/json", propsCaptor.getValue().getContentType());
   }
 

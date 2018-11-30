@@ -1,18 +1,18 @@
 package net.reini.rabbitmq.cdi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 
 import java.net.URI;
 import java.util.Collections;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.rabbitmq.client.Address;
 
@@ -23,14 +23,14 @@ import net.reini.rabbitmq.cdi.EventBinder.BinderConfiguration;
  *
  * @author Patrick Reinhart
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BinderConfigurationTest {
   @Mock
   private ConnectionConfigHolder config;
 
   private BinderConfiguration binderConfig;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     binderConfig = new BinderConfiguration(config);
   }
@@ -116,12 +116,10 @@ public class BinderConfigurationTest {
    */
   @Test
   public void testSetConnectionUri_unkown_scheme() {
-    try {
+    Throwable exception = assertThrows(IllegalArgumentException.class, () -> {
       binderConfig.setConnectionUri(URI.create("xXXx://flamingo.rmq.cloudamqp.com"));
-      fail("IllegalArgumentException expected");
-    } catch (IllegalArgumentException e) {
-      assertEquals("Wrong scheme in AMQP URI: xXXx", e.getMessage());
-    }
+    });
+    assertEquals("Wrong scheme in AMQP URI: xXXx", exception.getMessage());
   }
 
   /**
@@ -139,12 +137,10 @@ public class BinderConfigurationTest {
    */
   @Test
   public void testSetConnectionUri_unkown_credentials_part() {
-    try {
+    Throwable exception = assertThrows(IllegalArgumentException.class, () -> {
       binderConfig.setConnectionUri(URI.create("amqp://xx:yyy:zzz@flamingo.rmq.cloudamqp.com"));
-      fail("IllegalArgumentException expected");
-    } catch (IllegalArgumentException e) {
-      assertEquals("Bad user info in AMQP URI: xx:yyy:zzz", e.getMessage());
-    }
+    });
+    assertEquals("Bad user info in AMQP URI: xx:yyy:zzz", exception.getMessage());
   }
 
   /**
@@ -163,12 +159,10 @@ public class BinderConfigurationTest {
    */
   @Test
   public void testSetConnectionUri_illegal_virtual_host() {
-    try {
+    Throwable exception = assertThrows(IllegalArgumentException.class, () -> {
       binderConfig.setConnectionUri(URI.create("amqp://flamingo.rmq.cloudamqp.com/xxxx/vvv"));
-      fail("IllegalArgumentException expected");
-    } catch (IllegalArgumentException e) {
-      assertEquals("Multiple segments in path of AMQP URI: /xxxx/vvv", e.getMessage());
-    }
+    });
+    assertEquals("Multiple segments in path of AMQP URI: /xxxx/vvv", exception.getMessage());
   }
 
   /**

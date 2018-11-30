@@ -1,9 +1,9 @@
 package net.reini.rabbitmq.cdi;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 
 import java.util.Arrays;
@@ -14,12 +14,12 @@ import java.util.function.Consumer;
 
 import javax.net.ssl.SSLContext;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.rabbitmq.client.Address;
 import com.rabbitmq.client.ConnectionFactory;
@@ -30,7 +30,7 @@ import com.rabbitmq.client.SslContextFactory;
  *
  * @author Patrick Reinhart
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ConnectionConfigurationTest {
   @Mock
   private ConnectionFactory connectionFactory;
@@ -38,7 +38,7 @@ public class ConnectionConfigurationTest {
   private Address expectedAddress;
   private ConnectionConfiguration configuration;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     expectedAddress = new Address("somehost.somedomain", 5672);
     configuration = new ConnectionConfiguration();
@@ -127,12 +127,10 @@ public class ConnectionConfigurationTest {
    */
   @Test
   public void testCreateConnection_no_broker_host() throws Exception {
-    try {
+    Throwable exception = assertThrows(IllegalArgumentException.class, () -> {
       configuration.createConnection(connectionFactory);
-      fail("IllegalArgumentException expected");
-    } catch (IllegalArgumentException e) {
-      assertEquals("No broker host defined", e.getMessage());
-    }
+    });
+    assertEquals("No broker host defined", exception.getMessage());
     verify(connectionFactory).setUsername("guest");
     verify(connectionFactory).setPassword("guest");
   }
