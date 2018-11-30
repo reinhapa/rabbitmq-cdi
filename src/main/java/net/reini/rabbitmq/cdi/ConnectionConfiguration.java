@@ -64,13 +64,6 @@ class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolde
     brokerHosts.addAll(hosts);
   }
 
-  /**
-   * @return a new connection using the given connection factory
-   * 
-   * @throws TimeoutException if a timeout occurs
-   * @throws IOException if the connection error occurs
-   * @throws NoSuchAlgorithmException if the security context creation for secured connection fails
-   */
   @Override
   public Connection createConnection(ConnectionFactory connectionFactory)
       throws IOException, TimeoutException, NoSuchAlgorithmException {
@@ -107,7 +100,8 @@ class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolde
       return false;
     }
     ConnectionConfiguration other = (ConnectionConfiguration) obj;
-    return brokerHosts.equals(other.brokerHosts) && username.equals(other.username)
+    return secure == other.secure && brokerHosts.equals(other.brokerHosts)
+        && username.equals(other.username)
         && password.equals(other.password) && Objects.equals(virtualHost, other.virtualHost);
   }
 }
