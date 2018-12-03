@@ -6,11 +6,11 @@ import static javax.enterprise.event.TransactionPhase.AFTER_SUCCESS;
 import static javax.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
 import static javax.enterprise.event.TransactionPhase.IN_PROGRESS;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 
+import javax.annotation.PreDestroy;
+import javax.enterprise.event.ObserverException;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.TransactionPhase;
 import javax.inject.Inject;
@@ -29,14 +29,14 @@ public class EventPublisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventPublisher.class);
 
   private final ConnectionProducer connectionProducer;
-  private final Map<EventKey<?>, PublisherConfiguration> publisherConfigurations;
+  private final Map<EventKey<?>, PublisherConfiguration<?>> publisherConfigurations;
   private final ThreadLocal<Map<EventKey<?>, MessagePublisher>> publishers;
 
   @Inject
   public EventPublisher(ConnectionProducer connectionProducer) {
     this.connectionProducer = connectionProducer;
     this.publisherConfigurations = new HashMap<>();
-    this.publishers = new ThreadLocal<>();
+    this.publishers = ThreadLocal.withInitial(HashMap::new);
   }
 
   /**
@@ -48,7 +48,7 @@ public class EventPublisher {
    * @param configuration The configuration used when publishing and event
    * @param <T> The event type
    */
-  public void addEvent(EventKey<?> eventKey, PublisherConfiguration configuration) {
+  public <T> void addEvent(EventKey<T> eventKey, PublisherConfiguration<T> configuration) {
     publisherConfigurations.put(eventKey, configuration);
   }
 
@@ -92,24 +92,37 @@ public class EventPublisher {
    * Observes a CDI event after success and publishes it to the respective RabbitMQ exchange.
    * 
    * @param event The event to publish
+   * @throws ObserverException if the event could not be delivered to RabbitMQ
    */
   public void onEventAfterSuccess(@Observes(during = AFTER_SUCCESS) Object event) {
     publishEvent(event, AFTER_SUCCESS);
   }
 
   void publishEvent(Object event, TransactionPhase transactionPhase) {
-    EventKey<?> eventKey =  EventKey.of(event.getClass(), transactionPhase);
-    PublisherConfiguration publisherConfiguration = publisherConfigurations.get(eventKey);
-    if (publisherConfiguration == null) {
+    @SuppressWarnings("unchecked")
+    EventKey<Object> eventKey =  (EventKey<Object>) EventKey.of(event.getClass(), transactionPhase);
+    @SuppressWarnings("unchecked")
+    PublisherConfiguration<Object> configuration = (PublisherConfiguration<Object>) publisherConfigurations.get(eventKey);
+    if (configuration == null) {
       LOGGER.trace("No publisher configured for event {}", event);
     } else {
-      try (MessagePublisher publisher = providePublisher(eventKey, transactionPhase)) {
-        LOGGER.debug("Start publishing event {}...", event);
-        publisher.publish(event, publisherConfiguration);
-        LOGGER.debug("Published event successfully");
-      } catch (IOException | TimeoutException e) {
-        throw new RuntimeException("Failed to publish event to RabbitMQ", e);
-      }
+      doPublish(event, providePublisher(eventKey, transactionPhase), configuration);
+    }
+  }
+
+  @PreDestroy
+  public void cleanUp() {
+    publishers.get().values().forEach(MessagePublisher::close);
+  }
+
+  <T> void doPublish(T event, MessagePublisher publisher, PublisherConfiguration<T> configuration) {
+    try {
+      LOGGER.debug("Start publishing event {} ({})...", event, configuration);
+      publisher.publish(event, configuration);
+      LOGGER.debug("Published event successfully");
+    } catch (PublishException e) {
+      LOGGER.debug("Published event failed");
+      configuration.accept(event, e);
     }
   }
 
@@ -124,15 +137,6 @@ public class EventPublisher {
    */
   MessagePublisher providePublisher(EventKey<?> eventKey, TransactionPhase transactionPhase) {
     Map<EventKey<?>, MessagePublisher> localPublishers = publishers.get();
-    if (localPublishers == null) {
-      localPublishers = new HashMap<>();
-      publishers.set(localPublishers);
-    }
-    MessagePublisher publisher = localPublishers.get(eventKey);
-    if (publisher == null) {
-      publisher = new GenericPublisher(connectionProducer);
-      localPublishers.put(eventKey, publisher);
-    }
-    return publisher;
+    return localPublishers.computeIfAbsent(eventKey, key -> new GenericPublisher(connectionProducer));
   }
 }

@@ -1,6 +1,10 @@
 package net.reini.rabbitmq.cdi;
 
+import static net.reini.rabbitmq.cdi.ConsumerImpl.create;
+import static net.reini.rabbitmq.cdi.ConsumerImpl.createAcknowledged;
+
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -14,13 +18,14 @@ import com.rabbitmq.client.Connection;
 class ConsumerContainer {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerContainer.class);
 
-  private final ConnectionProducer connectionFactory;
+  private final ConnectionConfig config;
+  private final ConnectionProducer connectionProducer;
   private final CopyOnWriteArrayList<ConsumerHolder> consumerHolders;
 
-  ConsumerContainer(ConnectionProducer connectionFactory) {
-    this.connectionFactory = connectionFactory;
+  ConsumerContainer(ConnectionConfig config, ConnectionProducer connectionProducer) {
+    this.config = config;
+    this.connectionProducer = connectionProducer;
     this.consumerHolders = new CopyOnWriteArrayList<>();
-    connectionFactory.registerListener(new ContainerConnectionListener());
   }
 
   /**
@@ -29,11 +34,11 @@ class ConsumerContainer {
    * @return The channel
    * @throws IOException if the channel cannot be created due to a connection problem
    * @throws TimeoutException if the channel cannot be created due to a timeout problem
+   * @throws NoSuchAlgorithmException if the security context creation for secured connection fails
    */
-  protected Channel createChannel() throws IOException, TimeoutException {
+  protected Channel createChannel() throws IOException, TimeoutException, NoSuchAlgorithmException {
     LOGGER.debug("Creating channel");
-    Connection connection = connectionFactory.newConnection();
-    Channel channel = connection.createChannel();
+    Channel channel = connectionProducer.getConnection(config).createChannel();
     LOGGER.debug("Created channel");
     return channel;
   }
@@ -43,25 +48,25 @@ class ConsumerContainer {
   }
 
   public void startAllConsumers() {
+    connectionProducer.registerConnectionListener(config, new ContainerConnectionListener());
     consumerHolders.forEach(holder -> holder.activate());
   }
 
   final class ContainerConnectionListener implements ConnectionListener {
     @Override
-    public void onConnectionEstablished(Connection connection) {
-      String hostName = connection.getAddress().getHostName();
-      LOGGER.info("Connection established to {}. Activating consumers...", hostName);
+    public void onConnectionEstablished(Connection con) {
+      LOGGER.info("Connection established to {}. Activating consumers...", con);
       consumerHolders.forEach(consumer -> consumer.activate());
     }
 
     @Override
-    public void onConnectionLost(Connection connection) {
+    public void onConnectionLost(Connection con) {
       LOGGER.warn("Connection lost. Deactivating consumers");
       consumerHolders.forEach(consumer -> consumer.deactivate());
     }
 
     @Override
-    public void onConnectionClosed(Connection connection) {
+    public void onConnectionClosed(Connection con) {
       LOGGER.warn("Connection closed for ever. Deactivating consumers");
       consumerHolders.forEach(consumer -> consumer.deactivate());
     }
@@ -97,7 +102,6 @@ class ConsumerContainer {
             // not usable any more
           }
           channel = null;
-          consumer.setChannel(channel);
         }
         LOGGER.info("Deactivated consumer of class {}", consumer.getClass());
       }
@@ -109,10 +113,10 @@ class ConsumerContainer {
         // Start the consumer
         try {
           channel = createChannel();
-          consumer.setChannel(channel);
-          channel.basicConsume(queueName, autoAck, consumer);
+          channel.basicConsume(queueName, autoAck,
+              autoAck ? create(consumer) : createAcknowledged(consumer, channel));
           LOGGER.info("Activated consumer of class {}", consumer.getClass());
-        } catch (IOException | TimeoutException e) {
+        } catch (IOException | TimeoutException | NoSuchAlgorithmException e) {
           LOGGER.error("Failed to activate consumer of class {}", consumer.getClass(), e);
         }
       }

@@ -11,7 +11,8 @@ public interface Encoder<T> {
   /**
    * Encode a message object of type T into given bytes.
    * 
-   * @return bytes
+   * @param object the object to be encode
+   * @return the encoded object as a byte array
    * @throws EncodeException If the conversion fails
    */
   byte[] encode(T object) throws EncodeException;
@@ -19,7 +20,7 @@ public interface Encoder<T> {
   /**
    * Content type of converter.
    * 
-   * <h4>Example:</h4>
+   * <h3>Example:</h3>
    * 
    * {@code application/json}
    * 

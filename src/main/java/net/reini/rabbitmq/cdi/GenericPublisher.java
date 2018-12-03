@@ -1,13 +1,15 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
 
 public class GenericPublisher implements MessagePublisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(GenericPublisher.class);
@@ -16,24 +18,28 @@ public class GenericPublisher implements MessagePublisher {
   public static final int DEFAULT_RETRY_INTERVAL = 1000;
 
   private final ConnectionProducer connectionProducer;
-
-  private Channel channel;
+  private final Map<ConnectionConfig, Channel> channelMap;
 
   public GenericPublisher(ConnectionProducer connectionProducer) {
     this.connectionProducer = connectionProducer;
+    channelMap = new HashMap<>();
   }
 
   /**
    * Initializes a channel if there is not already an open channel.
-   *
+   * 
+   * @param config the connection configuration
    * @return The initialized or already open channel.
    * @throws IOException if the channel cannot be initialized
    * @throws TimeoutException if the channel can not be opened within the timeout period
+   * @throws NoSuchAlgorithmException if the security context creation for secured connection fails
    */
-  protected Channel provideChannel() throws IOException, TimeoutException {
+  protected Channel provideChannel(ConnectionConfig config)
+      throws IOException, TimeoutException, NoSuchAlgorithmException {
+    Channel channel = channelMap.get(config);
     if (channel == null || !channel.isOpen()) {
-      Connection connection = connectionProducer.newConnection();
-      channel = connection.createChannel();
+      channel = connectionProducer.getConnection(config).createChannel();
+      channelMap.put(config, channel);
     }
     return channel;
   }
@@ -42,24 +48,24 @@ public class GenericPublisher implements MessagePublisher {
    * Handles an exception depending on the already used attempts to send a message. Also performs a
    * soft reset of the currently used channel.
    *
+   * @param channel Current channel that has a problem. Can be {@code null}
    * @param attempt Current attempt count
-   * @param <T> the type of exception being handled
-   * @param exception The thrown exception
-   * @throws T if the maximum amount of attempts is exceeded
+   * @param cause The thrown exception
+   * @throws PublishException if the maximum amount of attempts is exceeded
    */
-
-  protected <T extends Exception> void handleIoException(int attempt, T exception) throws T {
-    if (channel != null && channel.isOpen()) {
-      try {
-        channel.close();
-      } catch (IOException | TimeoutException e) {
-        LOGGER.warn("Failed to close channel after failed publish", e);
-      }
+  protected void handleIoException(Channel channel, int attempt, Throwable cause)
+      throws PublishException {
+    if (channel != null) {
+      closeChannel(channel);
     }
     channel = null;
     if (attempt == DEFAULT_RETRY_ATTEMPTS) {
-      throw exception;
+      throw new PublishException("Unable to send message after " + attempt + " attempts", cause);
     }
+    sleepBeforeRetry();
+  }
+
+  protected void sleepBeforeRetry() {
     try {
       Thread.sleep(DEFAULT_RETRY_INTERVAL);
     } catch (InterruptedException e) {
@@ -69,20 +75,20 @@ public class GenericPublisher implements MessagePublisher {
 
   @Override
   public void publish(Object event, PublisherConfiguration publisherConfiguration)
-      throws IOException, TimeoutException {
+      throws PublishException {
     for (int attempt = 1; attempt <= DEFAULT_RETRY_ATTEMPTS; attempt++) {
       if (attempt > 1) {
         LOGGER.debug("Attempt {} to send message", Integer.valueOf(attempt));
       }
+      Channel channel = null;
       try {
-        publisherConfiguration.publish(provideChannel(),event);
+        channel = provideChannel(publisherConfiguration.getConfig());
+        publisherConfiguration.publish(channel, event);
         return;
       } catch (EncodeException e) {
-        LOGGER.error("Unable to serialize {} due to: {}", event, e.getMessage());
-      } catch (IOException e) {
-        handleIoException(attempt, e);
-      } catch (TimeoutException e) {
-        handleIoException(attempt, e);
+        throw new PublishException("Unable to serialize event", e);
+      } catch (IOException | TimeoutException | NoSuchAlgorithmException e) {
+        handleIoException(channel, attempt, e);
       }
     }
   }
@@ -91,7 +97,11 @@ public class GenericPublisher implements MessagePublisher {
    * {@inheritDoc}
    */
   @Override
-  public void close() throws IOException, TimeoutException {
+  public void close() {
+    channelMap.values().forEach(this::closeChannel);
+  }
+
+  protected void closeChannel(Channel channel) {
     if (channel == null) {
       LOGGER.warn("Attempt to close a publisher channel that has not been initialized");
       return;
@@ -101,8 +111,11 @@ public class GenericPublisher implements MessagePublisher {
       return;
     }
     LOGGER.debug("Closing publisher channel");
-    channel.close();
-    channel = null;
+    try {
+      channel.close();
+    } catch (IOException | TimeoutException e) {
+      LOGGER.warn("Failed to close channel", e);
+    }
     LOGGER.debug("Successfully closed publisher channel");
   }
 }

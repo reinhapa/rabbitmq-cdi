@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: javax.interceptor:javax.interceptor-api:1.2">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/javax.interceptor/javax.interceptor-api/1.2/a5c058610aebacc1eb89c89e8fde2a978090e374/javax.interceptor-api-1.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/javax.interceptor/javax.interceptor-api/1.2/8f4532cfd20c53e5fb482fa263c29d26c7ff1777/javax.interceptor-api-1.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

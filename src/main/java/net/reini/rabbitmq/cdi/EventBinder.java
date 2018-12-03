@@ -1,9 +1,13 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.annotation.PostConstruct;
@@ -19,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.AMQP.BasicProperties.Builder;
 import com.rabbitmq.client.Address;
+import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.MessageProperties;
 
 /**
@@ -78,8 +83,8 @@ public abstract class EventBinder {
   @Inject
   private ConnectionProducer connectionProducer;
 
+  private ConnectionConfiguration configuration;
   private ConsumerContainer consumerContainer;
-  private BinderConfiguration configuration;
 
   public EventBinder() {
     exchangeBindings = new HashSet<>();
@@ -121,7 +126,7 @@ public abstract class EventBinder {
    * @return the configuration object
    */
   public BinderConfiguration configuration() {
-    return configuration;
+    return new BinderConfiguration(configuration);
   }
 
   /**
@@ -149,8 +154,8 @@ public abstract class EventBinder {
 
   @PostConstruct
   void initializeConsumerContainer() {
-    consumerContainer = new ConsumerContainer(connectionProducer);
-    configuration = new BinderConfiguration();
+    configuration = new ConnectionConfiguration();
+    consumerContainer = new ConsumerContainer(configuration, connectionProducer);
   }
 
   void processExchangeBindings() {
@@ -172,8 +177,7 @@ public abstract class EventBinder {
     Event<Object> eventControl = (Event<Object>) remoteEventControl.select(queueBinding.eventType);
     @SuppressWarnings("unchecked")
     Instance<Object> eventPool = (Instance<Object>) remoteEventPool.select(queueBinding.eventType);
-    EventConsumer consumer =
-        new EventConsumer(queueBinding.decoder, queueBinding.autoAck, eventControl, eventPool);
+    EventConsumer consumer = new EventConsumer(queueBinding.decoder, eventControl, eventPool);
     consumerContainer.addConsumer(consumer, queueBinding.queue, queueBinding.autoAck);
     LOGGER.info("Binding between queue {} and event type {} activated", queueBinding.queue,
         queueBinding.eventType.getSimpleName());
@@ -181,12 +185,29 @@ public abstract class EventBinder {
 
   void bindExchange(ExchangeBinding<?> exchangeBinding) {
     PublisherConfiguration cfg =
-        new PublisherConfiguration(exchangeBinding.exchange, exchangeBinding.routingKey,
-            exchangeBinding.basicPropertiesBuilder, exchangeBinding.encoder);
+        new PublisherConfiguration(configuration, exchangeBinding.exchange,
+            exchangeBinding.routingKey, exchangeBinding.basicPropertiesBuilder,
+            exchangeBinding.encoder, exchangeBinding.errorHandler);
     eventPublisher
         .addEvent(EventKey.of(exchangeBinding.eventType, exchangeBinding.transactionPhase), cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
         exchangeBinding.eventType.getSimpleName());
+  }
+
+  static <T> BiConsumer<T, PublishException> nop() {
+    return (event, cause) -> {
+      // no operation
+    };
+  }
+
+  static String uriDecode(String value) {
+    try {
+      // URLDecode decodes '+' to a space, as for
+      // form encoding. So protect plus signs.
+      return URLDecoder.decode(value.replace("+", "%2B"), "US-ASCII");
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -201,6 +222,7 @@ public abstract class EventBinder {
    * <p>
    * bind(MyEvent.class).toQueue("my.queue");
    *
+   * @param <M> the type of the event
    * @param event The event
    * @return The binding builder
    */
@@ -256,6 +278,7 @@ public abstract class EventBinder {
   public static final class QueueBinding<T> {
     private final Class<T> eventType;
     private final String queue;
+
     private boolean autoAck;
     private Decoder<T> decoder;
 
@@ -327,6 +350,7 @@ public abstract class EventBinder {
     private Encoder<T> encoder;
     private Builder basicPropertiesBuilder;
     private TransactionPhase transactionPhase;
+    private BiConsumer<T, PublishException> errorHandler;
 
     ExchangeBinding(Class<T> eventType, String exchange) {
       this.eventType = eventType;
@@ -334,6 +358,7 @@ public abstract class EventBinder {
       this.encoder = new JsonEncoder<>();
       routingKey = "";
       transactionPhase = TransactionPhase.IN_PROGRESS;
+      errorHandler = nop();
       basicPropertiesBuilder = MessageProperties.BASIC.builder();
       LOGGER.info("Binding created between exchange {} and event type {}", exchange,
           eventType.getSimpleName());
@@ -404,10 +429,31 @@ public abstract class EventBinder {
       this.transactionPhase = Objects.requireNonNull(phase, "phase must not be null");
       return this;
     }
+
+    /**
+     * Sets the given error handler to be used when a event could not be published to RabbitMQ.
+     *
+     * @param errorHandler The custom error handler
+     * @return the exchange binding
+     */
+    public ExchangeBinding<T> setErrorHandler(BiConsumer<T, PublishException> errorHandler) {
+      this.errorHandler = errorHandler == null ? nop() : errorHandler;
+      return this;
+    }
   }
 
-  public final class BinderConfiguration {
+  public final static class BinderConfiguration {
+    private final ConnectionConfigHolder config;
+
+    BinderConfiguration(ConnectionConfigHolder config) {
+      this.config = config;
+    }
+
     /**
+     * Adds the given {@code hostName} to the set of hostnames, taken when connecting.
+     *
+     * @param hostName the RabbitMQ host name to use
+     * @return the binder configuration object
      * @deprecated Use {@link #addHost(String)} instead
      */
     @Deprecated
@@ -432,7 +478,7 @@ public abstract class EventBinder {
      * @return the binder configuration object
      */
     public BinderConfiguration addHost(Address hostAddress) {
-      connectionProducer.getBrokerHosts().add(hostAddress);
+      config.addHost(hostAddress);
       return this;
     }
 
@@ -443,7 +489,7 @@ public abstract class EventBinder {
      * @return the binder configuration object
      */
     public BinderConfiguration setUsername(String username) {
-      connectionProducer.getConnectionFactory().setUsername(username);
+      config.setUsername(username);
       return this;
     }
 
@@ -454,7 +500,7 @@ public abstract class EventBinder {
      * @return the binder configuration object
      */
     public BinderConfiguration setPassword(String password) {
-      connectionProducer.getConnectionFactory().setPassword(password);
+      config.setPassword(password);
       return this;
     }
 
@@ -465,7 +511,72 @@ public abstract class EventBinder {
      * @return the binder configuration object
      */
     public BinderConfiguration setVirtualHost(String virtualHost) {
-      connectionProducer.getConnectionFactory().setVirtualHost(virtualHost);
+      config.setVirtualHost(virtualHost);
+      return this;
+    }
+
+    /**
+     * Set the connection security setting.
+     * 
+     * @param secure {@code true} to use secured connection, {@code false} otherwise
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setSecure(boolean secure) {
+      config.setSecure(secure);
+      return this;
+    }
+
+    /**
+     * Set the connection parameters using the given {@code uri}. This will reset all other
+     * settings.
+     * 
+     * @param uri the connection URI
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setConnectionUri(URI uri) {
+      int port = uri.getPort();
+      String scheme = uri.getScheme().toLowerCase();
+      if ("amqp".equals(scheme)) {
+        // nothing special to do
+        if (port == -1) {
+          port = ConnectionFactory.DEFAULT_AMQP_PORT;
+        }
+      } else if ("amqps".equals(scheme)) {
+        config.setSecure(true);
+        if (port == -1) {
+          port = ConnectionFactory.DEFAULT_AMQP_OVER_SSL_PORT;
+        }
+      } else {
+        throw new IllegalArgumentException("Wrong scheme in AMQP URI: " + uri.getScheme());
+      }
+
+      String host = uri.getHost();
+      if (host == null) {
+        host = "127.0.0.1";
+      }
+      config.setHosts(Collections.singleton(new Address(host, port)));
+
+      String userInfo = uri.getRawUserInfo();
+      if (userInfo != null) {
+        String userPass[] = userInfo.split(":");
+        if (userPass.length > 2) {
+          throw new IllegalArgumentException("Bad user info in AMQP URI: " + userInfo);
+        }
+
+        setUsername(uriDecode(userPass[0]));
+        if (userPass.length == 2) {
+          setPassword(uriDecode(userPass[1]));
+        }
+      }
+
+      String path = uri.getRawPath();
+      if (path != null && path.length() > 0) {
+        if (path.indexOf('/', 1) != -1) {
+          throw new IllegalArgumentException("Multiple segments in path of AMQP URI: " + path);
+        }
+
+        setVirtualHost(uriDecode(path.substring(1)));
+      }
       return this;
     }
   }
