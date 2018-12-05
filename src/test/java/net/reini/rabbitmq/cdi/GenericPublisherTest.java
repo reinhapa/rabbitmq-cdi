@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -104,6 +105,28 @@ public class GenericPublisherTest {
     verify(channel).basicPublish(eq("exchange"), eq("routingKey"), propsCaptor.capture(),
         eq("Id: theId, BooleanValue: true".getBytes()));
     assertEquals("text/plain", propsCaptor.getValue().getContentType());
+  }
+
+  @Test
+  public void testCloseChannel_channel_null() {
+    publisher.closeChannel(null);
+  }
+
+  @Test
+  public void testCloseChannel() throws IOException, TimeoutException {
+    when(channel.isOpen()).thenReturn(true);
+
+    publisher.closeChannel(channel);
+
+    verify(channel).close();
+  }
+
+  @Test
+  public void testCloseChannel_channel_with_error() throws IOException, TimeoutException {
+    when(channel.isOpen()).thenReturn(true);
+    doThrow(new IOException()).when(channel).close();
+
+    publisher.closeChannel(channel);
   }
 
   public static class CustomEncoder implements Encoder<TestEvent> {
