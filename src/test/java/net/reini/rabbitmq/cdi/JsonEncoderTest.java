@@ -1,6 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,20 @@ public class JsonEncoderTest {
 
     assertEquals("{\"id\":\"theId\",\"booleanValue\":true}", new String(messageBody));
     assertTrue(eventObject.isBooleanValue());
+  }
+
+  @Test
+  public void testEncode_with_error() {
+    RuntimeException ex = new RuntimeException("some error");
+    TestEvent eventObject = new TestEvent() {
+      @Override
+      public String getId() {
+        throw ex;
+      }
+    };
+    assertThrows(EncodeException.class, () -> {
+      encoder.encode(eventObject);
+    });
   }
 
   @Test
