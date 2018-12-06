@@ -106,6 +106,36 @@ public class GenericPublisherTest {
   }
 
   @Test
+  public void testPublish_withTooManyAttempts() throws Exception {
+    publisher = new GenericPublisher(connectionProducer) {
+      @Override
+      protected void handleIoException(Channel channel, int attempt, Throwable cause)
+          throws PublishException {
+        // do not throw to allow attempts to overrun DEFAULT_RETRY_ATTEMPTS
+      }
+
+      @Override
+      protected void sleepBeforeRetry() {
+        // no delay
+      }
+    };
+
+    Builder builder = new Builder();
+    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
+        "routingKey", builder, new JsonEncoder<>(), errorHandler);
+    ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
+
+    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connection.createChannel()).thenReturn(channel);
+    doThrow(new IOException("someError")).when(channel).basicPublish(eq("exchange"),
+        eq("routingKey"), propsCaptor.capture(),
+        eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
+
+    publisher.publish(event, publisherConfiguration);
+    assertEquals("application/json", propsCaptor.getValue().getContentType());
+  }
+
+  @Test
   public void testPublish_with_custom_MessageConverter() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
