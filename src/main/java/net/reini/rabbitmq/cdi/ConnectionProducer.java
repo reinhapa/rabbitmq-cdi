@@ -118,7 +118,7 @@ public class ConnectionProducer {
         establishConnection(factorySupplier);
       }
       // Retrieve the connection if it is established
-      if (connection != null && connection.isOpen()) {
+      if (connection.isOpen()) {
         return connection;
       }
       // Throw an exception if no established connection could not be

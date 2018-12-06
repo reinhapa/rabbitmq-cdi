@@ -28,7 +28,6 @@ import com.rabbitmq.client.Connection;
  *
  * @author Patrick Reinhart
  */
-@SuppressWarnings("boxing")
 @ExtendWith(MockitoExtension.class)
 public class EventPublisherTest {
   @Mock
