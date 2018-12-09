@@ -46,6 +46,11 @@ public class ConnectionProducerTest {
   public void setUp() {
     connectionProducer = new ConnectionProducer(() -> connectionFactory);
   }
+  
+  @Test
+  public void testConnectionProducer() {
+    connectionProducer = new ConnectionProducer();
+  }
 
   @Test
   public void testGetConnection() throws Exception {
@@ -116,6 +121,20 @@ public class ConnectionProducerTest {
 
       connectionState.shutdownCompleted(new ShutdownSignalException(true, false, null, null),
           () -> connectionFactory);
+    }
+
+    @Test
+    public void testShutdownCompleted_interrupted()
+        throws NoSuchAlgorithmException, IOException, TimeoutException, InterruptedException {
+      when(config.createConnection(connectionFactory)).thenThrow(new IOException());
+
+      Thread test = new Thread(() -> {
+        connectionState.shutdownCompleted(new ShutdownSignalException(true, false, null, null),
+            () -> connectionFactory);
+      });
+      test.start();
+      Thread.sleep(3000);
+      test.interrupt();
     }
 
     @Test
