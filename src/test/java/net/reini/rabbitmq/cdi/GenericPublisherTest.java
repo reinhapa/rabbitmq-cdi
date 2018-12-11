@@ -109,7 +109,7 @@ public class GenericPublisherTest {
   public void testPublish_withTooManyAttempts() throws Exception {
     publisher = new GenericPublisher(connectionProducer) {
       @Override
-      protected void handleIoException(Channel channel, int attempt, Throwable cause)
+      protected void handleIoException(Channel ch, int attempt, Throwable cause)
           throws PublishException {
         // do not throw to allow attempts to overrun DEFAULT_RETRY_ATTEMPTS
       }
