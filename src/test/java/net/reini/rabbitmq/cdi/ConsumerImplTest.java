@@ -22,7 +22,6 @@ import com.rabbitmq.client.ShutdownSignalException;
  *
  * @author Patrick Reinhart
  */
-@SuppressWarnings("boxing")
 @ExtendWith(MockitoExtension.class)
 public class ConsumerImplTest {
   @Mock

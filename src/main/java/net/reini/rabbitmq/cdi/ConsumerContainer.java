@@ -49,7 +49,7 @@ class ConsumerContainer {
 
   public void startAllConsumers() {
     connectionProducer.registerConnectionListener(config, new ContainerConnectionListener());
-    consumerHolders.forEach(holder -> holder.activate());
+    consumerHolders.forEach(ConsumerHolder::activate);
   }
 
   final class ContainerConnectionListener implements ConnectionListener {

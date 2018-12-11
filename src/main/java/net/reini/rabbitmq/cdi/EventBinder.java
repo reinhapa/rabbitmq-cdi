@@ -159,39 +159,41 @@ public abstract class EventBinder {
   }
 
   void processExchangeBindings() {
-    for (ExchangeBinding<?> exchangeBinding : exchangeBindings) {
-      bindExchange(exchangeBinding);
-    }
+    exchangeBindings.forEach(this::bindExchange);
     exchangeBindings.clear();
   }
 
   void processQueueBindings() {
-    for (QueueBinding<?> queueBinding : queueBindings) {
-      bindQueue(queueBinding);
-    }
+    queueBindings.forEach(this::bindQueue);
     queueBindings.clear();
   }
 
   void bindQueue(QueueBinding<?> queueBinding) {
     @SuppressWarnings("unchecked")
-    Event<Object> eventControl = (Event<Object>) remoteEventControl.select(queueBinding.eventType);
-    @SuppressWarnings("unchecked")
-    Instance<Object> eventPool = (Instance<Object>) remoteEventPool.select(queueBinding.eventType);
-    EventConsumer consumer = new EventConsumer(queueBinding.decoder, eventControl, eventPool);
-    consumerContainer.addConsumer(consumer, queueBinding.queue, queueBinding.autoAck);
-    LOGGER.info("Binding between queue {} and event type {} activated", queueBinding.queue,
-        queueBinding.eventType.getSimpleName());
+    Class<Object> eventType = (Class<Object>) queueBinding.getEventType();
+    Event<Object> eventControl = (Event<Object>) remoteEventControl.select(eventType);
+    Instance<Object> eventPool = (Instance<Object>) remoteEventPool.select(eventType);
+    EventConsumer consumer = new EventConsumer(queueBinding.getDecoder(), eventControl, eventPool);
+    String queue = queueBinding.getQueue();
+    consumerContainer.addConsumer(consumer, queue, queueBinding.isAutoAck());
+    LOGGER.info("Binding between queue {} and event type {} activated", queue, eventType.getName());
   }
 
   void bindExchange(ExchangeBinding<?> exchangeBinding) {
-    PublisherConfiguration cfg =
-        new PublisherConfiguration(configuration, exchangeBinding.exchange,
-            exchangeBinding.routingKey, exchangeBinding.basicPropertiesBuilder,
-            exchangeBinding.encoder, exchangeBinding.errorHandler);
-    eventPublisher
-        .addEvent(EventKey.of(exchangeBinding.eventType, exchangeBinding.transactionPhase), cfg);
-    LOGGER.info("Binding between exchange {} and event type {} activated", exchangeBinding.exchange,
-        exchangeBinding.eventType.getSimpleName());
+    @SuppressWarnings("unchecked")
+    Class<Object> eventType = (Class<Object>) exchangeBinding.getEventType();
+    @SuppressWarnings("unchecked")
+    BiConsumer<Object, PublishException> errorHandler =
+        (BiConsumer<Object, PublishException>) exchangeBinding.getErrorHandler();
+    @SuppressWarnings("unchecked")
+    Encoder<Object> encoder = (Encoder<Object>) exchangeBinding.getEncoder();
+    String exchange = exchangeBinding.getExchange();
+    PublisherConfiguration<Object> cfg =
+        new PublisherConfiguration<>(configuration, exchange, exchangeBinding.getRoutingKey(),
+            exchangeBinding.getBasicPropertiesBuilder(), encoder, errorHandler);
+    eventPublisher.addEvent(EventKey.of(eventType, exchangeBinding.getTransactionPhase()), cfg);
+    LOGGER.info("Binding between exchange {} and event type {} activated", exchange,
+        eventType.getName());
   }
 
   static <T> BiConsumer<T, PublishException> nop() {
@@ -227,10 +229,7 @@ public abstract class EventBinder {
    * @return The binding builder
    */
   public <M> EventBindingBuilder<M> bind(Class<M> event) {
-    EventBindingBuilder<M> builder =
-        new EventBindingBuilder<>(event, queueBindings::add, exchangeBindings::add);
-
-    return builder;
+    return new EventBindingBuilder<>(event, queueBindings::add, exchangeBindings::add);
   }
 
   public static final class EventBindingBuilder<T> {
@@ -253,9 +252,9 @@ public abstract class EventBinder {
      * @return the queue binding
      */
     public QueueBinding<T> toQueue(String queue) {
-      QueueBinding<T> binding = new QueueBinding<>(eventType, queue);
-      queueBindingConsumer.accept(binding);
-      return binding;
+      QueueBinding<T> queueBinding = new QueueBinding<>(eventType, queue);
+      queueBindingConsumer.accept(queueBinding);
+      return queueBinding;
     }
 
     /**
@@ -266,9 +265,9 @@ public abstract class EventBinder {
      * @return the exchange binding
      */
     public ExchangeBinding<T> toExchange(String exchange) {
-      ExchangeBinding<T> binding = new ExchangeBinding<>(eventType, exchange);
-      exchangeBindingConsumer.accept(binding);
-      return binding;
+      ExchangeBinding<T> exchangeBinding = new ExchangeBinding<>(eventType, exchange);
+      exchangeBindingConsumer.accept(exchangeBinding);
+      return exchangeBinding;
     }
   }
 
@@ -290,19 +289,20 @@ public abstract class EventBinder {
           eventType.getSimpleName());
     }
 
-    @Override
-    public int hashCode() {
-      return eventType.hashCode();
+    Class<T> getEventType() {
+      return eventType;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      } else if (!(obj instanceof QueueBinding)) {
-        return false;
-      }
-      return eventType.equals(((QueueBinding<?>) obj).eventType);
+    String getQueue() {
+      return queue;
+    }
+
+    boolean isAutoAck() {
+      return autoAck;
+    }
+
+    Decoder<T> getDecoder() {
+      return decoder;
     }
 
     /**
@@ -337,6 +337,27 @@ public abstract class EventBinder {
       LOGGER.info("Decoder set to {} for event type {}", messageDecoder, eventType.getSimpleName());
       return this;
     }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(eventType, queue);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      } else if (!(obj instanceof QueueBinding)) {
+        return false;
+      }
+      QueueBinding<?> other = (QueueBinding<?>) obj;
+      return eventType.equals(other.eventType) && queue.equals(other.queue);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("QueueBinding[type=%s, queue=%s]", eventType.getName(), queue);
+    }
   }
 
   /**
@@ -364,19 +385,32 @@ public abstract class EventBinder {
           eventType.getSimpleName());
     }
 
-    @Override
-    public int hashCode() {
-      return eventType.hashCode();
+    Class<T> getEventType() {
+      return eventType;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      } else if (!(obj instanceof ExchangeBinding)) {
-        return false;
-      }
-      return eventType.equals(((ExchangeBinding<?>) obj).eventType);
+    String getExchange() {
+      return exchange;
+    }
+
+    String getRoutingKey() {
+      return routingKey;
+    }
+
+    Encoder<T> getEncoder() {
+      return encoder;
+    }
+
+    BiConsumer<T, PublishException> getErrorHandler() {
+      return errorHandler;
+    }
+
+    Builder getBasicPropertiesBuilder() {
+      return basicPropertiesBuilder;
+    }
+
+    TransactionPhase getTransactionPhase() {
+      return transactionPhase;
     }
 
     /**
@@ -433,12 +467,33 @@ public abstract class EventBinder {
     /**
      * Sets the given error handler to be used when a event could not be published to RabbitMQ.
      *
-     * @param errorHandler The custom error handler
+     * @param handler The custom error handler
      * @return the exchange binding
      */
-    public ExchangeBinding<T> setErrorHandler(BiConsumer<T, PublishException> errorHandler) {
-      this.errorHandler = errorHandler == null ? nop() : errorHandler;
+    public ExchangeBinding<T> withErrorHandler(BiConsumer<T, PublishException> handler) {
+      this.errorHandler = handler == null ? nop() : handler;
       return this;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(eventType, exchange);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      } else if (!(obj instanceof ExchangeBinding)) {
+        return false;
+      }
+      ExchangeBinding<?> other = (ExchangeBinding<?>) obj;
+      return eventType.equals(other.eventType) && exchange.equals(other.exchange);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("ExchangeBinding[type=%s, exchange=%s]", eventType.getName(), exchange);
     }
   }
 

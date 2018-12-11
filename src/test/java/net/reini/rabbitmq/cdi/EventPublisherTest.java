@@ -30,7 +30,6 @@ import com.rabbitmq.client.Connection;
  *
  * @author Patrick Reinhart
  */
-@SuppressWarnings("boxing")
 @ExtendWith(MockitoExtension.class)
 public class EventPublisherTest {
   @Mock
@@ -42,11 +41,11 @@ public class EventPublisherTest {
   @Mock
   private Channel channel;
   @Mock
-  private BiConsumer<?, PublishException> errorHandler;
+  private BiConsumer<TestEvent, PublishException> errorHandler;
 
   private EventPublisher publisher;
   private Builder basicProperties;
-  private JsonEncoder<Object> encoder;
+  private JsonEncoder<TestEvent> encoder;
 
   @BeforeEach
   public void setUp() throws Exception {
@@ -78,7 +77,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
     when(channel.isOpen()).thenReturn(true);
 
-    publisher.addEvent(key, new PublisherConfiguration(config, "exchange", "routingKey",
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
         basicProperties, encoder, errorHandler));
     publisher.publishEvent(new TestEvent(), TransactionPhase.AFTER_SUCCESS);
     publisher.cleanUp();
@@ -106,7 +105,7 @@ public class EventPublisherTest {
     doThrow(IOException.class).when(channel).basicPublish(eq("exchange"), eq("routingKey"), any(),
         any());
 
-    publisher.addEvent(key, new PublisherConfiguration(config, "exchange", "routingKey",
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
         basicProperties, encoder, errorHandler));
     publisher.publishEvent(new TestEvent(), TransactionPhase.AFTER_FAILURE);
     publisher.cleanUp();
