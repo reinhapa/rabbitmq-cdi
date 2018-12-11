@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Objects;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,5 +49,15 @@ class QueueBindingTest {
     assertEquals(JsonDecoder.class, binding.getDecoder().getClass());
     assertSame(binding, binding.withDecoder(decoder));
     assertEquals(decoder, binding.getDecoder());
+  }
+
+  @Test
+  void testToString() {
+    assertEquals("QueueBinding[type=net.reini.rabbitmq.cdi.TestEvent, queue=queue]", binding.toString());
+  }
+
+  @Test
+  void testHashCode() {
+    assertEquals(Objects.hash(TestEvent.class, "queue"), binding.hashCode());
   }
 }

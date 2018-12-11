@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -72,5 +73,16 @@ class ExchangeBindingTest {
     assertSame(binding, binding.withErrorHandler(null));
     assertNotEquals(errorHandler, binding.getErrorHandler());
   }
+
+  @Test
+  void testToString() {
+    assertEquals("ExchangeBinding[type=net.reini.rabbitmq.cdi.TestEvent, exchange=exchange]", binding.toString());
+  }
+
+  @Test
+  void testHashCode() {
+    assertEquals(Objects.hash(TestEvent.class, "exchange"), binding.hashCode());
+  }
+
 }
 

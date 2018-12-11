@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
@@ -221,14 +222,19 @@ public abstract class EventBinder {
    * @return The binding builder
    */
   public <M> EventBindingBuilder<M> bind(Class<M> event) {
-    return new EventBindingBuilder<>(event);
+    return new EventBindingBuilder<>(event, queueBindings::add, exchangeBindings::add);
   }
 
-  public final class EventBindingBuilder<T> {
+  public final static class EventBindingBuilder<T> {
     private final Class<T> eventType;
+    private final Consumer<QueueBinding<T>> queueBindingConsumer;
+    private final Consumer<ExchangeBinding<T>> exchangeBindingConsumer;
 
-    EventBindingBuilder(Class<T> eventType) {
+    EventBindingBuilder(Class<T> eventType, Consumer<QueueBinding<T>> queueBindingConsumer,
+        Consumer<ExchangeBinding<T>> exchangeBindingConsumer) {
       this.eventType = eventType;
+      this.queueBindingConsumer = queueBindingConsumer;
+      this.exchangeBindingConsumer = exchangeBindingConsumer;
     }
 
     /**
@@ -240,7 +246,7 @@ public abstract class EventBinder {
      */
     public QueueBinding<T> toQueue(String queue) {
       QueueBinding<T> queueBinding = new QueueBinding<>(eventType, queue);
-      queueBindings.add(queueBinding);
+      queueBindingConsumer.accept(queueBinding);
       return queueBinding;
     }
 
@@ -253,7 +259,7 @@ public abstract class EventBinder {
      */
     public ExchangeBinding<T> toExchange(String exchange) {
       ExchangeBinding<T> exchangeBinding = new ExchangeBinding<>(eventType, exchange);
-      exchangeBindings.add(exchangeBinding);
+      exchangeBindingConsumer.accept(exchangeBinding);
       return exchangeBinding;
     }
   }
@@ -323,6 +329,27 @@ public abstract class EventBinder {
       this.decoder = Objects.requireNonNull(messageDecoder, "decoder must not be null");
       LOGGER.info("Decoder set to {} for event type {}", messageDecoder, eventType.getSimpleName());
       return this;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(eventType, queue);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      } else if (!(obj instanceof QueueBinding)) {
+        return false;
+      }
+      QueueBinding<?> other = (QueueBinding<?>) obj;
+      return eventType.equals(other.eventType) && queue.equals(other.queue);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("QueueBinding[type=%s, queue=%s]", eventType.getName(), queue);
     }
   }
 
@@ -421,6 +448,27 @@ public abstract class EventBinder {
     public ExchangeBinding<T> withErrorHandler(BiConsumer<T, PublishException> handler) {
       this.errorHandler = handler == null ? nop() : handler;
       return this;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(eventType, exchange);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      } else if (!(obj instanceof ExchangeBinding)) {
+        return false;
+      }
+      ExchangeBinding<?> other = (ExchangeBinding<?>) obj;
+      return eventType.equals(other.eventType) && exchange.equals(other.exchange);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("ExchangeBinding[type=%s, exchange=%s]", eventType.getName(), exchange);
     }
   }
 
