@@ -2,8 +2,6 @@ package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
@@ -18,47 +16,21 @@ public class GenericPublisher implements MessagePublisher {
   public static final int DEFAULT_RETRY_INTERVAL = 1000;
 
   private final ConnectionProducer connectionProducer;
-  private final Map<ConnectionConfig, Channel> channelMap;
 
   public GenericPublisher(ConnectionProducer connectionProducer) {
     this.connectionProducer = connectionProducer;
-    channelMap = new HashMap<>();
-  }
-
-  /**
-   * Initializes a channel if there is not already an open channel.
-   * 
-   * @param config the connection configuration
-   * @return The initialized or already open channel.
-   * @throws IOException if the channel cannot be initialized
-   * @throws TimeoutException if the channel can not be opened within the timeout period
-   * @throws NoSuchAlgorithmException if the security context creation for secured connection fails
-   */
-  protected Channel provideChannel(ConnectionConfig config)
-      throws IOException, TimeoutException, NoSuchAlgorithmException {
-    Channel channel = channelMap.get(config);
-    if (channel == null || !channel.isOpen()) {
-      channel = connectionProducer.getConnection(config).createChannel();
-      channelMap.put(config, channel);
-    }
-    return channel;
   }
 
   /**
    * Handles an exception depending on the already used attempts to send a message. Also performs a
    * soft reset of the currently used channel.
-   *
-   * @param channel Current channel that has a problem. Can be {@code null}
    * @param attempt Current attempt count
    * @param cause The thrown exception
+   *
    * @throws PublishException if the maximum amount of attempts is exceeded
    */
-  protected void handleIoException(Channel channel, int attempt, Throwable cause)
+  protected void handleIoException(int attempt, Throwable cause)
       throws PublishException {
-    if (channel != null) {
-      closeChannel(channel);
-    }
-    channel = null;
     if (attempt == DEFAULT_RETRY_ATTEMPTS) {
       throw new PublishException("Unable to send message after " + attempt + " attempts", cause);
     }
@@ -80,15 +52,14 @@ public class GenericPublisher implements MessagePublisher {
       if (attempt > 1) {
         LOGGER.debug("Attempt {} to send message", Integer.valueOf(attempt));
       }
-      Channel channel = null;
-      try {
-        channel = provideChannel(publisherConfiguration.getConfig());
+      try (Channel channel =
+          connectionProducer.getConnection(publisherConfiguration.getConfig()).createChannel()) {
         publisherConfiguration.publish(channel, event);
         return;
       } catch (EncodeException e) {
         throw new PublishException("Unable to serialize event", e);
       } catch (IOException | TimeoutException | NoSuchAlgorithmException e) {
-        handleIoException(channel, attempt, e);
+        handleIoException(attempt, e);
       }
     }
   }
@@ -98,24 +69,5 @@ public class GenericPublisher implements MessagePublisher {
    */
   @Override
   public void close() {
-    channelMap.values().forEach(this::closeChannel);
-  }
-
-  protected void closeChannel(Channel channel) {
-    if (channel == null) {
-      LOGGER.warn("Attempt to close a publisher channel that has not been initialized");
-      return;
-    } else if (!channel.isOpen()) {
-      LOGGER.warn(
-          "Attempt to close a publisher channel that has already been closed or is already closing");
-      return;
-    }
-    LOGGER.debug("Closing publisher channel");
-    try {
-      channel.close();
-    } catch (IOException | TimeoutException e) {
-      LOGGER.warn("Failed to close channel", e);
-    }
-    LOGGER.debug("Successfully closed publisher channel");
   }
 }
