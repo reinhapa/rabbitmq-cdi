@@ -72,7 +72,6 @@ public class EventPublisherTest {
   public void testPublishEvent() throws IOException, TimeoutException, NoSuchAlgorithmException {
     when(connectionProducer.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
-    when(channel.isOpen()).thenReturn(true);
 
     publisher.addEvent(TestEvent.class, new PublisherConfiguration(config, "exchange", "routingKey",
         basicProperties, encoder, errorHandler));
@@ -96,7 +95,6 @@ public class EventPublisherTest {
       throws IOException, TimeoutException, NoSuchAlgorithmException {
     when(connectionProducer.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
-    when(channel.isOpen()).thenReturn(true);
     doThrow(IOException.class).when(channel).basicPublish(eq("exchange"), eq("routingKey"), any(),
         any());
 
@@ -105,6 +103,6 @@ public class EventPublisherTest {
     publisher.publishEvent(new TestEvent());
     publisher.cleanUp();
 
-    verify(channel, times(4)).close();
+    verify(channel, times(3)).close();
   }
 }
