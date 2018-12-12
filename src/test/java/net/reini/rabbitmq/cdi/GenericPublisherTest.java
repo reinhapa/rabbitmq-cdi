@@ -6,16 +6,18 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.AMQP.BasicProperties.Builder;
 import com.rabbitmq.client.Channel;
@@ -109,8 +111,7 @@ public class GenericPublisherTest {
   public void testPublish_withTooManyAttempts() throws Exception {
     publisher = new GenericPublisher(connectionProducer) {
       @Override
-      protected void handleIoException(Channel ch, int attempt, Throwable cause)
-          throws PublishException {
+      protected void handleIoException(int attempt, Throwable cause) throws PublishException {
         // do not throw to allow attempts to overrun DEFAULT_RETRY_ATTEMPTS
       }
 
@@ -153,30 +154,13 @@ public class GenericPublisherTest {
   }
 
   @Test
-  public void testCloseChannel_channel_null() {
-    publisher.closeChannel(null);
-  }
-
-  @Test
-  public void testCloseChannel() throws IOException, TimeoutException {
-    when(channel.isOpen()).thenReturn(true);
-
-    publisher.closeChannel(channel);
-
-    verify(channel).close();
-  }
-
-  @Test
-  public void testCloseChannel_channel_with_error() throws IOException, TimeoutException {
-    when(channel.isOpen()).thenReturn(true);
-    doThrow(new IOException()).when(channel).close();
-
-    publisher.closeChannel(channel);
+  public void testClose() {
+    publisher.close();
   }
 
   @Test
   public void testHandleIoException_channel_null() throws PublishException {
-    publisher.handleIoException(null, 1, null);
+    publisher.handleIoException(1, null);
   }
 
   @Test
