@@ -75,7 +75,6 @@ public class EventPublisherTest {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_SUCCESS);
     when(connectionProducer.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
-    when(channel.isOpen()).thenReturn(true);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
         basicProperties, encoder, errorHandler));
@@ -101,7 +100,6 @@ public class EventPublisherTest {
 
     when(connectionProducer.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
-    when(channel.isOpen()).thenReturn(true);
     doThrow(IOException.class).when(channel).basicPublish(eq("exchange"), eq("routingKey"), any(),
         any());
 
@@ -110,6 +108,6 @@ public class EventPublisherTest {
     publisher.publishEvent(new TestEvent(), TransactionPhase.AFTER_FAILURE);
     publisher.cleanUp();
 
-    verify(channel, times(4)).close();
+    verify(channel, times(3)).close();
   }
 }
