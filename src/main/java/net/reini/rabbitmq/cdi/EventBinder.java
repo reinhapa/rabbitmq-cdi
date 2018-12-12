@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -359,6 +361,7 @@ public abstract class EventBinder {
   public static final class ExchangeBinding<T> {
     private final Class<T> eventType;
     private final String exchange;
+    private final Map<String, Object> headers;
 
     private String routingKey;
     private Encoder<T> encoder;
@@ -368,10 +371,11 @@ public abstract class EventBinder {
     ExchangeBinding(Class<T> eventType, String exchange) {
       this.eventType = eventType;
       this.exchange = exchange;
+      this.headers = new HashMap<>();
       this.encoder = new JsonEncoder<>();
       routingKey = "";
       errorHandler = nop();
-      basicPropertiesBuilder = MessageProperties.BASIC.builder();
+      basicPropertiesBuilder = MessageProperties.BASIC.builder().headers(headers);
       LOGGER.info("Binding created between exchange {} and event type {}", exchange,
           eventType.getSimpleName());
     }
@@ -426,16 +430,37 @@ public abstract class EventBinder {
     }
 
     /**
-     * Sets the given basic properties to be used for message publishing.
+     * Sets the message header to the given headerValue to be added when sending each message.
+     * 
+     * @param header the header type
+     * @param headerValue the header value
+     * @return the exchange binding
+     */
+    public ExchangeBinding<T> withHeader(String header, Object headerValue) {
+      headers.put(Objects.requireNonNull(header, "header must not be null"),
+          Objects.requireNonNull(headerValue, "headerValue must not be null"));
+      return this;
+    }
+
+    /**
+     * Sets the given basic properties to be used for message publishing. This will reset all
+     * previously set headers that may exist.
      *
      * @param properties The basic properties
      * @return the exchange binding
+     * @see #withHeader(String, Object)
      */
     public ExchangeBinding<T> withProperties(BasicProperties properties) {
       this.basicPropertiesBuilder =
-          Objects.requireNonNull(properties, "propeties must not be null").builder();
+          Objects.requireNonNull(properties, "propeties must not be null").builder()
+              .headers(headers);
       LOGGER.info("Publisher properties for event type {} set to {}", eventType.getSimpleName(),
           properties.toString());
+      headers.clear();
+      Map<String, Object> newHeaders = properties.getHeaders();
+      if (newHeaders != null) {
+        headers.putAll(newHeaders);
+      }
       return this;
     }
 

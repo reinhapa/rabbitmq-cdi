@@ -2,6 +2,7 @@ package net.reini.rabbitmq.cdi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -53,11 +54,31 @@ class QueueBindingTest {
 
   @Test
   void testToString() {
-    assertEquals("QueueBinding[type=net.reini.rabbitmq.cdi.TestEvent, queue=queue]", binding.toString());
+    assertEquals("QueueBinding[type=net.reini.rabbitmq.cdi.TestEvent, queue=queue]",
+        binding.toString());
   }
 
   @Test
   void testHashCode() {
     assertEquals(Objects.hash(TestEvent.class, "queue"), binding.hashCode());
+  }
+
+  @Test
+  void testEquals() {
+    assertNotEquals(binding, null);
+    assertNotEquals(binding, new Object());
+    assertNotEquals(binding, new QueueBinding<>(Object.class, "queue"));
+    assertNotEquals(binding, new QueueBinding<>(TestEvent.class, "queueX"));
+
+    assertEquals(binding, binding);
+
+    QueueBinding<TestEvent> binding1 = new QueueBinding<>(TestEvent.class, "queue");
+    assertEquals(binding, binding1);
+    assertEquals(binding1, binding);
+
+    QueueBinding<TestEvent> binding2 = new QueueBinding<>(TestEvent.class, "queue");
+    assertEquals(binding, binding2);
+
+    assertEquals(binding1, binding1);
   }
 }
