@@ -696,5 +696,39 @@ public abstract class EventBinder {
       }
       return this;
     }
+
+    /**
+     * Set the TCP connection timeout.
+     * @param timeout connection TCP establishment timeout in milliseconds; zero for infinite
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setConnectTimeout(int timeout) {
+      config.setConnectTimeout(timeout);
+      return this;
+    }
+
+    /**
+     * Set the time to sleep between connection attempts, this only applies if the connection
+     * was not recoverable and a complete reconnect is needed and also during the first connect attempt.
+     * @param waitTime time in milli seconds to wait between retries
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setConnectRetryWaitTime(int waitTime) {
+      config.setConnectRetryWaitTime(waitTime);
+      return this;
+    }
+
+    /**
+     * Set the requested heartbeat timeout. Heartbeat frames will be sent at about 1/2 the timeout interval.
+     * If server heartbeat timeout is configured to a non-zero value, this method can only be used
+     * to lower the value; otherwise any value provided by the client will be used.
+     * @param requestedHeartbeat the initially requested heartbeat timeout, in seconds; zero for none
+     * @see <a href="http://rabbitmq.com/heartbeats.html">RabbitMQ Heartbeats Guide</a>
+     */
+    public BinderConfiguration setRequestedConnectionHeartbeatTimeout(int requestedHeartbeat) {
+      config.setRequestedConnectionHeartbeatTimeout(requestedHeartbeat);
+      return this;
+    }
+
   }
 }

@@ -57,25 +57,38 @@ As second step you have to define the bindings:
 public class RabbitBinder extends EventBinder {
   @Override
   protected void bindEvents() {
+
+    declareExchange("text.exchange.one")
+      .withExchangeType(BuiltinExchangeType.DIRECT)
+      .withAutoDelete(false)
+      .withDurable(false); // <1>
+
+    declareQueue("test.queue")
+      .withAutoDelete(false)
+      .withDurable(false)
+      .withExclusiveAccess(false); // <2>
+
     bind(EventOne.class)
-      .toExchange("test.exchange.one"); // <1>
+      .toExchange("test.exchange.one"); // <3>
     bind(EventOne.class)
       .toExchange("test.exchange.two")
       .withRoutingKey("test.key")
-      .withEncoder(new MyCustomEncoder()); // <2>
+      .withEncoder(new MyCustomEncoder()); // <4>
 
     bind(EventTwo.class)
       .toQueue("test.queue");
     bind(EventTwo.class)
       .toQueue("test.queue")
       .withDecoder(new MyCustomDecoder())
-      .autoAck(); // <3>
+      .autoAck(); // <5>
   }
 }
 ----
-<1> Uses an empty routing key for exchange 'test.exchange.one'
-<2> Specifies a custom event encoder
-<3> Specifies a custom event decoder and enables auto acknowledge
+<1> Declares an exchange with name 'test.exchange.one' and type 'direct'
+<2> Declares a queue with name 'test.queue'
+<3> Uses an empty routing key for exchange 'test.exchange.one'
+<4> Specifies a custom event encoder
+<5> Specifies a custom event decoder and enables auto acknowledge
 
 
 As last step you need to initialize the binder either in a singleton
@@ -97,6 +110,9 @@ public class BindingInitializer {
         .setUsername("myuser") // <2>
         .setPassword("mypassword"); // <3>
         .setSecure(true) // <4>
+        .setConnectTimeout(10000) // <5>
+        .setConnectRetryWaitTime(10000) // <6>
+        .setRequestedConnectionHeartbeatTimeout(3) // <7>
       binder.initialize();
     } catch (IOException e) {
       LoggerFactory.getLogger(getClass()).error("Unable to initialize", e);
@@ -108,6 +124,9 @@ public class BindingInitializer {
 <2> Specifies a connection user name
 <3> Specifies a connection password
 <4> Enables the transport layer security (TLS)
+<5> Sets the connect timeout to 10 sec
+<6> Set the time to wait between connection retries to 10 sec
+<7> Set the heartbeat timeout to 3 sec (To detect connection problems)
 
 
 ### Alternative connection definition
