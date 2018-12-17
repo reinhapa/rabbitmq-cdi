@@ -6,6 +6,7 @@ class ConsumerHolderFactory {
       ExchangeDeclarationConfig exchangeDeclarationConfig, QueueDeclarationConfig queueDeclarationConfig) {
     ConsumerExchangeAndQueueDeclarer consumerExchangeAndQueueDeclarer = new ConsumerExchangeAndQueueDeclarer(exchangeDeclarationConfig, queueDeclarationConfig);
     ConsumerChannelFactory consumerChannelFactory = new ConsumerChannelFactory(connectionRepository, config);
-    return new ConsumerHolder(consumer, queue, autoAck, consumerChannelFactory, consumerExchangeAndQueueDeclarer);
+    ConsumerFactory consumerFactory =new ConsumerFactory();
+    return new ConsumerHolder(consumer, queue, autoAck, consumerChannelFactory, consumerExchangeAndQueueDeclarer, consumerFactory);
   }
 }

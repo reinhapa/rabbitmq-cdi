@@ -99,5 +99,20 @@ public class ConnectionRepositoryTest {
       assertEquals(exception.getMessage(),
           "Attempt to retrieve a connection from a closed connection factory");
     }
+
+    @Test
+    public void testNotifyConnecting(){
+      connectionManager.changeState(ConnectionState.CONNECTING);
+      verify(listener).onConnectionLost(null);
+    }
+
+    @Test
+    public void testNotifyConnected(){
+      connectionManager.changeState(ConnectionState.CONNECTED);
+      verify(listener).onConnectionEstablished(null);
+    }
+
+
   }
+
 }

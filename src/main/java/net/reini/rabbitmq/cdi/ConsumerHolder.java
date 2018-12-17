@@ -1,14 +1,11 @@
 package net.reini.rabbitmq.cdi;
 
+
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ShutdownListener;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-
-import static net.reini.rabbitmq.cdi.ConsumerImpl.create;
-import static net.reini.rabbitmq.cdi.ConsumerImpl.createAcknowledged;
 
 class ConsumerHolder {
 
@@ -24,8 +21,10 @@ class ConsumerHolder {
   private final ConsumerChannelFactory consumerChannelFactory;
   private final ConsumerExchangeAndQueueDeclarer consumerExchangeAndQueueDeclarer;
   private final ResourceCloser resourceCloser;
+  private final ConsumerFactory consumerFactory;
 
-  ConsumerHolder(EventConsumer consumer, String queueName, boolean autoAck, ConsumerChannelFactory consumerChannelFactory, ConsumerExchangeAndQueueDeclarer consumerExchangeAndQueueDeclarer) {
+  ConsumerHolder(EventConsumer consumer, String queueName, boolean autoAck, ConsumerChannelFactory consumerChannelFactory, ConsumerExchangeAndQueueDeclarer consumerExchangeAndQueueDeclarer,
+      ConsumerFactory consumerFactory) {
     this.consumer = consumer;
     this.queueName = queueName;
     this.autoAck = autoAck;
@@ -33,7 +32,8 @@ class ConsumerHolder {
     this.consumerExchangeAndQueueDeclarer = consumerExchangeAndQueueDeclarer;
     this.activeLock = new Object();
     this.resourceCloser = new ResourceCloser();
-    shutdownListener = new ConsumerHolderChannelShutdownListener(this);
+    this.shutdownListener = new ConsumerHolderChannelShutdownListener(this);
+    this.consumerFactory = consumerFactory;
   }
 
   void deactivate() {
@@ -58,7 +58,7 @@ class ConsumerHolder {
           channel.addShutdownListener(shutdownListener);
           this.consumerExchangeAndQueueDeclarer.declareQueuesAndExchanges(channel);
           channel.basicConsume(queueName, autoAck,
-              autoAck ? create(consumer) : createAcknowledged(consumer, channel));
+              autoAck ? consumerFactory.create(consumer) : consumerFactory.createAcknowledged(consumer, channel));
           LOGGER.info("Activated consumer of class {}", consumer.getClass());
           active = true;
         } catch (IOException e) {
@@ -74,8 +74,8 @@ class ConsumerHolder {
     if (channel != null) {
       channel.removeShutdownListener(this.shutdownListener);
     }
-    channel = null;
     resourceCloser.closeResource(channel, "closing channel for consumer " + consumer.getClass());
+    channel = null;
     active = false;
   }
 

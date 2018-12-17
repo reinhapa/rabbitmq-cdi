@@ -1,20 +1,5 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.AMQP.BasicProperties.Builder;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.IOException;
-import java.text.MessageFormat;
-import java.util.function.BiConsumer;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
@@ -22,10 +7,27 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.AMQP.BasicProperties.Builder;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.function.BiConsumer;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 @ExtendWith(MockitoExtension.class)
 public class GenericPublisherTest {
+
   @Mock
-  private ConnectionConfiguration  config;
+  private ConnectionConfiguration config;
   @Mock
   private ConnectionRepository connectionRepository;
   @Mock
@@ -34,6 +36,9 @@ public class GenericPublisherTest {
   private Channel channel;
   @Mock
   BiConsumer<?, PublishException> errorHandler;
+
+  @Mock
+  private Encoder<?> failingEncoderMock;
 
   private GenericPublisher publisher;
   private TestEvent event;
@@ -67,7 +72,7 @@ public class GenericPublisherTest {
         eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
     assertEquals("application/json", propsCaptor.getValue().getContentType());
   }
-  
+
 
   @Test
   public void testPublish_with_error() throws Exception {
@@ -107,6 +112,24 @@ public class GenericPublisherTest {
   }
 
   @Test
+  public void testPublish_with_custom_MessageConverterAndEncodingProblem() throws Exception {
+
+    Assertions.assertThrows(PublishException.class, () -> {
+      doThrow(new EncodeException(null)).when(failingEncoderMock).encode(Mockito.any());
+
+      Builder builder = new Builder();
+      PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
+          "routingKey", builder, failingEncoderMock, errorHandler);
+      ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
+
+      when(connectionRepository.getConnection(config)).thenReturn(connection);
+      when(connection.createChannel()).thenReturn(channel);
+
+      publisher.publish(event, publisherConfiguration);
+    });
+  }
+
+  @Test
   public void testClose() {
     publisher.close();
   }
@@ -123,6 +146,7 @@ public class GenericPublisherTest {
   }
 
   public static class CustomEncoder implements Encoder<TestEvent> {
+
     @Override
     public String contentType() {
       return "text/plain";
