@@ -2,7 +2,6 @@ package net.reini.rabbitmq.cdi;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ShutdownListener;
-import com.rabbitmq.client.ShutdownSignalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +15,7 @@ class ConsumerHolder
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerHolder.class);
     private final boolean autoAck;
     private final String queueName;
-    private final UnrecoverableErrorDetector unrecoverableErrorDetector;
+
     private volatile boolean active;
     private final Object activeLock;
     private final EventConsumer consumer;
@@ -35,24 +34,7 @@ class ConsumerHolder
         this.consumerExchangeAndQueueDeclarer = consumerExchangeAndQueueDeclarer;
         this.activeLock = new Object();
         this.resourceCloser = new ResourceCloser();
-        this.unrecoverableErrorDetector = new UnrecoverableErrorDetector();
-
-        shutdownListener = new ShutdownListener()
-        {
-            @Override
-            public void shutdownCompleted(ShutdownSignalException cause)
-            {
-                synchronized (activeLock)
-                {
-                    LOGGER.warn("channel shutdown detected", cause);
-                    if (unrecoverableErrorDetector.isUnrecoverableError(cause))
-                    {
-                        ensureCompleteShutdown();
-                    }
-                }
-            }
-        };
-
+        shutdownListener = new ConsumerHolderChannelShutdownListener(this);
     }
 
     void deactivate()
@@ -98,7 +80,7 @@ class ConsumerHolder
         }
     }
 
-    private void ensureCompleteShutdown()
+    void ensureCompleteShutdown()
     {
         if (channel != null)
         {
