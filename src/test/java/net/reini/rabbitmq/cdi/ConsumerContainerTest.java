@@ -1,6 +1,5 @@
 package net.reini.rabbitmq.cdi;
 
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -11,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,9 +65,9 @@ class ConsumerContainerTest
         when(consumerHolderFactoryMock.createConsumerHolder(consumerMock, EXPECTED_QUEUE_NAME, EXPECTED_AUTOACK, connectionRepositoryMock, connectionConfigMock, exchangeDeclarationConfigMock, queueDeclarationConfigMock)).thenReturn(consumerHolderMock);
         sut.addConsumer(consumerMock, EXPECTED_QUEUE_NAME, EXPECTED_AUTOACK);
 
-        Assert.assertEquals(1, consumerHolders.size());
+        assertEquals(1, consumerHolders.size());
         ConsumerHolder consumerHolder = consumerHolders.get(0);
-        Assert.assertSame(consumerHolderMock, consumerHolder);
+        assertSame(consumerHolderMock, consumerHolder);
     }
 
 }
