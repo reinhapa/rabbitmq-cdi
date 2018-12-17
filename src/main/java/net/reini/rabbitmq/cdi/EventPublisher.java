@@ -20,6 +20,7 @@ import java.util.Set;
  */
 @Singleton
 public class EventPublisher {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(EventPublisher.class);
 
   private final ConnectionRepository connectionRepository;
@@ -34,9 +35,7 @@ public class EventPublisher {
   }
 
   /**
-   * Adds events of the given type to the CDI events to which the event publisher listens in order
-   * to publish them. The publisher configuration is used to decide where to and how to publish
-   * messages.
+   * Adds events of the given type to the CDI events to which the event publisher listens in order to publish them. The publisher configuration is used to decide where to and how to publish messages.
    *
    * @param eventType The event type
    * @param configuration The configuration used when publishing and event
@@ -46,8 +45,7 @@ public class EventPublisher {
   }
 
   /**
-   * Observes CDI events for remote events and publishes those events if their event type was added
-   * before.
+   * Observes CDI events for remote events and publishes those events if their event type was added before.
    *
    * @param event The event to publish
    * @throws ObserverException if the event could not be delivered to RabbitMQ
@@ -80,8 +78,7 @@ public class EventPublisher {
   }
 
   /**
-   * Provides a publisher with the specified reliability. Within the same thread, the same producer
-   * instance is provided for the given event type.
+   * Provides a publisher with the specified reliability. Within the same thread, the same producer instance is provided for the given event type.
    *
    * @param eventType The event type
    * @return The provided publisher

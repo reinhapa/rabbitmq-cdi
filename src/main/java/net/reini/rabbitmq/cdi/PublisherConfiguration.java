@@ -8,20 +8,20 @@ import java.io.IOException;
 import java.util.function.BiConsumer;
 
 /**
- * A publisher configuration stores all important settings and options used for publishing and
- * event.
+ * A publisher configuration stores all important settings and options used for publishing and event.
  *
  * @author Patrick Reinhart
  */
 final class PublisherConfiguration implements BiConsumer<Object, PublishException> {
-  private final ConnectionConfiguration  config;
+
+  private final ConnectionConfiguration config;
   private final BasicProperties basicProperties;
   private final Encoder<?> messageEncoder;
   private final String exchange;
   private final String routingKey;
   private final BiConsumer<?, PublishException> errorHandler;
 
-  PublisherConfiguration(ConnectionConfiguration  config, String exchange, String routingKey,
+  PublisherConfiguration(ConnectionConfiguration config, String exchange, String routingKey,
       Builder basicPropertiesBuilder, Encoder<?> encoder,
       BiConsumer<?, PublishException> errorHandler) {
     this.config = config;
@@ -39,7 +39,7 @@ final class PublisherConfiguration implements BiConsumer<Object, PublishExceptio
   /**
    * @return the connection configuration
    */
-  ConnectionConfiguration  getConfig() {
+  ConnectionConfiguration getConfig() {
     return config;
   }
 

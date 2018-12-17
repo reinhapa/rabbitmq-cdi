@@ -1,5 +1,8 @@
 package net.reini.rabbitmq.cdi;
 
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.rabbitmq.client.MissedHeartbeatException;
 import com.rabbitmq.client.ShutdownSignalException;
 import org.junit.jupiter.api.Test;
@@ -22,29 +25,29 @@ class ConsumerHolderChannelShutdownListenerTest
     void testShutdownBecauseOfApplicationException()
     {
         ConsumerHolderChannelShutdownListener sut = new ConsumerHolderChannelShutdownListener(consumerHolderMock);
-        Mockito.when(shutdownExceptionMock.isInitiatedByApplication()).thenReturn(true);
+        when(shutdownExceptionMock.isInitiatedByApplication()).thenReturn(true);
         sut.shutdownCompleted(shutdownExceptionMock);;
-        Mockito.verify(consumerHolderMock).ensureCompleteShutdown();
+        verify(consumerHolderMock).ensureCompleteShutdown();
     }
 
     @Test
     void testShutdownBecauseOfMissedHeartbeatException()
     {
         ConsumerHolderChannelShutdownListener sut = new ConsumerHolderChannelShutdownListener(consumerHolderMock);
-        Mockito.when(shutdownExceptionMock.isInitiatedByApplication()).thenReturn(false);
+        when(shutdownExceptionMock.isInitiatedByApplication()).thenReturn(false);
 
-        Mockito.when(shutdownExceptionMock.getCause()).thenReturn(new MissedHeartbeatException(""));
+        when(shutdownExceptionMock.getCause()).thenReturn(new MissedHeartbeatException(""));
         sut.shutdownCompleted(shutdownExceptionMock);;
-        Mockito.verify(consumerHolderMock,Mockito.never()).ensureCompleteShutdown();
+        verify(consumerHolderMock,Mockito.never()).ensureCompleteShutdown();
     }
 
     @Test
     void testRecoverableShutdown()
     {
         ConsumerHolderChannelShutdownListener sut = new ConsumerHolderChannelShutdownListener(consumerHolderMock);
-        Mockito.when(shutdownExceptionMock.isInitiatedByApplication()).thenReturn(false);
+        when(shutdownExceptionMock.isInitiatedByApplication()).thenReturn(false);
         sut.shutdownCompleted(shutdownExceptionMock);;
-        Mockito.verify(consumerHolderMock,Mockito.never()).ensureCompleteShutdown();
+        verify(consumerHolderMock,Mockito.never()).ensureCompleteShutdown();
     }
 
 }

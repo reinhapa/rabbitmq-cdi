@@ -17,6 +17,7 @@ import com.rabbitmq.client.ShutdownSignalException;
  * @author Patrick Reinhart
  */
 final class ConsumerImpl implements Consumer {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerImpl.class);
 
   private final EnvelopeConsumer envelopeConsumer;
@@ -54,19 +55,24 @@ final class ConsumerImpl implements Consumer {
   }
 
   @Override
-  public void handleConsumeOk(String consumerTag) {}
+  public void handleConsumeOk(String consumerTag) {
+  }
 
   @Override
-  public void handleCancelOk(String consumerTag) {}
+  public void handleCancelOk(String consumerTag) {
+  }
 
   @Override
-  public void handleCancel(String consumerTag) throws IOException {}
+  public void handleCancel(String consumerTag) throws IOException {
+  }
 
   @Override
-  public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {}
+  public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {
+  }
 
   @Override
-  public void handleRecoverOk(String consumerTag) {}
+  public void handleRecoverOk(String consumerTag) {
+  }
 
 
   @Override

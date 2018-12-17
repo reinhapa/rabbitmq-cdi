@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 class ConsumerContainer {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerContainer.class);
 
   private final ConnectionConfiguration config;
@@ -19,13 +20,12 @@ class ConsumerContainer {
   private volatile boolean connectionAvailable = false;
   private ConsumerHolderFactory consumerHolderFactory;
 
-  ConsumerContainer(ConnectionConfiguration config, ConnectionRepository connectionRepository)
-  {
+  ConsumerContainer(ConnectionConfiguration config, ConnectionRepository connectionRepository) {
     this(config, connectionRepository, new CopyOnWriteArrayList<>(), new ExchangeDeclarationConfig(), new QueueDeclarationConfig(), new ConsumerHolderFactory());
   }
 
-  ConsumerContainer(ConnectionConfiguration config, ConnectionRepository connectionRepository, List<ConsumerHolder> consumerHolders, ExchangeDeclarationConfig exchangeDeclarationConfig, QueueDeclarationConfig queueDeclarationConfig, ConsumerHolderFactory consumerHolderFactory)
-  {
+  ConsumerContainer(ConnectionConfiguration config, ConnectionRepository connectionRepository, List<ConsumerHolder> consumerHolders, ExchangeDeclarationConfig exchangeDeclarationConfig,
+      QueueDeclarationConfig queueDeclarationConfig, ConsumerHolderFactory consumerHolderFactory) {
     this.config = config;
     this.connectionRepository = connectionRepository;
     this.consumerHolders = consumerHolders;
@@ -34,41 +34,32 @@ class ConsumerContainer {
     this.consumerHolderFactory = consumerHolderFactory;
   }
 
-  public void addConsumer(EventConsumer consumer, String queue, boolean autoAck)
-  {
+  public void addConsumer(EventConsumer consumer, String queue, boolean autoAck) {
     ConsumerHolder consumerHolder = consumerHolderFactory.createConsumerHolder(consumer, queue, autoAck, connectionRepository, config, exchangeDeclarationConfig, queueDeclarationConfig);
     consumerHolders.add(consumerHolder);
   }
 
-  public void start()
-  {
+  public void start() {
     connectionRepository.registerConnectionListener(config, new ContainerConnectionListener(this));
     connectionRepository.connect(config);
     consumerWatcherThread = new ConsumerContainerWatcherThread(this, config.getFailedConsumerActivationRetryTime());
     consumerWatcherThread.start();
   }
 
-  public void addExchangeDeclaration(ExchangeDeclaration exchangeDeclaration)
-  {
+  public void addExchangeDeclaration(ExchangeDeclaration exchangeDeclaration) {
     this.exchangeDeclarationConfig.addExchangeDeclaration(exchangeDeclaration);
   }
 
-  public void addQueueDeclaration(QueueDeclaration queueDeclaration)
-  {
+  public void addQueueDeclaration(QueueDeclaration queueDeclaration) {
     this.queueDeclarationConfig.addQueueDeclaration(queueDeclaration);
   }
 
-  boolean ensureConsumersAreActive()
-  {
+  boolean ensureConsumersAreActive() {
     boolean allConsumersActive = true;
-    for (ConsumerHolder consumerHolder : consumerHolders)
-    {
-      try
-      {
+    for (ConsumerHolder consumerHolder : consumerHolders) {
+      try {
         consumerHolder.activate();
-      }
-      catch (Exception e)
-      {
+      } catch (Exception e) {
         allConsumersActive = false;
         LOGGER.warn("failed to activate consumer", e);
       }
@@ -77,18 +68,15 @@ class ConsumerContainer {
 
   }
 
-  boolean isConnectionAvailable()
-  {
+  boolean isConnectionAvailable() {
     return connectionAvailable;
   }
 
-  void deactivateAllConsumer()
-  {
+  void deactivateAllConsumer() {
     consumerHolders.forEach(consumer -> consumer.deactivate());
   }
 
-  public void setConnectionAvailable(boolean connectionAvailable)
-  {
+  public void setConnectionAvailable(boolean connectionAvailable) {
     this.connectionAvailable = connectionAvailable;
   }
 }

@@ -5,10 +5,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * Specialized decoder that decodes Json into the target event type.
- * 
+ *
  * @author Patrick Reinhart
  */
 public final class JsonDecoder<T> implements Decoder<T> {
+
   private static final ObjectMapper MAPPER =
       new ObjectMapper().disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 

@@ -18,8 +18,8 @@ import java.util.concurrent.TimeoutException;
  *
  * @author Patrick Reinhart
  */
-public class ConnectionConfiguration implements ConnectionConfigHolder
-{
+public class ConnectionConfiguration implements ConnectionConfigHolder {
+
   private static final int DEFAULT_CONNECTION_HEARTBEAT_TIMEOUT_IN_SEC = 3;
   private static final int DEFAULT_CONNECT_TIMEOUT_IN_MS = 10000;
   private static final int DEFAULT_WAIT_TIME_RETRY_CONNECT_IN_MS = 10_000;
@@ -78,20 +78,17 @@ public class ConnectionConfiguration implements ConnectionConfigHolder
   }
 
   @Override
-  public void setRequestedConnectionHeartbeatTimeout(int requestedHeartbeat)
-  {
+  public void setRequestedConnectionHeartbeatTimeout(int requestedHeartbeat) {
     this.requestedConnectionHeartbeatTimeout = requestedHeartbeat;
   }
 
   @Override
-  public void setConnectTimeout(int timeout)
-  {
+  public void setConnectTimeout(int timeout) {
     this.connectTimeout = timeout;
   }
 
   @Override
-  public void setConnectRetryWaitTime(long waitTime)
-  {
+  public void setConnectRetryWaitTime(long waitTime) {
     this.connectRetryWaitTime = waitTime;
   }
 
@@ -114,8 +111,7 @@ public class ConnectionConfiguration implements ConnectionConfigHolder
     return connectionFactory.newConnection(new ArrayList<>(brokerHosts));
   }
 
-  public void setFailedConsumerActivationRetryTime(long failedConsumerActivationRetryTime)
-  {
+  public void setFailedConsumerActivationRetryTime(long failedConsumerActivationRetryTime) {
     this.failedConsumerActivationRetryTime = failedConsumerActivationRetryTime;
   }
 
@@ -142,43 +138,35 @@ public class ConnectionConfiguration implements ConnectionConfigHolder
         && password.equals(other.password) && Objects.equals(virtualHost, other.virtualHost);
   }
 
-  boolean isSecure()
-  {
+  boolean isSecure() {
     return secure;
   }
 
-  String getUsername()
-  {
+  String getUsername() {
     return username;
   }
 
-  String getPassword()
-  {
+  String getPassword() {
     return password;
   }
 
-  String getVirtualHost()
-  {
+  String getVirtualHost() {
     return virtualHost;
   }
 
-  int getRequestedConnectionHeartbeatTimeout()
-  {
+  int getRequestedConnectionHeartbeatTimeout() {
     return requestedConnectionHeartbeatTimeout;
   }
 
-  int getConnectTimeout()
-  {
+  int getConnectTimeout() {
     return connectTimeout;
   }
 
-  long getConnectRetryWaitTime()
-  {
+  long getConnectRetryWaitTime() {
     return connectRetryWaitTime;
   }
 
-  long getFailedConsumerActivationRetryTime()
-  {
+  long getFailedConsumerActivationRetryTime() {
     return failedConsumerActivationRetryTime;
   }
 }

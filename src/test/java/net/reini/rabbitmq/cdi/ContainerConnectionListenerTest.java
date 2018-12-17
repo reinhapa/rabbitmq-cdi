@@ -1,5 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
+import static org.mockito.Mockito.verify;
+
 import com.rabbitmq.client.Connection;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +14,7 @@ public class ContainerConnectionListenerTest
 {
     @Mock
     private ConsumerContainer consumerContainerMock;
+    @Mock
     private Connection conectionMock;
     @Mock
     private ContainerConnectionListener.NotifyWrapper notifyWrapperMock;
@@ -21,8 +24,8 @@ public class ContainerConnectionListenerTest
     {
         ContainerConnectionListener sut = new ContainerConnectionListener(consumerContainerMock);
         sut.onConnectionClosed(conectionMock);
-        Mockito.verify(consumerContainerMock,Mockito.times(1)).setConnectionAvailable(false);
-        Mockito.verify(consumerContainerMock,Mockito.times(1)).deactivateAllConsumer();
+        verify(consumerContainerMock,Mockito.times(1)).setConnectionAvailable(false);
+        verify(consumerContainerMock,Mockito.times(1)).deactivateAllConsumer();
 
     }
 
@@ -31,8 +34,8 @@ public class ContainerConnectionListenerTest
     {
         ContainerConnectionListener sut = new ContainerConnectionListener(consumerContainerMock);
         sut.onConnectionLost(conectionMock);
-        Mockito.verify(consumerContainerMock,Mockito.times(1)).setConnectionAvailable(false);
-        Mockito.verify(consumerContainerMock,Mockito.times(1)).deactivateAllConsumer();
+        verify(consumerContainerMock,Mockito.times(1)).setConnectionAvailable(false);
+        verify(consumerContainerMock,Mockito.times(1)).deactivateAllConsumer();
     }
 
     @Test
@@ -40,8 +43,8 @@ public class ContainerConnectionListenerTest
     {
         ContainerConnectionListener sut = new ContainerConnectionListener(consumerContainerMock,notifyWrapperMock);
         sut.onConnectionEstablished(conectionMock);
-        Mockito.verify(consumerContainerMock,Mockito.times(1)).setConnectionAvailable(true);
-        Mockito.verify(notifyWrapperMock,Mockito.times(1)).notifyThread();
+        verify(consumerContainerMock,Mockito.times(1)).setConnectionAvailable(true);
+        verify(notifyWrapperMock,Mockito.times(1)).notifyThread();
 
     }
 

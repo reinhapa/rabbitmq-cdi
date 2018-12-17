@@ -12,6 +12,7 @@ import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Envelope;
 
 public class EventConsumer implements EnvelopeConsumer {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(EventConsumer.class);
 
   private final Decoder<?> decoder;
@@ -25,8 +26,7 @@ public class EventConsumer implements EnvelopeConsumer {
   }
 
   /**
-   * Builds a CDI event from a message. The CDI event instance is retrieved from the injection
-   * container.
+   * Builds a CDI event from a message. The CDI event instance is retrieved from the injection container.
    *
    * @param messageBody The message
    * @return The CDI event

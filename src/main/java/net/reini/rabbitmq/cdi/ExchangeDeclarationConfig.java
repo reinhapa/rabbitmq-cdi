@@ -5,23 +5,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ExchangeDeclarationConfig
-{
-    private final Set<ExchangeDeclaration> exchangeDeclarations;
+public class ExchangeDeclarationConfig {
 
-    public ExchangeDeclarationConfig()
-    {
-        this.exchangeDeclarations = new HashSet<>();
-    }
+  private final Set<ExchangeDeclaration> exchangeDeclarations;
 
-    public void addExchangeDeclaration(ExchangeDeclaration exchangeDeclaration)
-    {
-        this.exchangeDeclarations.add(exchangeDeclaration);
-    }
+  public ExchangeDeclarationConfig() {
+    this.exchangeDeclarations = new HashSet<>();
+  }
 
-    List<ExchangeDeclaration> getExchangeDeclarations()
-    {
-        return new ArrayList(exchangeDeclarations);
-    }
+  public void addExchangeDeclaration(ExchangeDeclaration exchangeDeclaration) {
+    this.exchangeDeclarations.add(exchangeDeclaration);
+  }
+
+  List<ExchangeDeclaration> getExchangeDeclarations() {
+    return new ArrayList(exchangeDeclarations);
+  }
 
 }

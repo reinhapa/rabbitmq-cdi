@@ -25,6 +25,7 @@ import net.reini.rabbitmq.cdi.EventBinder.BinderConfiguration;
  */
 @ExtendWith(MockitoExtension.class)
 public class BinderConfigurationTest {
+
   @Mock
   private ConnectionConfigHolder config;
 
@@ -216,4 +217,23 @@ public class BinderConfigurationTest {
     verify(config).setSecure(true);
     verify(config).setVirtualHost("nkjoriiy");
   }
+
+  @Test
+  public void testSetConnectTimeout() {
+    assertSame(binderConfig, binderConfig.setConnectTimeout(4000));
+    verify(config).setConnectTimeout(4000);
+  }
+
+  @Test
+  public void testSetConnectRetryWaitTime() {
+    assertSame(binderConfig, binderConfig.setConnectRetryWaitTime(3000));
+    verify(config).setConnectRetryWaitTime(3000);
+  }
+
+  @Test
+  public void testSetRequestedConnectionHeartbeatTimeout() {
+    assertSame(binderConfig, binderConfig.setRequestedConnectionHeartbeatTimeout(5));
+    verify(config).setRequestedConnectionHeartbeatTimeout(5);
+  }
+
 }

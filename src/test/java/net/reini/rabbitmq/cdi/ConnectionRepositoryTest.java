@@ -1,7 +1,13 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.Connection;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
+
 import com.rabbitmq.client.ConnectionFactory;
+import java.io.IOException;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -9,17 +15,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.IOException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
-
 @ExtendWith(MockitoExtension.class)
-public class ConnectionRepositoryTest
-{
-  @Mock
-  private Connection connection;
+public class ConnectionRepositoryTest {
+
   @Mock
   private ConnectionConfiguration config;
   @Mock
@@ -27,42 +25,69 @@ public class ConnectionRepositoryTest
   @Mock
   private ConnectionFactory connectionFactory;
 
-  private ConnectionRepository connectionRepository;
+  @Mock
+  private ConnectionManager connectionManagerMock;
+
+  private Supplier<ConnectionFactory> connectionFactorySupplier;
+
+  private ConnectionRepository sut;
+
+
+  private Function<ConnectionConfiguration, ConnectionManager> factoryFunction = (ConnectionConfiguration connectionConfiguration) -> {
+    return connectionManagerMock;
+  };
 
   @BeforeEach
   public void setUp() {
-    connectionRepository = new ConnectionRepository(() -> connectionFactory);
+    this.connectionFactorySupplier = () -> connectionFactory;
+    sut = new ConnectionRepository(connectionFactorySupplier, factoryFunction);
   }
 
   @Test
   public void testClose() {
-    connectionRepository.close();
+    sut.close();
 
-    connectionRepository.registerConnectionListener(config, listener);
-    connectionRepository.close();
-    verify(listener).onConnectionClosed(null);
+    sut.registerConnectionListener(config, listener);
+    sut.close();
+    verify(connectionManagerMock).close();
   }
 
   @Test
   public void testRegisterConnectionListener() {
-    connectionRepository.registerConnectionListener(config, listener);
+    sut.registerConnectionListener(config, listener);
+    verify(connectionManagerMock).addListener(listener);
   }
 
   @Test
   public void testRemoveConnectionListener() {
-    connectionRepository.removeConnectionListener(config, listener);
+
+    sut.removeConnectionListener(config, listener);
+    verify(connectionManagerMock).removeListener(listener);
   }
 
   @Nested
-  class ConnectionManagerTest
-  {
+  class ConnectionManagerTest {
+
     private ConnectionManager connectionManager;
 
     @BeforeEach
     public void setUp() {
       connectionManager = new ConnectionManager(config);
-      connectionManager.listeners().add(listener);
+      connectionManager.addListener(listener);
     }
+
+    @Test
+    public void testConnect() {
+      sut.connect(config);
+      verify(connectionManagerMock).connect(connectionFactorySupplier);
+    }
+
+    @Test
+    public void testGetConnection() throws IOException {
+      sut.getConnection(config);
+      verify(connectionManagerMock).getConnection(connectionFactorySupplier);
+    }
+
 
     @Test
     public void getConnection_closed() throws Exception {

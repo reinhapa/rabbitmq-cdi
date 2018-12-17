@@ -5,22 +5,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class QueueDeclarationConfig
-{
-    private Set<QueueDeclaration> queueDeclarations;
+public class QueueDeclarationConfig {
 
-    public QueueDeclarationConfig()
-    {
-        this.queueDeclarations = new HashSet<>();
-    }
+  private Set<QueueDeclaration> queueDeclarations;
 
-    public void addQueueDeclaration(QueueDeclaration queueDeclaration)
-    {
-        this.queueDeclarations.add(queueDeclaration);
-    }
+  public QueueDeclarationConfig() {
+    this.queueDeclarations = new HashSet<>();
+  }
 
-    List<QueueDeclaration> getQueueDeclarations()
-    {
-        return new ArrayList<>(queueDeclarations);
-    }
+  public void addQueueDeclaration(QueueDeclaration queueDeclaration) {
+    this.queueDeclarations.add(queueDeclaration);
+  }
+
+  List<QueueDeclaration> getQueueDeclarations() {
+    return new ArrayList<>(queueDeclarations);
+  }
 }

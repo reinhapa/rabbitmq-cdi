@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 public class GenericPublisher implements MessagePublisher {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(GenericPublisher.class);
 
   public static final int DEFAULT_RETRY_ATTEMPTS = 3;
@@ -20,12 +21,10 @@ public class GenericPublisher implements MessagePublisher {
   }
 
   /**
-   * Handles an exception depending on the already used attempts to send a message. Also performs a
-   * soft reset of the currently used channel.
+   * Handles an exception depending on the already used attempts to send a message. Also performs a soft reset of the currently used channel.
    *
    * @param attempt Current attempt count
    * @param cause The thrown exception
-   *
    * @throws PublishException if the maximum amount of attempts is exceeded
    */
   protected void handleIoException(int attempt, Throwable cause)
@@ -52,7 +51,7 @@ public class GenericPublisher implements MessagePublisher {
         LOGGER.debug("Attempt {} to send message", Integer.valueOf(attempt));
       }
       try (Channel channel =
-                   connectionRepository.getConnection(publisherConfiguration.getConfig()).createChannel()) {
+          connectionRepository.getConnection(publisherConfiguration.getConfig()).createChannel()) {
         publisherConfiguration.publish(channel, event);
         return;
       } catch (EncodeException e) {

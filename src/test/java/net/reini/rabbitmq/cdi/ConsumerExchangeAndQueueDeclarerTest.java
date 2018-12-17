@@ -1,5 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
+import static org.mockito.Mockito.verify;
+
 import com.rabbitmq.client.Channel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,7 +40,7 @@ class ConsumerExchangeAndQueueDeclarerTest
         ConsumerExchangeAndQueueDeclarer sut = new ConsumerExchangeAndQueueDeclarer(exchangeDeclarationConfig, queueDeclarationConfig);
         sut.declareQueuesAndExchanges(channelMock);
 
-        Mockito.verify(channelMock, Mockito.times(1)).exchangeDeclare(exchangeDeclaration.getExchangeName(), exchangeDeclaration.getExchangeType(), exchangeDeclaration.isDurable(), exchangeDeclaration.isAutoDelete(), exchangeDeclaration.getArguments());
+        verify(channelMock, Mockito.times(1)).exchangeDeclare(exchangeDeclaration.getExchangeName(), exchangeDeclaration.getExchangeType(), exchangeDeclaration.isDurable(), exchangeDeclaration.isAutoDelete(), exchangeDeclaration.getArguments());
     }
 
     @Test
@@ -55,6 +57,6 @@ class ConsumerExchangeAndQueueDeclarerTest
         ConsumerExchangeAndQueueDeclarer sut = new ConsumerExchangeAndQueueDeclarer(exchangeDeclarationConfig, queueDeclarationConfig);
         sut.declareQueuesAndExchanges(channelMock);
 
-        Mockito.verify(channelMock, Mockito.times(1)).queueDeclare(queueDeclaration.getQueueName(), queueDeclaration.isDurable(), queueDeclaration.isExclusive(), queueDeclaration.isAutoDelete(), queueDeclaration.getArguments());
+        verify(channelMock, Mockito.times(1)).queueDeclare(queueDeclaration.getQueueName(), queueDeclaration.isDurable(), queueDeclaration.isExclusive(), queueDeclaration.isAutoDelete(), queueDeclaration.getArguments());
     }
 }

@@ -4,7 +4,7 @@ public interface MessagePublisher {
 
   /**
    * Publishes the given event using the given publisher configuration template.
-   * 
+   *
    * @param event the event being published to RabbitMQ
    * @param publisherConfiguration the default publisher configuration
    * @throws PublishException if the event could not be delivered to RabbitMQ
