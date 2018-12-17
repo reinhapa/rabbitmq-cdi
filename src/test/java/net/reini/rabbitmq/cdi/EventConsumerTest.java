@@ -65,6 +65,7 @@ public class EventConsumerTest {
     assertFalse(consumer.consume("consumerTag", envelope, properties, body));
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void testHandleDelivery() throws Exception {
     TestEvent event = new TestEvent();

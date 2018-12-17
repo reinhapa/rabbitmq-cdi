@@ -1,13 +1,11 @@
 package net.reini.rabbitmq.cdi;
 
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.TimeoutException;
-
+import com.rabbitmq.client.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.Channel;
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 public class GenericPublisher implements MessagePublisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(GenericPublisher.class);
@@ -15,15 +13,16 @@ public class GenericPublisher implements MessagePublisher {
   public static final int DEFAULT_RETRY_ATTEMPTS = 3;
   public static final int DEFAULT_RETRY_INTERVAL = 1000;
 
-  private final ConnectionProducer connectionProducer;
+  private final ConnectionRepository connectionRepository;
 
-  public GenericPublisher(ConnectionProducer connectionProducer) {
-    this.connectionProducer = connectionProducer;
+  public GenericPublisher(ConnectionRepository connectionRepository) {
+    this.connectionRepository = connectionRepository;
   }
 
   /**
    * Handles an exception depending on the already used attempts to send a message. Also performs a
    * soft reset of the currently used channel.
+   *
    * @param attempt Current attempt count
    * @param cause The thrown exception
    *
@@ -53,12 +52,12 @@ public class GenericPublisher implements MessagePublisher {
         LOGGER.debug("Attempt {} to send message", Integer.valueOf(attempt));
       }
       try (Channel channel =
-          connectionProducer.getConnection(publisherConfiguration.getConfig()).createChannel()) {
+                   connectionRepository.getConnection(publisherConfiguration.getConfig()).createChannel()) {
         publisherConfiguration.publish(channel, event);
         return;
       } catch (EncodeException e) {
         throw new PublishException("Unable to serialize event", e);
-      } catch (IOException | TimeoutException | NoSuchAlgorithmException e) {
+      } catch (IOException | TimeoutException e) {
         handleIoException(attempt, e);
       }
     }

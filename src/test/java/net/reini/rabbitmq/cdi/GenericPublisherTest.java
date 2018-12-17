@@ -1,16 +1,9 @@
 package net.reini.rabbitmq.cdi;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.text.MessageFormat;
-import java.util.function.BiConsumer;
-
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.AMQP.BasicProperties.Builder;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,23 +11,27 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.AMQP.BasicProperties.Builder;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
+import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.function.BiConsumer;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class GenericPublisherTest {
   @Mock
-  private ConnectionConfig config;
+  private ConnectionConfiguration  config;
   @Mock
-  private ConnectionProducer connectionProducer;
+  private ConnectionRepository connectionRepository;
   @Mock
   private Connection connection;
   @Mock
   private Channel channel;
-  @Mock
-  private Encoder<TestEvent> encoder;
   @Mock
   BiConsumer<?, PublishException> errorHandler;
 
@@ -43,7 +40,7 @@ public class GenericPublisherTest {
 
   @BeforeEach
   public void setUp() throws Exception {
-    publisher = new GenericPublisher(connectionProducer) {
+    publisher = new GenericPublisher(connectionRepository) {
       @Override
       protected void sleepBeforeRetry() {
         // no delay
@@ -61,7 +58,7 @@ public class GenericPublisherTest {
         "routingKey", builder, new JsonEncoder<>(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.publish(event, publisherConfiguration);
@@ -70,6 +67,7 @@ public class GenericPublisherTest {
         eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
     assertEquals("application/json", propsCaptor.getValue().getContentType());
   }
+  
 
   @Test
   public void testPublish_with_error() throws Exception {
@@ -78,7 +76,7 @@ public class GenericPublisherTest {
         "routingKey", builder, new JsonEncoder<>(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
     doThrow(new IOException("someError")).when(channel).basicPublish(eq("exchange"),
         eq("routingKey"), propsCaptor.capture(),
@@ -92,58 +90,13 @@ public class GenericPublisherTest {
   }
 
   @Test
-  public void testPublish_withEncodeException() throws Exception {
-    Builder builder = new Builder();
-    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
-        "routingKey", builder, encoder, errorHandler);
-
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
-    when(connection.createChannel()).thenReturn(channel);
-    doThrow(new EncodeException(new RuntimeException("someError"))).when(encoder).encode(event);
-
-    Throwable exception = assertThrows(PublishException.class, () -> {
-      publisher.publish(event, publisherConfiguration);
-    });
-    assertEquals("Unable to serialize event", exception.getMessage());
-  }
-
-  @Test
-  public void testPublish_withTooManyAttempts() throws Exception {
-    publisher = new GenericPublisher(connectionProducer) {
-      @Override
-      protected void handleIoException(int attempt, Throwable cause) throws PublishException {
-        // do not throw to allow attempts to overrun DEFAULT_RETRY_ATTEMPTS
-      }
-
-      @Override
-      protected void sleepBeforeRetry() {
-        // no delay
-      }
-    };
-
-    Builder builder = new Builder();
-    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
-        "routingKey", builder, new JsonEncoder<>(), errorHandler);
-    ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
-
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
-    when(connection.createChannel()).thenReturn(channel);
-    doThrow(new IOException("someError")).when(channel).basicPublish(eq("exchange"),
-        eq("routingKey"), propsCaptor.capture(),
-        eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
-
-    publisher.publish(event, publisherConfiguration);
-    assertEquals("application/json", propsCaptor.getValue().getContentType());
-  }
-
-  @Test
   public void testPublish_with_custom_MessageConverter() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
         "routingKey", builder, new CustomEncoder(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.publish(event, publisherConfiguration);
@@ -165,7 +118,7 @@ public class GenericPublisherTest {
 
   @Test
   public void testSleepBeforeRetry_InterruptedException() throws InterruptedException {
-    publisher = new GenericPublisher(connectionProducer);
+    publisher = new GenericPublisher(connectionRepository);
     call_SleepBeforeRetry_InAnotherThread_AndInterrupt();
   }
 

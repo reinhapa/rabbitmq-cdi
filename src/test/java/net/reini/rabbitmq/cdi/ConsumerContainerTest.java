@@ -1,84 +1,72 @@
 package net.reini.rabbitmq.cdi;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.TimeoutException;
-
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.Consumer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ConsumerContainerTest {
-  @Mock
-  private ConsumerContainer consumerContainer;
-  @Mock
-  private ConnectionProducer connectionProducer;
-  @Mock
-  private Connection connection;
-  @Mock
-  private Channel channelOne;
-  @Mock
-  private Channel channelTwo;
-  @Mock
-  private EventConsumer consumer;
-  @Mock
-  private EventConsumer consumerAutoAck;
+class ConsumerContainerTest
+{
+    private static final String EXPECTED_QUEUE_NAME = "queue";
+    private static final boolean EXPECTED_AUTOACK = true;
 
-  private ConnectionConfig config;
+    @Mock
+    private ConnectionRepository connectionRepositoryMock;
+    @Mock
+    private CopyOnWriteArrayList<ConsumerHolder> consumerHolderListMock;
+    @Mock
+    private ExchangeDeclarationConfig exchangeDeclarationConfigMock;
+    @Mock
+    private QueueDeclarationConfig queueDeclarationConfigMock;
+    @Mock
+    private ExchangeDeclaration exchangeDeclarationMock;
+    @Mock
+    private QueueDeclaration queueDeclarationMock;
+    @Mock
+    private ConnectionConfiguration connectionConfigMock;
+    @Mock
+    private EventConsumer consumerMock;
+    @Mock
+    private ConsumerHolderFactory consumerHolderFactoryMock;
+    @Mock
+    private ConsumerHolder consumerHolderMock;
 
-  @BeforeEach
-  void prepare() {
-    consumerContainer = new ConsumerContainer(config, connectionProducer);
-  }
+    @Test
+    void testDelegateExchangeDeclaration()
+    {
+        ConsumerContainer sut = new ConsumerContainer(null, null, null, exchangeDeclarationConfigMock, null, null);
+        sut.addExchangeDeclaration(exchangeDeclarationMock);
+        Mockito.verify(exchangeDeclarationConfigMock).addExchangeDeclaration(exchangeDeclarationMock);
+    }
 
-  @Test
-  void testCreateChannel() throws NoSuchAlgorithmException, IOException, TimeoutException {
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
-    when(connection.createChannel()).thenReturn(channelOne);
+    @Test
+    void testDelegateQueueDeclaration()
+    {
+        ConsumerContainer sut = new ConsumerContainer(null, null, null, null, queueDeclarationConfigMock, null);
+        sut.addQueueDeclaration(queueDeclarationMock);
+        Mockito.verify(queueDeclarationConfigMock).addQueueDeclaration(queueDeclarationMock);
+    }
 
-    assertEquals(channelOne, consumerContainer.createChannel());
-  }
+    @Test
+    void testAddConsumerHolder()
+    {
+        List<ConsumerHolder> consumerHolders = new ArrayList<>();
+        ConsumerContainer sut = new ConsumerContainer(connectionConfigMock, connectionRepositoryMock, consumerHolders, exchangeDeclarationConfigMock, queueDeclarationConfigMock, consumerHolderFactoryMock);
+        when(consumerHolderFactoryMock.createConsumerHolder(consumerMock, EXPECTED_QUEUE_NAME, EXPECTED_AUTOACK, connectionRepositoryMock, connectionConfigMock, exchangeDeclarationConfigMock, queueDeclarationConfigMock)).thenReturn(consumerHolderMock);
+        sut.addConsumer(consumerMock, EXPECTED_QUEUE_NAME, EXPECTED_AUTOACK);
 
-  @Test
-  void testStartAllConsumers() throws NoSuchAlgorithmException, IOException, TimeoutException {
-    ArgumentCaptor<ConnectionListener> listenerCaptor =
-        ArgumentCaptor.forClass(ConnectionListener.class);
-
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
-    when(connection.createChannel()).thenReturn(channelOne, channelTwo, channelOne)
-        .thenThrow(new IOException("channel create error"));
-    doNothing().doThrow(new IOException("channel close error")).when(channelOne).close();
-    doNothing().when(channelTwo).close();
-
-    consumerContainer.addConsumer(consumer, "queueOne", false);
-    consumerContainer.addConsumer(consumerAutoAck, "queueTwo", true);
-    consumerContainer.startAllConsumers();
-
-    verify(channelOne).basicConsume(eq("queueOne"), eq(false), any(Consumer.class));
-    verify(channelTwo).basicConsume(eq("queueTwo"), eq(true), any(Consumer.class));
-
-    verify(connectionProducer).registerConnectionListener(eq(config), listenerCaptor.capture());
-    assertEquals(1, listenerCaptor.getAllValues().size());
-
-    ConnectionListener listener = listenerCaptor.getValue();
-    listener.onConnectionLost(connection);
-    listener.onConnectionEstablished(connection);
-    listener.onConnectionClosed(connection);
-  }
+        Assert.assertEquals(1, consumerHolders.size());
+        ConsumerHolder consumerHolder = consumerHolders.get(0);
+        Assert.assertSame(consumerHolderMock, consumerHolder);
+    }
 
 }

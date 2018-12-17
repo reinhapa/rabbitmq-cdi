@@ -1,25 +1,24 @@
 package net.reini.rabbitmq.cdi;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.util.function.BiConsumer;
-
+import com.rabbitmq.client.AMQP.BasicProperties.Builder;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.MessageProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.rabbitmq.client.AMQP.BasicProperties.Builder;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.MessageProperties;
+import java.io.IOException;
+import java.util.function.BiConsumer;
+
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PublisherConfigurationTest {
   @Mock
-  private ConnectionConfig config;
+  private ConnectionConfiguration  config;
   @Mock
   private Encoder<Object> encoder;
   @Mock

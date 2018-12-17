@@ -1,5 +1,18 @@
 package net.reini.rabbitmq.cdi;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.AMQP.BasicProperties.Builder;
+import com.rabbitmq.client.Address;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.MessageProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.event.Event;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
@@ -11,21 +24,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.Dependent;
-import javax.enterprise.event.Event;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.AMQP.BasicProperties.Builder;
-import com.rabbitmq.client.Address;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.MessageProperties;
 
 /**
  * <p>
@@ -71,7 +69,8 @@ import com.rabbitmq.client.MessageProperties;
 @Dependent
 public abstract class EventBinder {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventBinder.class);
-
+  private final Set<ExchangeDeclaration> exchangeDeclarations;
+  private final Set<QueueDeclaration> queueDeclarations;
   private final Set<QueueBinding<?>> queueBindings;
   private final Set<ExchangeBinding<?>> exchangeBindings;
 
@@ -82,7 +81,7 @@ public abstract class EventBinder {
   @Inject
   private EventPublisher eventPublisher;
   @Inject
-  private ConnectionProducer connectionProducer;
+  private ConnectionRepository connectionRepository;
 
   private ConnectionConfiguration configuration;
   private ConsumerContainer consumerContainer;
@@ -90,6 +89,8 @@ public abstract class EventBinder {
   public EventBinder() {
     exchangeBindings = new HashSet<>();
     queueBindings = new HashSet<>();
+    exchangeDeclarations = new HashSet<>();
+    queueDeclarations = new HashSet<>();
   }
 
   /**
@@ -146,9 +147,11 @@ public abstract class EventBinder {
    * @throws IOException if the initialization failed due to a broker related issue
    */
   public void initialize() throws IOException {
+    processExchangeDeclarations();
+    processQueueDeclarations();
     bindEvents();
     processQueueBindings();
-    consumerContainer.startAllConsumers();
+    consumerContainer.start();
     processExchangeBindings();
   }
 
@@ -156,7 +159,21 @@ public abstract class EventBinder {
   @PostConstruct
   void initializeConsumerContainer() {
     configuration = new ConnectionConfiguration();
-    consumerContainer = new ConsumerContainer(configuration, connectionProducer);
+    consumerContainer = new ConsumerContainer(configuration, connectionRepository);
+  }
+
+  void processExchangeDeclarations(){
+    for (ExchangeDeclaration exchangeDeclaration : exchangeDeclarations) {
+      consumerContainer.addExchangeDeclaration(exchangeDeclaration);
+    }
+    exchangeDeclarations.clear();
+  }
+
+  void processQueueDeclarations(){
+    for (QueueDeclaration queueDeclaration : queueDeclarations) {
+      consumerContainer.addQueueDeclaration(queueDeclaration);
+    }
+    queueDeclarations.clear();
   }
 
   void processExchangeBindings() {
@@ -172,23 +189,25 @@ public abstract class EventBinder {
   void bindQueue(QueueBinding<?> queueBinding) {
     @SuppressWarnings("unchecked")
     Class<Object> eventType = (Class<Object>) queueBinding.getEventType();
-    Event<Object> eventControl = (Event<Object>) remoteEventControl.select(eventType);
-    Instance<Object> eventPool = (Instance<Object>) remoteEventPool.select(eventType);
-    EventConsumer consumer = new EventConsumer(queueBinding.getDecoder(), eventControl, eventPool);
+    Event<Object> eventControl = (Event<Object>) remoteEventControl.select(queueBinding.eventType);
+    @SuppressWarnings("unchecked")
+    Instance<Object> eventPool = (Instance<Object>) remoteEventPool.select(queueBinding.eventType);
     String queue = queueBinding.getQueue();
+    EventConsumer consumer = new EventConsumer(queueBinding.getDecoder(), eventControl, eventPool);
     consumerContainer.addConsumer(consumer, queue, queueBinding.isAutoAck());
-    LOGGER.info("Binding between queue {} and event type {} activated", queue, eventType.getName());
+    LOGGER.info("Binding between queue {} and event type {} activated", queue,
+            eventType.getName());
   }
 
   void bindExchange(ExchangeBinding<?> exchangeBinding) {
     Class<?> eventType = exchangeBinding.getEventType();
     String exchange = exchangeBinding.getExchange();
     PublisherConfiguration cfg = new PublisherConfiguration(configuration, exchange,
-        exchangeBinding.getRoutingKey(), exchangeBinding.getBasicPropertiesBuilder(),
-        exchangeBinding.getEncoder(), exchangeBinding.getErrorHandler());
+            exchangeBinding.getRoutingKey(), exchangeBinding.getBasicPropertiesBuilder(),
+            exchangeBinding.getEncoder(), exchangeBinding.getErrorHandler());
     eventPublisher.addEvent(eventType, cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchange,
-        eventType.getName());
+            eventType.getName());
   }
 
   static <T> BiConsumer<T, PublishException> nop() {
@@ -227,18 +246,35 @@ public abstract class EventBinder {
     return new EventBindingBuilder<>(event, queueBindings::add, exchangeBindings::add);
   }
 
-  public final static class EventBindingBuilder<T> {
+
+  public ExchangeDeclaration declareExchange(String exchangeName)
+  {
+    ExchangeDeclaration exchangeDeclaration = new ExchangeDeclaration(exchangeName);
+    consumerContainer.addExchangeDeclaration(exchangeDeclaration);
+    return exchangeDeclaration;
+  }
+
+  public QueueDeclaration declareQueue(String queueName)
+  {
+    QueueDeclaration exchangeDeclarationConfigEntry = new QueueDeclaration(queueName);
+    consumerContainer.addQueueDeclaration(exchangeDeclarationConfigEntry);
+    return exchangeDeclarationConfigEntry;
+  }
+
+
+  public final static class EventBindingBuilder<T>
+  {
     private final Class<T> eventType;
     private final Consumer<QueueBinding<T>> queueBindingConsumer;
     private final Consumer<ExchangeBinding<T>> exchangeBindingConsumer;
 
     EventBindingBuilder(Class<T> eventType, Consumer<QueueBinding<T>> queueBindingConsumer,
-        Consumer<ExchangeBinding<T>> exchangeBindingConsumer) {
+                        Consumer<ExchangeBinding<T>> exchangeBindingConsumer)
+    {
       this.eventType = eventType;
       this.queueBindingConsumer = queueBindingConsumer;
       this.exchangeBindingConsumer = exchangeBindingConsumer;
     }
-
     /**
      * Binds an event to the given queue. On initialization, a consumer is going to be registered at
      * the broker that is going to fire an event of the bound event type for every consumed message.
@@ -284,19 +320,23 @@ public abstract class EventBinder {
           eventType.getSimpleName());
     }
 
-    Class<T> getEventType() {
+    Class<T> getEventType()
+    {
       return eventType;
     }
 
-    String getQueue() {
+    String getQueue()
+    {
       return queue;
     }
 
-    boolean isAutoAck() {
+    boolean isAutoAck()
+    {
       return autoAck;
     }
 
-    Decoder<T> getDecoder() {
+    Decoder<T> getDecoder()
+    {
       return decoder;
     }
 
@@ -334,15 +374,20 @@ public abstract class EventBinder {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode()
+    {
       return Objects.hash(eventType, queue);
     }
 
     @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
+    public boolean equals(Object obj)
+    {
+      if (this == obj)
+      {
         return true;
-      } else if (!(obj instanceof QueueBinding)) {
+      }
+      else if (!(obj instanceof QueueBinding))
+      {
         return false;
       }
       QueueBinding<?> other = (QueueBinding<?>) obj;
@@ -350,7 +395,8 @@ public abstract class EventBinder {
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
       return String.format("QueueBinding[type=%s, queue=%s]", eventType.getName(), queue);
     }
   }
@@ -380,28 +426,48 @@ public abstract class EventBinder {
           eventType.getSimpleName());
     }
 
-    Class<T> getEventType() {
+    Class<T> getEventType()
+    {
       return eventType;
     }
 
-    String getExchange() {
+    String getExchange()
+    {
       return exchange;
     }
 
-    String getRoutingKey() {
+    String getRoutingKey()
+    {
       return routingKey;
     }
 
-    Encoder<T> getEncoder() {
+    Encoder<T> getEncoder()
+    {
       return encoder;
     }
 
-    BiConsumer<T, PublishException> getErrorHandler() {
+    BiConsumer<T, PublishException> getErrorHandler()
+    {
       return errorHandler;
     }
 
-    Builder getBasicPropertiesBuilder() {
+    Builder getBasicPropertiesBuilder()
+    {
       return basicPropertiesBuilder;
+    }
+
+    /**
+     * Sets the given basic properties to be used for message publishing.	     * Sets the message header to the given headerValue to be added when sending each message.
+     *
+     * @param header      the header type
+     * @param headerValue the header value
+     * @return the exchange binding
+     */
+    public ExchangeBinding<T> withHeader(String header, Object headerValue)
+    {
+      headers.put(Objects.requireNonNull(header, "header must not be null"),
+              Objects.requireNonNull(headerValue, "headerValue must not be null"));
+      return this;
     }
 
     /**
@@ -418,7 +484,7 @@ public abstract class EventBinder {
 
     /**
      * Sets the message encoder to be used for message encoding.
-     * 
+     *
      * @param messageEncoder The message encoder instance
      * @return the exchange binding
      */
@@ -430,35 +496,24 @@ public abstract class EventBinder {
     }
 
     /**
-     * Sets the message header to the given headerValue to be added when sending each message.
-     * 
-     * @param header the header type
-     * @param headerValue the header value
-     * @return the exchange binding
-     */
-    public ExchangeBinding<T> withHeader(String header, Object headerValue) {
-      headers.put(Objects.requireNonNull(header, "header must not be null"),
-          Objects.requireNonNull(headerValue, "headerValue must not be null"));
-      return this;
-    }
-
-    /**
      * Sets the given basic properties to be used for message publishing. This will reset all
      * previously set headers that may exist.
-     *
-     * @param properties The basic properties
-     * @return the exchange binding
+     *	     *
+     * @param properties The basic properties	     * @param properties The basic properties
+     * @return the exchange binding	     * @return the exchange binding
      * @see #withHeader(String, Object)
      */
-    public ExchangeBinding<T> withProperties(BasicProperties properties) {
+    public ExchangeBinding<T> withProperties(BasicProperties properties)
+    {
       this.basicPropertiesBuilder =
-          Objects.requireNonNull(properties, "propeties must not be null").builder()
-              .headers(headers);
+              Objects.requireNonNull(properties, "propeties must not be null").builder()
+                      .headers(headers);
       LOGGER.info("Publisher properties for event type {} set to {}", eventType.getSimpleName(),
-          properties.toString());
+              properties.toString());
       headers.clear();
       Map<String, Object> newHeaders = properties.getHeaders();
-      if (newHeaders != null) {
+      if (newHeaders != null)
+      {
         headers.putAll(newHeaders);
       }
       return this;
@@ -470,21 +525,27 @@ public abstract class EventBinder {
      * @param handler The custom error handler
      * @return the exchange binding
      */
-    public ExchangeBinding<T> withErrorHandler(BiConsumer<T, PublishException> handler) {
+    public ExchangeBinding<T> setErrorHandler(BiConsumer<T, PublishException> handler)
+    {
       this.errorHandler = handler == null ? nop() : handler;
       return this;
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode()
+    {
       return Objects.hash(eventType, exchange);
     }
 
     @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
+    public boolean equals(Object obj)
+    {
+      if (this == obj)
+      {
         return true;
-      } else if (!(obj instanceof ExchangeBinding)) {
+      }
+      else if (!(obj instanceof ExchangeBinding))
+      {
         return false;
       }
       ExchangeBinding<?> other = (ExchangeBinding<?>) obj;
@@ -492,7 +553,8 @@ public abstract class EventBinder {
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
       return String.format("ExchangeBinding[type=%s, exchange=%s]", eventType.getName(), exchange);
     }
   }
@@ -518,7 +580,7 @@ public abstract class EventBinder {
 
     /**
      * Adds a broker host name used when establishing a connection.
-     * 
+     *
      * @param hostName a broker host name with optional port
      * @return the binder configuration object
      */
@@ -528,7 +590,7 @@ public abstract class EventBinder {
 
     /**
      * Adds a broker host address used when establishing a connection.
-     * 
+     *
      * @param hostAddress the broker host address
      * @return the binder configuration object
      */
@@ -539,7 +601,7 @@ public abstract class EventBinder {
 
     /**
      * Set the user name.
-     * 
+     *
      * @param username the AMQP user name to use when connecting to the broker
      * @return the binder configuration object
      */
@@ -550,7 +612,7 @@ public abstract class EventBinder {
 
     /**
      * Set the password.
-     * 
+     *
      * @param password the password to use when connecting to the broker
      * @return the binder configuration object
      */
@@ -561,7 +623,7 @@ public abstract class EventBinder {
 
     /**
      * Set the virtual host.
-     * 
+     *
      * @param virtualHost the virtual host to use when connecting to the broker
      * @return the binder configuration object
      */
@@ -572,7 +634,7 @@ public abstract class EventBinder {
 
     /**
      * Set the connection security setting.
-     * 
+     *
      * @param secure {@code true} to use secured connection, {@code false} otherwise
      * @return the binder configuration object
      */
@@ -584,7 +646,7 @@ public abstract class EventBinder {
     /**
      * Set the connection parameters using the given {@code uri}. This will reset all other
      * settings.
-     * 
+     *
      * @param uri the connection URI
      * @return the binder configuration object
      */

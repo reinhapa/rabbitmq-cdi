@@ -1,18 +1,17 @@
 package net.reini.rabbitmq.cdi;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PreDestroy;
 import javax.enterprise.event.ObserverException;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Publishes events to exchanges of a broker.
@@ -23,13 +22,13 @@ import org.slf4j.LoggerFactory;
 public class EventPublisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventPublisher.class);
 
-  private final ConnectionProducer connectionProducer;
+  private final ConnectionRepository connectionRepository;
   private final Map<Class<?>, Set<PublisherConfiguration>> publisherConfigurations;
   private final ThreadLocal<Map<Class<?>, MessagePublisher>> publishers;
 
   @Inject
-  public EventPublisher(ConnectionProducer connectionProducer) {
-    this.connectionProducer = connectionProducer;
+  public EventPublisher(ConnectionRepository connectionRepository) {
+    this.connectionRepository = connectionRepository;
     this.publisherConfigurations = new HashMap<>();
     this.publishers = ThreadLocal.withInitial(HashMap::new);
   }
@@ -84,13 +83,12 @@ public class EventPublisher {
    * Provides a publisher with the specified reliability. Within the same thread, the same producer
    * instance is provided for the given event type.
    *
-   * @param reliability The desired publisher reliability
    * @param eventType The event type
    * @return The provided publisher
    */
   MessagePublisher providePublisher(Class<?> eventType) {
     return publishers.get().computeIfAbsent(eventType,
-        key -> new GenericPublisher(connectionProducer));
+        key -> new GenericPublisher(connectionRepository));
   }
 
 }
