@@ -2,6 +2,8 @@ package net.reini.rabbitmq.cdi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import javax.enterprise.event.Event;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,13 +30,18 @@ class EventBinderTest {
   @Mock
   private ConnectionRepository connectionRepository;
   @Mock
-  private ConsumerContainer consumerContainer;
+  private ConsumerContainerFactory consumerContainerFactory;
+  @Mock
+  private ConsumerContainer consumerContainerMock;
+
 
   @InjectMocks
   private TestEventBinder eventBinder;
 
+
   @BeforeEach
   void prepare() {
+    Mockito.when(consumerContainerFactory.create(Mockito.any(),Mockito.any())).thenReturn(consumerContainerMock);
     eventBinder.initializeConsumerContainer();
   }
 
@@ -53,31 +61,37 @@ class EventBinderTest {
   }
 
   @Test
-  void testBindQueue() {
+  void testBindQueue() throws IOException {
     QueueBinding<TestEvent> queueBinding = new QueueBinding<>(TestEvent.class, "queue");
 
     eventBinder.bindQueue(queueBinding);
+    eventBinder.initialize();
   }
 
   @Test
-  void testBindExchange() {
+  void testBindExchange() throws IOException {
     ExchangeBinding<TestEvent> exchangeBinding = new ExchangeBinding<>(TestEvent.class, "exchange");
 
     eventBinder.bindExchange(exchangeBinding);
+    eventBinder.initialize();
   }
 
   @Test
-  void testDeclareExchange() {
+  void testDeclareExchange() throws IOException {
     ExchangeDeclaration exchangeDeclaration = eventBinder.declareExchange("hello");
     assertEquals("hello", exchangeDeclaration.getExchangeName());
     assertNotNull(exchangeDeclaration);
+    eventBinder.initialize();
+    verify(consumerContainerMock,times(1)).addExchangeDeclaration(exchangeDeclaration);
   }
 
   @Test
-  void testDeclareQueue() {
+  void testDeclareQueue() throws IOException {
     QueueDeclaration queue = eventBinder.declareQueue("hello");
     assertEquals("hello", queue.getQueueName());
     assertNotNull(queue);
+    eventBinder.initialize();
+    verify(consumerContainerMock,times(1)).addQueueDeclaration(queue);
   }
 
   @Test

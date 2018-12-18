@@ -83,6 +83,9 @@ public abstract class EventBinder {
   @Inject
   private ConnectionRepository connectionRepository;
 
+  @Inject
+  private ConsumerContainerFactory consumerContainerFactory;
+
   private ConnectionConfiguration configuration;
   private ConsumerContainer consumerContainer;
 
@@ -154,7 +157,7 @@ public abstract class EventBinder {
   @PostConstruct
   void initializeConsumerContainer() {
     configuration = new ConnectionConfiguration();
-    consumerContainer = new ConsumerContainer(configuration, connectionRepository);
+    consumerContainer = consumerContainerFactory.create(configuration, connectionRepository);
   }
 
   void processExchangeDeclarations() {
@@ -244,13 +247,13 @@ public abstract class EventBinder {
 
   public ExchangeDeclaration declareExchange(String exchangeName) {
     ExchangeDeclaration exchangeDeclaration = new ExchangeDeclaration(exchangeName);
-    consumerContainer.addExchangeDeclaration(exchangeDeclaration);
+    exchangeDeclarations.add(exchangeDeclaration);
     return exchangeDeclaration;
   }
 
   public QueueDeclaration declareQueue(String queueName) {
     QueueDeclaration exchangeDeclarationConfigEntry = new QueueDeclaration(queueName);
-    consumerContainer.addQueueDeclaration(exchangeDeclarationConfigEntry);
+    queueDeclarations.add(exchangeDeclarationConfigEntry);
     return exchangeDeclarationConfigEntry;
   }
 
