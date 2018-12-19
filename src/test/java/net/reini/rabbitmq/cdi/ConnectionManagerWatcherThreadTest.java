@@ -28,9 +28,9 @@ class ConnectionManagerWatcherThreadTest {
     ConnectionManager connectionManagerMock = mock(ConnectionManager.class);
     when(connectionManagerMock.tryToEstablishConnection()).thenReturn(false);
     when(connectionManagerMock.getState()).thenReturn(ConnectionState.NEVER_CONNECTED);
-    ConnectionManagerWatcherThread sut = new ConnectionManagerWatcherThread(lock,condition,connectionManagerMock, 50);
+    ConnectionManagerWatcherThread sut = new ConnectionManagerWatcherThread(lock,condition,connectionManagerMock, 100);
     sut.start();
-    Thread.sleep(200);
+    Thread.sleep(300);
     assertTrue(sut.isAlive());
     verify(connectionManagerMock, atLeast(2)).tryToEstablishConnection();
     assertEquals(State.TIMED_WAITING, sut.getState());

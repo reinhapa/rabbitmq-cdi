@@ -12,8 +12,10 @@ public class ConnectionManagerWatcherThread extends Thread {
   private ConnectionManager connectionManager;
   private long connectRetryWaitTime;
   private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionManager.class);
+  private final ThreadStopper threadStopper;
 
   public ConnectionManagerWatcherThread(ReentrantLock connectionManagerLock, Condition noConnectionCondition, ConnectionManager connectionManager, long connectRetryWaitTime) {
+    this.threadStopper=new ThreadStopper();
     this.connectionManagerLock = connectionManagerLock;
     this.noConnectionCondition = noConnectionCondition;
     this.connectionManager = connectionManager;
@@ -56,18 +58,11 @@ public class ConnectionManagerWatcherThread extends Thread {
           Thread.currentThread().interrupt();
         }
       }
-
-
     }
   }
 
   public void stopThread() {
-    this.interrupt();
-    try {
-      this.join();
-    } catch (InterruptedException e) {
-      LOGGER.warn("failed to wait for thread end of connect thread", e);
-    }
+    threadStopper.stopThread(this);
   }
 
   public boolean isRunning() {

@@ -35,8 +35,10 @@ public class ConnectionConfiguration implements ConnectionConfigHolder {
   private int connectTimeout;
   private long connectRetryWaitTime;
   private long failedConsumerActivationRetryTime;
+  private SSLContextFactory sslContextFactory;
 
-  ConnectionConfiguration() {
+  public ConnectionConfiguration(SSLContextFactory sslContextFactory) {
+    this.sslContextFactory = sslContextFactory;
     brokerHosts = new ArrayList<>();
     username = "guest";
     password = "guest";
@@ -44,6 +46,10 @@ public class ConnectionConfiguration implements ConnectionConfigHolder {
     this.requestedConnectionHeartbeatTimeout = DEFAULT_CONNECTION_HEARTBEAT_TIMEOUT_IN_SEC;
     this.connectRetryWaitTime = DEFAULT_WAIT_TIME_RETRY_CONNECT_IN_MS;
     this.failedConsumerActivationRetryTime = DEFAULT_WAIT_TIME_RETRY_ACTIVATE_CONSUMER_IN_MS;
+  }
+
+  ConnectionConfiguration() {
+    this(new SSLContextFactory());
   }
 
   @Override
@@ -101,7 +107,7 @@ public class ConnectionConfiguration implements ConnectionConfigHolder {
     if (secure) {
       final SSLContext sslContext;
       try {
-        sslContext = SSLContext.getDefault();
+        sslContext = sslContextFactory.createSSLContext();
       } catch (NoSuchAlgorithmException e) {
         throw new IllegalStateException("error during connect, fatal system configuration", e);
       }

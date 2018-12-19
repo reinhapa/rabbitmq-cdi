@@ -13,8 +13,10 @@ public class ConsumerContainerWatcherThread extends Thread {
   private final ReentrantLock lock;
   private final Condition noConnectionCondition;
   private volatile long attempt;
+  private final ThreadStopper threadStopper;
 
   public ConsumerContainerWatcherThread(ConsumerContainer consumerContainer, long retryTime, ReentrantLock lock, Condition noConnectionCondition) {
+    this.threadStopper=new ThreadStopper();
     this.consumerContainer = consumerContainer;
     this.retryTime = retryTime;
     this.lock = lock;
@@ -58,12 +60,6 @@ public class ConsumerContainerWatcherThread extends Thread {
   }
 
   public void stopThread() {
-    this.interrupt();
-    try {
-      this.join();
-    } catch (InterruptedException e) {
-      LOGGER.debug("thread was interrupted while joining", e);
-      Thread.currentThread().interrupt();
-    }
+    threadStopper.stopThread(this);
   }
 }
