@@ -48,9 +48,11 @@ class ConnectionManagerWatcherThreadTest {
     sut.start();
     Thread.sleep(200);
     assertTrue(sut.isAlive());
+    assertEquals(sut.isAlive(),sut.isRunning());
     verify(connectionManagerMock).tryToEstablishConnection();
     assertEquals(State.WAITING, sut.getState());
     killThreadAndVerifyState(sut);
+    assertEquals(sut.isAlive(),sut.isRunning());
   }
 
 
