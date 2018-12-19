@@ -119,5 +119,15 @@ class ConsumerContainerTest {
     sut.stop();
 
   }
-  
+
+  @Test
+  void testSetConnectionAvailable() {
+    ConsumerContainer sut = new ConsumerContainer(null, null, null, null, null, null,lockMock);
+    assertFalse(sut.isConnectionAvailable());
+    sut.setConnectionAvailable(true);
+    assertTrue(sut.isConnectionAvailable());
+    sut.setConnectionAvailable(false);
+    assertFalse(sut.isConnectionAvailable());
+
+  }
 }

@@ -98,6 +98,20 @@ class ConsumerContainerWatcherThreadTest {
     killThreadAndCheckState(consumerContainerWatcherThread);
   }
 
+  @Test
+  void testInterruptDuringRetrySleep() throws InterruptedException {
+    ReentrantLock lock = new ReentrantLock();
+    Condition noConnectionCondition=lock.newCondition();
+    ConsumerContainer consumerContainerMock = Mockito.mock(ConsumerContainer.class);
+    when(consumerContainerMock.isConnectionAvailable()).thenReturn(true);
+    when(consumerContainerMock.ensureConsumersAreActive()).thenReturn(false);
+    ConsumerContainerWatcherThread consumerContainerWatcherThread = new ConsumerContainerWatcherThread(consumerContainerMock, 1000000, lock, noConnectionCondition);
+    consumerContainerWatcherThread.start();
+    Thread.sleep(350);
+    assertTrue(consumerContainerWatcherThread.isAlive());
+    killThreadAndCheckState(consumerContainerWatcherThread);
+  }
+
   private void killThreadAndCheckState(ConsumerContainerWatcherThread consumerContainerWatcherThread) throws InterruptedException {
     consumerContainerWatcherThread.interrupt();
     consumerContainerWatcherThread.join(100);
