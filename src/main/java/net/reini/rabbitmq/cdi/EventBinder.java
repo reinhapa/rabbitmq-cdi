@@ -5,14 +5,6 @@ import com.rabbitmq.client.AMQP.BasicProperties.Builder;
 import com.rabbitmq.client.Address;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.MessageProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.Dependent;
-import javax.enterprise.event.Event;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
@@ -24,6 +16,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.event.Event;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <p>
@@ -145,12 +144,12 @@ public abstract class EventBinder {
    * @throws IOException if the initialization failed due to a broker related issue
    */
   public void initialize() throws IOException {
+    bindEvents();
     processExchangeDeclarations();
     processQueueDeclarations();
-    bindEvents();
+    processExchangeBindings();
     processQueueBindings();
     consumerContainer.start();
-    processExchangeBindings();
   }
 
 
@@ -158,6 +157,10 @@ public abstract class EventBinder {
   void initializeConsumerContainer() {
     configuration = new ConnectionConfiguration();
     consumerContainer = consumerContainerFactory.create(configuration, connectionRepository);
+  }
+
+  void stop() {
+    consumerContainer.stop();
   }
 
   void processExchangeDeclarations() {
@@ -599,6 +602,18 @@ public abstract class EventBinder {
       return this;
     }
 
+
+    /**
+     * Set the time to sleep between retries to  activate consumers
+     *
+     * @param waitTime time in milli seconds to wait between retries
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setFailedConsumerActivationRetryTime(long waitTime) {
+      config.setFailedConsumerActivationRetryTime(waitTime);
+      return this;
+    }
+
     /**
      * Set the connection security setting.
      *
@@ -691,6 +706,7 @@ public abstract class EventBinder {
      *
      * @param requestedHeartbeat the initially requested heartbeat timeout, in seconds; zero for none
      * @see <a href="http://rabbitmq.com/heartbeats.html">RabbitMQ Heartbeats Guide</a>
+     * @return the binder configuration object
      */
     public BinderConfiguration setRequestedConnectionHeartbeatTimeout(int requestedHeartbeat) {
       config.setRequestedConnectionHeartbeatTimeout(requestedHeartbeat);

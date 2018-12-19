@@ -236,4 +236,9 @@ public class BinderConfigurationTest {
     verify(config).setRequestedConnectionHeartbeatTimeout(5);
   }
 
+  @Test
+  public void testSetFailedConsumerActivationRetryTime() {
+    assertSame(binderConfig, binderConfig.setFailedConsumerActivationRetryTime(4000));
+    verify(config).setFailedConsumerActivationRetryTime(4000);
+  }
 }

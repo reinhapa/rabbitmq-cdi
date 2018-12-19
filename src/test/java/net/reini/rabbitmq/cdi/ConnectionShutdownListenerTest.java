@@ -4,6 +4,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.rabbitmq.client.ShutdownSignalException;
+import java.util.concurrent.locks.ReentrantLock;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,6 +19,8 @@ class ConnectionShutdownListenerTest {
   private ConnectionManager connectionManager;
   @Mock
   private ShutdownSignalException shutdownSignalExceptionMock;
+  @Mock
+  private ReentrantLock connectionManagerLock;
   @InjectMocks
   private ConnectionShutdownListener sut;
 

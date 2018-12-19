@@ -1,5 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,22 +18,26 @@ class ConsumerContainer {
 
   private final ExchangeDeclarationConfig exchangeDeclarationConfig;
   private final QueueDeclarationConfig queueDeclarationConfig;
-  private Thread consumerWatcherThread;
+  private final Condition noConnectionCondition;
+  private ConsumerContainerWatcherThread consumerWatcherThread;
   private volatile boolean connectionAvailable = false;
   private ConsumerHolderFactory consumerHolderFactory;
+  private final ReentrantLock lock;
 
   ConsumerContainer(ConnectionConfiguration config, ConnectionRepository connectionRepository) {
-    this(config, connectionRepository, new CopyOnWriteArrayList<>(), new ExchangeDeclarationConfig(), new QueueDeclarationConfig(), new ConsumerHolderFactory());
+    this(config, connectionRepository, new CopyOnWriteArrayList<>(), new ExchangeDeclarationConfig(), new QueueDeclarationConfig(), new ConsumerHolderFactory(),new ReentrantLock());
   }
 
   ConsumerContainer(ConnectionConfiguration config, ConnectionRepository connectionRepository, List<ConsumerHolder> consumerHolders, ExchangeDeclarationConfig exchangeDeclarationConfig,
-      QueueDeclarationConfig queueDeclarationConfig, ConsumerHolderFactory consumerHolderFactory) {
+      QueueDeclarationConfig queueDeclarationConfig, ConsumerHolderFactory consumerHolderFactory,ReentrantLock lock) {
     this.config = config;
     this.connectionRepository = connectionRepository;
     this.consumerHolders = consumerHolders;
     this.exchangeDeclarationConfig = exchangeDeclarationConfig;
     this.queueDeclarationConfig = queueDeclarationConfig;
     this.consumerHolderFactory = consumerHolderFactory;
+    this.lock = lock;
+    this.noConnectionCondition=lock.newCondition();
   }
 
   public void addConsumer(EventConsumer consumer, String queue, boolean autoAck) {
@@ -40,11 +46,16 @@ class ConsumerContainer {
   }
 
   public void start() {
-    connectionRepository.registerConnectionListener(config, new ContainerConnectionListener(this));
+    connectionRepository.registerConnectionListener(config, new ContainerConnectionListener(this,lock,noConnectionCondition));
     connectionRepository.connect(config);
-    consumerWatcherThread = new ConsumerContainerWatcherThread(this, config.getFailedConsumerActivationRetryTime());
+    consumerWatcherThread = new ConsumerContainerWatcherThread(this, config.getFailedConsumerActivationRetryTime(),lock,noConnectionCondition);
     consumerWatcherThread.start();
   }
+
+  public void stop() {
+    consumerWatcherThread.stopThread();
+  }
+
 
   public void addExchangeDeclaration(ExchangeDeclaration exchangeDeclaration) {
     this.exchangeDeclarationConfig.addExchangeDeclaration(exchangeDeclaration);
@@ -65,7 +76,6 @@ class ConsumerContainer {
       }
     }
     return allConsumersActive;
-
   }
 
   boolean isConnectionAvailable() {
@@ -79,4 +89,5 @@ class ConsumerContainer {
   public void setConnectionAvailable(boolean connectionAvailable) {
     this.connectionAvailable = connectionAvailable;
   }
+
 }

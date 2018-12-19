@@ -93,13 +93,18 @@ public class ConnectionConfiguration implements ConnectionConfigHolder {
   }
 
   public Connection createConnection(ConnectionFactory connectionFactory)
-      throws IOException, TimeoutException, NoSuchAlgorithmException {
+      throws IOException, TimeoutException {
     connectionFactory.setUsername(username);
     connectionFactory.setPassword(password);
     connectionFactory.setRequestedHeartbeat(requestedConnectionHeartbeatTimeout);
     connectionFactory.setConnectionTimeout(connectTimeout);
     if (secure) {
-      SSLContext sslContext = SSLContext.getDefault();
+      final SSLContext sslContext;
+      try {
+        sslContext = SSLContext.getDefault();
+      } catch (NoSuchAlgorithmException e) {
+        throw new IllegalStateException("error during connect, fatal system configuration", e);
+      }
       connectionFactory.setSslContextFactory(name -> sslContext);
     }
     if (virtualHost != null) {
@@ -111,6 +116,7 @@ public class ConnectionConfiguration implements ConnectionConfigHolder {
     return connectionFactory.newConnection(new ArrayList<>(brokerHosts));
   }
 
+  @Override
   public void setFailedConsumerActivationRetryTime(long failedConsumerActivationRetryTime) {
     this.failedConsumerActivationRetryTime = failedConsumerActivationRetryTime;
   }
@@ -136,30 +142,6 @@ public class ConnectionConfiguration implements ConnectionConfigHolder {
     return secure == other.secure && brokerHosts.equals(other.brokerHosts)
         && username.equals(other.username)
         && password.equals(other.password) && Objects.equals(virtualHost, other.virtualHost);
-  }
-
-  boolean isSecure() {
-    return secure;
-  }
-
-  String getUsername() {
-    return username;
-  }
-
-  String getPassword() {
-    return password;
-  }
-
-  String getVirtualHost() {
-    return virtualHost;
-  }
-
-  int getRequestedConnectionHeartbeatTimeout() {
-    return requestedConnectionHeartbeatTimeout;
-  }
-
-  int getConnectTimeout() {
-    return connectTimeout;
   }
 
   long getConnectRetryWaitTime() {

@@ -2,7 +2,6 @@ package net.reini.rabbitmq.cdi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -46,6 +45,14 @@ class EventBinderTest {
   }
 
   @Test
+  void testStop() {
+
+    eventBinder.stop();
+    verify(consumerContainerMock).stop();
+  }
+
+
+  @Test
   void testBind() {
     assertNotNull(eventBinder.bind(TestEvent.class));
   }
@@ -82,7 +89,7 @@ class EventBinderTest {
     assertEquals("hello", exchangeDeclaration.getExchangeName());
     assertNotNull(exchangeDeclaration);
     eventBinder.initialize();
-    verify(consumerContainerMock,times(1)).addExchangeDeclaration(exchangeDeclaration);
+    verify(consumerContainerMock).addExchangeDeclaration(exchangeDeclaration);
   }
 
   @Test
@@ -91,7 +98,7 @@ class EventBinderTest {
     assertEquals("hello", queue.getQueueName());
     assertNotNull(queue);
     eventBinder.initialize();
-    verify(consumerContainerMock,times(1)).addQueueDeclaration(queue);
+    verify(consumerContainerMock).addQueueDeclaration(queue);
   }
 
   @Test

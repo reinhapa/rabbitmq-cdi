@@ -2,12 +2,9 @@ package net.reini.rabbitmq.cdi;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.TimeoutException;
 
 class ConsumerChannelFactory {
 
@@ -26,8 +23,6 @@ class ConsumerChannelFactory {
    *
    * @return The channel
    * @throws IOException if the channel cannot be created due to a connection problem
-   * @throws TimeoutException if the channel cannot be created due to a timeout problem
-   * @throws NoSuchAlgorithmException if the security context creation for secured connection fails
    */
   protected Channel createChannel() throws IOException {
     LOGGER.debug("Creating channel");

@@ -1,15 +1,12 @@
 package net.reini.rabbitmq.cdi;
 
 import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-
-import javax.annotation.PreDestroy;
-import javax.enterprise.context.ApplicationScoped;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import javax.annotation.PreDestroy;
+import javax.enterprise.context.ApplicationScoped;
 
 /**
  * <p>
@@ -26,16 +23,15 @@ import java.util.function.Supplier;
 public class ConnectionRepository {
 
   private Function<ConnectionConfiguration, ConnectionManager> connectionManagerFactoryFunction;
-  private final Supplier<ConnectionFactory> factorySupplier;
+
   private final Map<ConnectionConfiguration, ConnectionManager> connectionManagers;
 
   public ConnectionRepository() {
-    this(ConnectionFactory::new, ConnectionManager::new);
+    this(ConnectionManager::new);
   }
 
 
-  ConnectionRepository(Supplier<ConnectionFactory> factorySupplier, Function<ConnectionConfiguration, ConnectionManager> connectionManagerFactoryFunction) {
-    this.factorySupplier = factorySupplier;
+  ConnectionRepository(Function<ConnectionConfiguration, ConnectionManager> connectionManagerFactoryFunction) {
     connectionManagers = new ConcurrentHashMap<>();
     this.connectionManagerFactoryFunction = connectionManagerFactoryFunction;
   }
@@ -56,7 +52,7 @@ public class ConnectionRepository {
   public Connection getConnection(ConnectionConfiguration config)
       throws IOException {
     return connectionManagers.computeIfAbsent(config, connectionManagerFactoryFunction)
-        .getConnection(factorySupplier);
+        .getConnection();
   }
 
   /**
@@ -68,7 +64,7 @@ public class ConnectionRepository {
    */
   public void connect(ConnectionConfiguration config) {
     connectionManagers.computeIfAbsent(config, connectionManagerFactoryFunction)
-        .connect(factorySupplier);
+        .connect();
   }
 
 

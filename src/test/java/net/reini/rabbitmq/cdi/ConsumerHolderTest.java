@@ -48,10 +48,10 @@ class ConsumerHolderTest {
     verify(consumerExchangeAndQueueDeclarerMock).declareQueuesAndExchanges(channelMock);
     verify(channelMock, never()).close();
     verify(channelMock, never()).removeShutdownListener(any());
-    verify(channelMock,times(1)).basicConsume("queue",false,consmerMock);
+    verify(channelMock).basicConsume("queue",false,consmerMock);
     sut.deactivate();
-    verify(channelMock, times(1)).close();
-    verify(channelMock, times(1)).removeShutdownListener(any());
+    verify(channelMock).close();
+    verify(channelMock).removeShutdownListener(any());
   }
 
   @Test
@@ -63,14 +63,14 @@ class ConsumerHolderTest {
     when(consumerFactoryMock.create(eventConsumerMock)).thenReturn(consmerMock);
     sut.activate();
     verify(channelMock).addShutdownListener(any());
-    verify(channelMock,times(1)).basicConsume("queue",true,consmerMock);
+    verify(channelMock).basicConsume("queue",true,consmerMock);
     verify(consumerExchangeAndQueueDeclarerMock).declareQueuesAndExchanges(channelMock);
     verify(channelMock, never()).close();
     verify(channelMock, never()).removeShutdownListener(any());
 
     sut.deactivate();
-    verify(channelMock, times(1)).close();
-    verify(channelMock, times(1)).removeShutdownListener(any());
+    verify(channelMock).close();
+    verify(channelMock).removeShutdownListener(any());
   }
 
   @Test
@@ -83,8 +83,8 @@ class ConsumerHolderTest {
       sut.activate();
       verify(channelMock).addShutdownListener(any());
       verify(consumerExchangeAndQueueDeclarerMock).declareQueuesAndExchanges(channelMock);
-      verify(channelMock, times(1)).close();
-      verify(channelMock, times(1)).removeShutdownListener(any());
+      verify(channelMock).close();
+      verify(channelMock).removeShutdownListener(any());
     });
   }
 

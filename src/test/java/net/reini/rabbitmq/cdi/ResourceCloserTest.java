@@ -29,7 +29,7 @@ class ResourceCloserTest
     void testCloseMock() throws Exception
     {
         sut.closeResource(autoCloseableMock,"message");
-        verify(autoCloseableMock,times(1)).close();
+        verify(autoCloseableMock).close();
     }
 
     @Test
@@ -37,7 +37,7 @@ class ResourceCloserTest
     {
         Mockito.doThrow(new IOException()).when(autoCloseableMock).close();
         sut.closeResource(autoCloseableMock,"message");
-        verify(autoCloseableMock,times(1)).close();
+        verify(autoCloseableMock).close();
     }
 
 }

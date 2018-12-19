@@ -6,10 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import javax.net.ssl.SSLContext;
@@ -89,6 +91,37 @@ public class ConnectionConfigurationTest {
     assertConnection(null, null, "virtualHost", false, null);
   }
 
+  @Test
+  public void testSetRequestedConnectionHeartbeatTimeout() throws Exception {
+    configuration.setRequestedConnectionHeartbeatTimeout(300);
+    Address hostAddress = new Address("host.somedomain", 5671);
+    configuration.addHost(hostAddress);
+    configuration.createConnection(connectionFactory);
+    verify(connectionFactory).setRequestedHeartbeat(300);
+  }
+
+  @Test
+  public void testSetConnectTimeout() throws Exception {
+    configuration.setConnectTimeout(300);
+    Address hostAddress = new Address("host.somedomain", 5671);
+    configuration.addHost(hostAddress);
+    configuration.createConnection(connectionFactory);
+    verify(connectionFactory).setConnectionTimeout(300);
+  }
+
+  @Test
+  public void testSetConnectRetryWaitTime() throws Exception {
+    configuration.setConnectRetryWaitTime(300);
+    assertEquals(300,configuration.getConnectRetryWaitTime());
+  }
+
+  @Test
+  public void testSetFailedConsumerActivationRetryTime() throws Exception {
+    configuration.setFailedConsumerActivationRetryTime(300);
+    assertEquals(300,configuration.getFailedConsumerActivationRetryTime());
+  }
+
+
   /**
    * Test method for {@link ConnectionConfiguration#setSecure(boolean)}.
    */
@@ -155,7 +188,7 @@ public class ConnectionConfigurationTest {
    * Test method for {@link ConnectionConfiguration#hashCode()}.
    */
   @Test
-  public void testHashCode() {
+  public void testHashCode() throws IOException, TimeoutException {
     assertEquals(Arrays.asList().hashCode(), configuration.hashCode());
     configuration.addHost(expectedAddress);
     assertEquals(Arrays.asList(expectedAddress).hashCode(), configuration.hashCode());

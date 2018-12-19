@@ -64,4 +64,10 @@ interface ConnectionConfigHolder {
    */
   void setConnectRetryWaitTime(long waitTime);
 
+  /**
+   * Set the time to sleep between retries to  activate consumers
+   *
+   * @param waitTime time in milli seconds to wait between retries
+   */
+  void setFailedConsumerActivationRetryTime(long waitTime);
 }

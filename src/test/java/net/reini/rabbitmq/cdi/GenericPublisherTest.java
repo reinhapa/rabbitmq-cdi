@@ -95,6 +95,26 @@ public class GenericPublisherTest {
   }
 
   @Test
+  public void testPublish_with_FatalError() throws Exception {
+    Builder builder = new Builder();
+    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
+        "routingKey", builder, new JsonEncoder<>(), errorHandler);
+    ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
+
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
+    when(connection.createChannel()).thenReturn(channel);
+    doThrow(new IOException("someError")).when(channel).basicPublish(eq("exchange"),
+        eq("routingKey"), propsCaptor.capture(),
+        eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
+
+    Throwable exception = assertThrows(PublishException.class, () -> {
+      publisher.publish(event, publisherConfiguration);
+    });
+    assertEquals("Unable to send message after 3 attempts", exception.getMessage());
+    assertEquals("application/json", propsCaptor.getValue().getContentType());
+  }
+
+  @Test
   public void testPublish_with_custom_MessageConverter() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",

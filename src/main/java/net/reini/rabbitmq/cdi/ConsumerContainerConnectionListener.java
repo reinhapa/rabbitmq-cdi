@@ -1,64 +1,59 @@
 package net.reini.rabbitmq.cdi;
 
 import com.rabbitmq.client.Connection;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class ContainerConnectionListener implements ConnectionListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerContainer.class);
-  private final NotifyWrapper notifyWrapper;
 
   private ConsumerContainer consumerContainer;
+  private ReentrantLock lock;
+  private Condition connectionAvailableCondition;
 
-  public ContainerConnectionListener(ConsumerContainer consumerContainer) {
-    this(consumerContainer, new NotifyWrapper(consumerContainer));
-  }
-
-  ContainerConnectionListener(ConsumerContainer consumerContainer, NotifyWrapper notifyWrapper) {
-    this.notifyWrapper = notifyWrapper;
+  public ContainerConnectionListener(ConsumerContainer consumerContainer, ReentrantLock lock, Condition connectionAvailableCondition) {
     this.consumerContainer = consumerContainer;
+    this.lock = lock;
+    this.connectionAvailableCondition = connectionAvailableCondition;
   }
-
 
   @Override
   public void onConnectionEstablished(Connection con) {
-    synchronized (this.consumerContainer) {
+    try {
+      lock.lock();
       this.consumerContainer.setConnectionAvailable(true);
       LOGGER.info("Connection established to {}. Activating consumers...", con);
-      this.notifyWrapper.notifyThread();
+      connectionAvailableCondition.signalAll();
+    } finally {
+      lock.unlock();
     }
   }
 
   @Override
   public void onConnectionLost(Connection con) {
-    synchronized (this.consumerContainer) {
+    try {
+      lock.lock();
       this.consumerContainer.setConnectionAvailable(false);
       LOGGER.warn("Connection lost. Deactivating consumers");
       this.consumerContainer.deactivateAllConsumer();
+    } finally {
+      lock.unlock();
     }
   }
 
   @Override
   public void onConnectionClosed(Connection con) {
-    synchronized (this.consumerContainer) {
+    try {
+      lock.lock();
       this.consumerContainer.setConnectionAvailable(false);
       LOGGER.warn("Connection closed for ever. Deactivating consumers");
       this.consumerContainer.deactivateAllConsumer();
+    } finally {
+      lock.unlock();
     }
   }
-
-  static class NotifyWrapper {
-
-    private ConsumerContainer consumerContainer;
-
-    public NotifyWrapper(ConsumerContainer consumerContainer) {
-      this.consumerContainer = consumerContainer;
-    }
-
-    public void notifyThread() {
-      this.consumerContainer.notify();
-    }
-  }
-
 }
+

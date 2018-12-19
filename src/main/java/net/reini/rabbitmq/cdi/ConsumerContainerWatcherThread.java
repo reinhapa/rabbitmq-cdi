@@ -1,5 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,10 +10,15 @@ public class ConsumerContainerWatcherThread extends Thread {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerContainerWatcherThread.class);
   private final ConsumerContainer consumerContainer;
   private long retryTime;
+  private final ReentrantLock lock;
+  private final Condition noConnectionCondition;
+  private volatile long attempt;
 
-  public ConsumerContainerWatcherThread(ConsumerContainer consumerContainer, long retryTime) {
+  public ConsumerContainerWatcherThread(ConsumerContainer consumerContainer, long retryTime, ReentrantLock lock, Condition noConnectionCondition) {
     this.consumerContainer = consumerContainer;
     this.retryTime = retryTime;
+    this.lock = lock;
+    this.noConnectionCondition = noConnectionCondition;
     this.setDaemon(true);
     this.setName("consumer watcher thread");
   }
@@ -20,21 +27,23 @@ public class ConsumerContainerWatcherThread extends Thread {
   public void run() {
     while (Thread.currentThread().isInterrupted() == false) {
       boolean allConsumersActive = false;
-      synchronized (consumerContainer) {
-
+      try {
+        lock.lock();
         if (consumerContainer.isConnectionAvailable()) {
+          attempt++;
           allConsumersActive = consumerContainer.ensureConsumersAreActive();
         }
         if (allConsumersActive || consumerContainer.isConnectionAvailable() == false) {
-          try {
-            consumerContainer.wait();
-          } catch (InterruptedException e) {
-            LOGGER.info("interrupted while waiting for notification");
-            Thread.currentThread().interrupt();
-          }
+          attempt = 0;
+          this.noConnectionCondition.await();
         }
+      } catch (InterruptedException e) {
+        LOGGER.info("interrupted while waiting for notification");
+        Thread.currentThread().interrupt();
+      } finally {
+        lock.unlock();
       }
-      if (allConsumersActive == false) {
+      if (allConsumersActive == false && attempt > 0) {
         LOGGER.warn("could not activate all consumer. Retry to activate failed consumers");
         try {
           Thread.sleep(retryTime);
@@ -45,7 +54,16 @@ public class ConsumerContainerWatcherThread extends Thread {
       }
 
     }
+
   }
 
-
+  public void stopThread() {
+    this.interrupt();
+    try {
+      this.join();
+    } catch (InterruptedException e) {
+      LOGGER.debug("thread was interrupted while joining", e);
+      Thread.currentThread().interrupt();
+    }
+  }
 }
