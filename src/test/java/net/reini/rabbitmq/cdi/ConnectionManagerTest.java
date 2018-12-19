@@ -77,7 +77,6 @@ class ConnectionManagerTest {
     });
     assertEquals(exception.getMessage(),
         "Attempt to retrieve a connection from a closed connection factory");
-    throw new IOException();
   }
 
   @Test
