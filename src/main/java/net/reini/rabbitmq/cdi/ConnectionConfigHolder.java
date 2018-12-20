@@ -1,8 +1,8 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.Address;
-
 import java.util.Set;
+
+import com.rabbitmq.client.Address;
 
 /**
  * Holds the configuration for a AMQP connection.
