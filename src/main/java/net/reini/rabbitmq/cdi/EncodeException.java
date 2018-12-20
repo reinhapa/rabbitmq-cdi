@@ -6,7 +6,6 @@ package net.reini.rabbitmq.cdi;
  * @author André Ignacio
  */
 public class EncodeException extends Exception {
-
   private static final long serialVersionUID = 1L;
 
   /**

@@ -6,7 +6,6 @@ package net.reini.rabbitmq.cdi;
  * @author Patrick Reinhart
  */
 public interface Decoder<T> {
-
   /**
    * Decode the given bytes into an message object of type M.
    *

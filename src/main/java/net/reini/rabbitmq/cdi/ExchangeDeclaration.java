@@ -1,12 +1,11 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.BuiltinExchangeType;
-
 import java.util.HashMap;
 import java.util.Map;
 
-public class ExchangeDeclaration {
+import com.rabbitmq.client.BuiltinExchangeType;
 
+public class ExchangeDeclaration {
   private String exchangeName;
   private String exchangeType = BuiltinExchangeType.DIRECT.getType();
   private boolean durable = false;
@@ -41,7 +40,6 @@ public class ExchangeDeclaration {
     this.arguments = arguments;
     return this;
   }
-
 
   String getExchangeName() {
     return exchangeName;

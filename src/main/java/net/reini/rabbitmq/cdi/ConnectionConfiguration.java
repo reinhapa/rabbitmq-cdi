@@ -1,10 +1,5 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.Address;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-
-import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -13,20 +8,23 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
+import javax.net.ssl.SSLContext;
+
+import com.rabbitmq.client.Address;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+
 /**
  * Contains the Rabbit MQ connection configuration
  *
  * @author Patrick Reinhart
  */
-public class ConnectionConfiguration implements ConnectionConfigHolder {
-
+class ConnectionConfiguration implements ConnectionConfigHolder {
   private static final int DEFAULT_CONNECTION_HEARTBEAT_TIMEOUT_IN_SEC = 3;
   private static final int DEFAULT_CONNECT_TIMEOUT_IN_MS = 10000;
   private static final int DEFAULT_WAIT_TIME_RETRY_CONNECT_IN_MS = 10_000;
   private static final long DEFAULT_WAIT_TIME_RETRY_ACTIVATE_CONSUMER_IN_MS = 10000;
-
   private final List<Address> brokerHosts;
-
   private boolean secure;
   private String username;
   private String password;
@@ -37,7 +35,7 @@ public class ConnectionConfiguration implements ConnectionConfigHolder {
   private long failedConsumerActivationRetryTime;
   private SSLContextFactory sslContextFactory;
 
-  public ConnectionConfiguration(SSLContextFactory sslContextFactory) {
+  ConnectionConfiguration(SSLContextFactory sslContextFactory) {
     this.sslContextFactory = sslContextFactory;
     brokerHosts = new ArrayList<>();
     username = "guest";

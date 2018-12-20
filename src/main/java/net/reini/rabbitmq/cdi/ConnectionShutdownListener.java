@@ -1,17 +1,18 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.ShutdownListener;
-import com.rabbitmq.client.ShutdownSignalException;
 import java.util.concurrent.locks.ReentrantLock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ConnectionShutdownListener implements ShutdownListener {
+import com.rabbitmq.client.ShutdownListener;
+import com.rabbitmq.client.ShutdownSignalException;
 
+class ConnectionShutdownListener implements ShutdownListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionManager.class);
+  private final ReentrantLock connectionManagerLock;
   private UnrecoverableErrorDetector unrecoverableErrorDetector;
   private ConnectionManager connectionManager;
-  private final ReentrantLock connectionManagerLock;
 
   public ConnectionShutdownListener(ConnectionManager connectionManager, ReentrantLock connectionManagerLock) {
     this.connectionManager = connectionManager;
@@ -38,5 +39,4 @@ class ConnectionShutdownListener implements ShutdownListener {
       }
     }
   }
-
 }

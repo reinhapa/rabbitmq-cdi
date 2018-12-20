@@ -1,11 +1,12 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.Channel;
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.concurrent.TimeoutException;
+import com.rabbitmq.client.Channel;
 
 public class GenericPublisher implements MessagePublisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(GenericPublisher.class);
@@ -22,7 +23,6 @@ public class GenericPublisher implements MessagePublisher {
   /**
    * Handles an exception depending on the already used attempts to send a message. Also performs a
    * soft reset of the currently used channel.
-   *
    * @param attempt Current attempt count
    * @param cause The thrown exception
    *
@@ -52,7 +52,7 @@ public class GenericPublisher implements MessagePublisher {
         LOGGER.debug("Attempt {} to send message", Integer.valueOf(attempt));
       }
       try (Channel channel =
-                   connectionRepository.getConnection(publisherConfiguration.getConfig()).createChannel()) {
+          connectionRepository.getConnection(publisherConfiguration.getConfig()).createChannel()) {
         publisherConfiguration.publish(channel, event);
         return;
       } catch (EncodeException e) {

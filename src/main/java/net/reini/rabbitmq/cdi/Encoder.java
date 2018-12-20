@@ -3,8 +3,8 @@ package net.reini.rabbitmq.cdi;
 /**
  * The Encoder is responsible to convert a message object of the given type to a raw bytes message.
  *
- * @param <T> Message type
  * @author André Ignacio
+ * @param <T> Message type
  */
 public interface Encoder<T> {
 

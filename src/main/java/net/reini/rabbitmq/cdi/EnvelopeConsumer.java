@@ -12,7 +12,6 @@ import com.rabbitmq.client.Envelope;
  */
 @FunctionalInterface
 public interface EnvelopeConsumer {
-
   boolean consume(String consumerTag, Envelope envelope, BasicProperties properties,
       byte[] body) throws IOException;
 }

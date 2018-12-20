@@ -12,6 +12,7 @@ class ThreadStopper {
       thread.join();
     } catch (InterruptedException e) {
       LOGGER.debug("thread was interrupted while joining", e);
+      Thread.currentThread().interrupt();
     }
   }
 }

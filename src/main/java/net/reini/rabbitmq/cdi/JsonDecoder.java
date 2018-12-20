@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  * @author Patrick Reinhart
  */
 public final class JsonDecoder<T> implements Decoder<T> {
-
   private static final ObjectMapper MAPPER =
       new ObjectMapper().disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 

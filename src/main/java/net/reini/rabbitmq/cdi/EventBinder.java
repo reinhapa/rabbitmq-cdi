@@ -1,10 +1,5 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.AMQP.BasicProperties.Builder;
-import com.rabbitmq.client.Address;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.MessageProperties;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
@@ -16,13 +11,21 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.AMQP.BasicProperties.Builder;
+import com.rabbitmq.client.Address;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.MessageProperties;
 
 /**
  * <p>
@@ -81,7 +84,6 @@ public abstract class EventBinder {
   private EventPublisher eventPublisher;
   @Inject
   private ConnectionRepository connectionRepository;
-
   @Inject
   private ConsumerContainerFactory consumerContainerFactory;
 
@@ -247,7 +249,6 @@ public abstract class EventBinder {
     return new EventBindingBuilder<>(event, queueBindings::add, exchangeBindings::add);
   }
 
-
   public ExchangeDeclaration declareExchange(String exchangeName) {
     ExchangeDeclaration exchangeDeclaration = new ExchangeDeclaration(exchangeName);
     exchangeDeclarations.add(exchangeDeclaration);
@@ -260,9 +261,7 @@ public abstract class EventBinder {
     return exchangeDeclarationConfigEntry;
   }
 
-
   public final static class EventBindingBuilder<T> {
-
     private final Class<T> eventType;
     private final Consumer<QueueBinding<T>> queueBindingConsumer;
     private final Consumer<ExchangeBinding<T>> exchangeBindingConsumer;
@@ -303,7 +302,6 @@ public abstract class EventBinder {
    * Configures and stores the binding between and event class and a queue.
    */
   public static final class QueueBinding<T> {
-
     private final Class<T> eventType;
     private final String queue;
 
@@ -336,12 +334,15 @@ public abstract class EventBinder {
 
     /**
      * <p>
-     * Sets the acknowledgement mode to be used for consuming message to automatic acknowledges (auto acks).
+     * Sets the acknowledgement mode to be used for consuming message to automatic acknowledges
+     * (auto acks).
      * </p>
      *
      * <p>
-     * If auto acks is enabled, messages are delivered by the broker to its consumers in a fire-and-forget manner. The broker removes a message from the queue as soon as its is delivered to the
-     * consumer and does not care about whether the consumer successfully processes this message or not.
+     * If auto acks is enabled, messages are delivered by the broker to its consumers in a
+     * fire-and-forget manner. The broker removes a message from the queue as soon as its is
+     * delivered to the consumer and does not care about whether the consumer successfully processes
+     * this message or not.
      * </p>
      *
      * @return the queue binding
@@ -390,7 +391,6 @@ public abstract class EventBinder {
    * Configures and stores the binding between an event class and an exchange.
    */
   public static final class ExchangeBinding<T> {
-
     private final Class<T> eventType;
     private final String exchange;
     private final Map<String, Object> headers;
@@ -477,8 +477,8 @@ public abstract class EventBinder {
     /**
      * Sets the given basic properties to be used for message publishing. This will reset all previously set headers that may exist. *
      *
-     * @param properties The basic properties	     * @param properties The basic properties
-     * @return the exchange binding	     * @return the exchange binding
+     * @param properties The basic properties
+     * @return the exchange binding
      * @see #withHeader(String, Object)
      */
     public ExchangeBinding<T> withProperties(BasicProperties properties) {
@@ -529,7 +529,6 @@ public abstract class EventBinder {
   }
 
   public final static class BinderConfiguration {
-
     private final ConnectionConfigHolder config;
 
     BinderConfiguration(ConnectionConfigHolder config) {
@@ -626,7 +625,8 @@ public abstract class EventBinder {
     }
 
     /**
-     * Set the connection parameters using the given {@code uri}. This will reset all other settings.
+     * Set the connection parameters using the given {@code uri}. This will reset all other
+     * settings.
      *
      * @param uri the connection URI
      * @return the binder configuration object
@@ -705,8 +705,8 @@ public abstract class EventBinder {
      * to lower the value; otherwise any value provided by the client will be used.
      *
      * @param requestedHeartbeat the initially requested heartbeat timeout, in seconds; zero for none
-     * @see <a href="http://rabbitmq.com/heartbeats.html">RabbitMQ Heartbeats Guide</a>
      * @return the binder configuration object
+     * @see <a href="http://rabbitmq.com/heartbeats.html">RabbitMQ Heartbeats Guide</a>
      */
     public BinderConfiguration setRequestedConnectionHeartbeatTimeout(int requestedHeartbeat) {
       config.setRequestedConnectionHeartbeatTimeout(requestedHeartbeat);

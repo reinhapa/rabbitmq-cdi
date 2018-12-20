@@ -2,20 +2,20 @@ package net.reini.rabbitmq.cdi;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ConnectionManagerWatcherThread extends Thread {
-
+class ConnectionManagerWatcherThread extends Thread {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionManager.class);
   private final ReentrantLock connectionManagerLock;
   private final Condition noConnectionCondition;
+  private final ThreadStopper threadStopper;
   private ConnectionManager connectionManager;
   private long connectRetryWaitTime;
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionManager.class);
-  private final ThreadStopper threadStopper;
 
-  public ConnectionManagerWatcherThread(ReentrantLock connectionManagerLock, Condition noConnectionCondition, ConnectionManager connectionManager, long connectRetryWaitTime) {
-    this.threadStopper=new ThreadStopper();
+  ConnectionManagerWatcherThread(ReentrantLock connectionManagerLock, Condition noConnectionCondition, ConnectionManager connectionManager, long connectRetryWaitTime) {
+    this.threadStopper = new ThreadStopper();
     this.connectionManagerLock = connectionManagerLock;
     this.noConnectionCondition = noConnectionCondition;
     this.connectionManager = connectionManager;
@@ -29,43 +29,54 @@ public class ConnectionManagerWatcherThread extends Thread {
     ensureConnectionState();
   }
 
+  void stopThread() {
+    threadStopper.stopThread(this);
+  }
+
+  boolean isRunning() {
+    return isAlive();
+  }
+
   private void ensureConnectionState() {
 
-    while (Thread.currentThread().interrupted() == false) {
+    while (!interrupted()) {
       boolean connectionEstablished = false;
       try {
         connectionManagerLock.lock();
-        if (connectionManager.getState() == ConnectionState.NEVER_CONNECTED || connectionManager.getState() == ConnectionState.CONNECTING) {
+        if (reconnectNeeded()) {
           connectionEstablished = connectionManager.tryToEstablishConnection();
           if (connectionEstablished) {
-            try {
-              noConnectionCondition.await();
-            } catch (InterruptedException e) {
-              LOGGER.debug("connect thread was interrupted while waiting", e);
-              Thread.currentThread().interrupt();
-            }
+            waitTillConnectionIsLost();
           }
-
         }
       } finally {
         connectionManagerLock.unlock();
       }
-      if (connectionEstablished == false && Thread.currentThread().isInterrupted() == false) {
-        try {
-          Thread.sleep(connectRetryWaitTime);
-        } catch (InterruptedException e) {
-          LOGGER.debug("connect thread was interrupted while sleeping", e);
-          Thread.currentThread().interrupt();
-        }
+      if (!connectionEstablished && !Thread.currentThread().isInterrupted()) {
+        waitForRetry();
       }
     }
   }
 
-  public void stopThread() {
-    threadStopper.stopThread(this);
+  private boolean reconnectNeeded() {
+    return connectionManager.getState() == ConnectionState.NEVER_CONNECTED || connectionManager.getState() == ConnectionState.CONNECTING;
   }
 
-  public boolean isRunning() {
-    return isAlive();
+  private void waitForRetry() {
+    try {
+      Thread.sleep(connectRetryWaitTime);
+    } catch (InterruptedException e) {
+      LOGGER.debug("connect thread was interrupted while sleeping", e);
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private void waitTillConnectionIsLost() {
+    try {
+      noConnectionCondition.await();
+    } catch (InterruptedException e) {
+      LOGGER.debug("connect thread was interrupted while waiting", e);
+      Thread.currentThread().interrupt();
+    }
   }
 }

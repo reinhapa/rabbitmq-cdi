@@ -6,10 +6,9 @@ import java.util.List;
 import java.util.Set;
 
 public class ExchangeDeclarationConfig {
-
   private final Set<ExchangeDeclaration> exchangeDeclarations;
 
-  public ExchangeDeclarationConfig() {
+  ExchangeDeclarationConfig() {
     this.exchangeDeclarations = new HashSet<>();
   }
 
@@ -20,5 +19,4 @@ public class ExchangeDeclarationConfig {
   List<ExchangeDeclaration> getExchangeDeclarations() {
     return new ArrayList(exchangeDeclarations);
   }
-
 }

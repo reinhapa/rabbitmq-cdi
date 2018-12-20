@@ -4,14 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class QueueDeclaration {
-
   private String queueName;
   private boolean durable = false;
   private boolean autoDelete = true;
   private Map<String, Object> arguments = new HashMap<>();
   private boolean exclusive;
 
-  public QueueDeclaration(String queueName) {
+  QueueDeclaration(String queueName) {
     this.queueName = queueName;
   }
 
@@ -35,6 +34,14 @@ public class QueueDeclaration {
     return this;
   }
 
+  @Override
+  public String toString() {
+    return "queueName='" + queueName + '\'' +
+        ", durable=" + durable +
+        ", autoDelete=" + autoDelete +
+        ", arguments=" + arguments +
+        ", exclusive=" + exclusive;
+  }
 
   boolean isExclusive() {
     return exclusive;
@@ -43,7 +50,6 @@ public class QueueDeclaration {
   String getQueueName() {
     return this.queueName;
   }
-
 
   boolean isDurable() {
     return durable;
@@ -55,14 +61,5 @@ public class QueueDeclaration {
 
   Map<String, Object> getArguments() {
     return arguments;
-  }
-
-  @Override
-  public String toString() {
-    return "queueName='" + queueName + '\'' +
-        ", durable=" + durable +
-        ", autoDelete=" + autoDelete +
-        ", arguments=" + arguments +
-        ", exclusive=" + exclusive;
   }
 }

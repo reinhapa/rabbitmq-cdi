@@ -1,19 +1,19 @@
 package net.reini.rabbitmq.cdi;
 
+import java.io.IOException;
+import java.util.function.BiConsumer;
+
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.AMQP.BasicProperties.Builder;
 import com.rabbitmq.client.Channel;
 
-import java.io.IOException;
-import java.util.function.BiConsumer;
-
 /**
- * A publisher configuration stores all important settings and options used for publishing and event.
+ * A publisher configuration stores all important settings and options used for publishing and
+ * event.
  *
  * @author Patrick Reinhart
  */
 final class PublisherConfiguration implements BiConsumer<Object, PublishException> {
-
   private final ConnectionConfiguration config;
   private final BasicProperties basicProperties;
   private final Encoder<?> messageEncoder;

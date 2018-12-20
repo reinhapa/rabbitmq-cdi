@@ -1,19 +1,19 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
 import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ConsumerChannelFactory {
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
 
+class ConsumerChannelFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerChannelFactory.class);
   private final ConnectionRepository connectionRepository;
   private final ConnectionConfiguration config;
 
-  public ConsumerChannelFactory(ConnectionRepository connectionRepository, ConnectionConfiguration config) {
-
+  ConsumerChannelFactory(ConnectionRepository connectionRepository, ConnectionConfiguration config) {
     this.connectionRepository = connectionRepository;
     this.config = config;
   }
@@ -31,5 +31,4 @@ class ConsumerChannelFactory {
     LOGGER.debug("Created channel");
     return channel;
   }
-
 }

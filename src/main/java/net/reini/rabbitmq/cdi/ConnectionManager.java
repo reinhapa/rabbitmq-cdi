@@ -1,15 +1,17 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
 
 /**
  * <p>
@@ -18,8 +20,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Patrick Reinhart
  */
-public class ConnectionManager {
-
+class ConnectionManager {
   private final ConnectionConfiguration config;
   private final Set<ConnectionListener> listeners = ConcurrentHashMap.newKeySet();
   private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionManager.class);
@@ -40,7 +41,6 @@ public class ConnectionManager {
     this.noConnectionCondition = connectionManagerLock.newCondition();
     this.shutdownListener = new ConnectionShutdownListener(this, this.connectionManagerLock);
     this.connectThread = new ConnectionManagerWatcherThread(connectionManagerLock, noConnectionCondition, this, config.getConnectRetryWaitTime());
-
   }
 
   ConnectionManager(ConnectionConfiguration config, ConnectionManagerWatcherThread connectThread, ConnectionShutdownListener shutdownListener, ConnectionFactory connectionFactory,
@@ -53,18 +53,18 @@ public class ConnectionManager {
     this.noConnectionCondition = noConnectionCondition;
   }
 
-  public void connect() {
+  void connect() {
     if (state == ConnectionState.CLOSED) {
       throw new IllegalStateException("Attempt to initiate a connect from a closed connection manager");
     }
     startConnectThread();
   }
 
-  public void addListener(ConnectionListener listener) {
+  void addListener(ConnectionListener listener) {
     this.listeners.add(listener);
   }
 
-  public void removeListener(ConnectionListener listener) {
+  void removeListener(ConnectionListener listener) {
     this.listeners.remove(listener);
   }
 
@@ -91,7 +91,6 @@ public class ConnectionManager {
     return state;
   }
 
-
   Connection getConnection()
       throws IOException {
     // Retrieve the connection if it is established
@@ -105,22 +104,6 @@ public class ConnectionManager {
     // retrieved
     LOGGER.error("Unable to retrieve connection");
     throw new IOException("Unable to retrieve connection");
-  }
-
-  /**
-   * Establishes a new connection with the given {@code addresses}.
-   *
-   * @throws IOException if establishing a new connection fails
-   * @throws TimeoutException if establishing a new connection times out
-   */
-  private Connection createNewConnection()
-      throws IOException, TimeoutException {
-    LOGGER.debug("Trying to establish connection using {}", config);
-    connection = config.createConnection(connectionFactory);
-    connection.addShutdownListener(this.shutdownListener);
-    LOGGER.debug("Established connection successfully");
-    changeState(ConnectionState.CONNECTED);
-    return connection;
   }
 
   boolean tryToEstablishConnection() {
@@ -164,6 +147,21 @@ public class ConnectionManager {
     }
   }
 
+  /**
+   * Establishes a new connection with the given {@code addresses}.
+   *
+   * @throws IOException if establishing a new connection fails
+   * @throws TimeoutException if establishing a new connection times out
+   */
+  private Connection createNewConnection()
+      throws IOException, TimeoutException {
+    LOGGER.debug("Trying to establish connection using {}", config);
+    connection = config.createConnection(connectionFactory);
+    connection.addShutdownListener(this.shutdownListener);
+    LOGGER.debug("Established connection successfully");
+    changeState(ConnectionState.CONNECTED);
+    return connection;
+  }
 
   /**
    * Notifies all connection listener about a state change.
@@ -203,6 +201,5 @@ public class ConnectionManager {
       connectThread.stopThread();
     }
   }
-
 }
 

@@ -4,10 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class ResourceCloser {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(ResourceCloser.class);
 
-  public void closeResource(AutoCloseable autoCloseable, String logTextIfFailed) {
+  void closeResource(AutoCloseable autoCloseable, String logTextIfFailed) {
     try {
       if (autoCloseable != null) {
         autoCloseable.close();
@@ -16,6 +15,5 @@ class ResourceCloser {
       LOGGER.warn(logTextIfFailed);
       LOGGER.debug(logTextIfFailed, e);
     }
-
   }
 }

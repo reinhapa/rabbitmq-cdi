@@ -1,27 +1,26 @@
 package net.reini.rabbitmq.cdi;
 
-
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ShutdownListener;
 import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ConsumerHolder {
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.ShutdownListener;
 
+class ConsumerHolder {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerHolder.class);
   private final boolean autoAck;
   private final String queueName;
-
-  private volatile boolean active;
   private final Object activeLock;
   private final EventConsumer consumer;
   private final ShutdownListener shutdownListener;
-  private Channel channel;
   private final ConsumerChannelFactory consumerChannelFactory;
   private final ConsumerExchangeAndQueueDeclarer consumerExchangeAndQueueDeclarer;
   private final ResourceCloser resourceCloser;
   private final ConsumerFactory consumerFactory;
+  private Channel channel;
+  private volatile boolean active;
 
   ConsumerHolder(EventConsumer consumer, String queueName, boolean autoAck, ConsumerChannelFactory consumerChannelFactory, ConsumerExchangeAndQueueDeclarer consumerExchangeAndQueueDeclarer,
       ConsumerFactory consumerFactory) {
@@ -38,7 +37,7 @@ class ConsumerHolder {
 
   void deactivate() {
     synchronized (activeLock) {
-      if (active == true) {
+      if (active) {
         LOGGER.debug("Deactivating consumer of class {}", consumer.getClass());
         LOGGER.debug("Closing channel for consumer of class {}", consumer.getClass());
         ensureCompleteShutdown();
@@ -47,10 +46,9 @@ class ConsumerHolder {
     }
   }
 
-
   void activate() throws IOException {
     synchronized (activeLock) {
-      if (active == false) {
+      if (!active) {
         LOGGER.debug("Activating consumer of class {}", consumer.getClass());
         // Start the consumer
         try {
@@ -86,6 +84,4 @@ class ConsumerHolder {
   String getQueueName() {
     return queueName;
   }
-
-
 }

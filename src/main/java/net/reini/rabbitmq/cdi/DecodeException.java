@@ -6,7 +6,6 @@ package net.reini.rabbitmq.cdi;
  * @author Patrick Reinhart
  */
 public class DecodeException extends Exception {
-
   private static final long serialVersionUID = 1L;
 
   public DecodeException(Throwable cause) {

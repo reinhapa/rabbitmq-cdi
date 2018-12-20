@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  * @author André Ignacio
  */
 public final class JsonEncoder<T> implements Encoder<T> {
-
   private static final String CONTENT_TYPE = "application/json";
   private final ObjectMapper mapper;
 

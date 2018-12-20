@@ -1,12 +1,14 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.Connection;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
+
+import com.rabbitmq.client.Connection;
 
 /**
  * <p>
@@ -21,15 +23,12 @@ import javax.enterprise.context.ApplicationScoped;
  */
 @ApplicationScoped
 public class ConnectionRepository {
-
-  private Function<ConnectionConfiguration, ConnectionManager> connectionManagerFactoryFunction;
-
   private final Map<ConnectionConfiguration, ConnectionManager> connectionManagers;
+  private Function<ConnectionConfiguration, ConnectionManager> connectionManagerFactoryFunction;
 
   public ConnectionRepository() {
     this(ConnectionManager::new);
   }
-
 
   ConnectionRepository(Function<ConnectionConfiguration, ConnectionManager> connectionManagerFactoryFunction) {
     connectionManagers = new ConcurrentHashMap<>();

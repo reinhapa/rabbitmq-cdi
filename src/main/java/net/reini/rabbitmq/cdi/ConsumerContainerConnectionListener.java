@@ -1,15 +1,15 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.Connection;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rabbitmq.client.Connection;
+
 final class ContainerConnectionListener implements ConnectionListener {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerContainer.class);
-
   private ConsumerContainer consumerContainer;
   private ReentrantLock lock;
   private Condition connectionAvailableCondition;
@@ -56,4 +56,3 @@ final class ContainerConnectionListener implements ConnectionListener {
     }
   }
 }
-
