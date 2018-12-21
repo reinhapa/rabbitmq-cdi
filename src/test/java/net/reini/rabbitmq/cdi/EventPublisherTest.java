@@ -112,4 +112,84 @@ public class EventPublisherTest {
 
     verify(channel, times(3)).close();
   }
+
+  @Test
+  public void testOnEventInProgress()
+      throws IOException, TimeoutException, NoSuchAlgorithmException {
+    EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.IN_PROGRESS);
+    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connection.createChannel()).thenReturn(channel);
+
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
+        basicProperties, encoder, errorHandler));
+    publisher.onEventInProgress(new TestEvent());
+    publisher.cleanUp();
+
+    verify(channel).basicPublish(eq("exchange"), eq("routingKey"), any(), any());
+    verify(channel).close();
+  }
+
+  @Test
+  public void testOnEventInBeforeCompletion()
+      throws IOException, TimeoutException, NoSuchAlgorithmException {
+    EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.BEFORE_COMPLETION);
+    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connection.createChannel()).thenReturn(channel);
+
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
+        basicProperties, encoder, errorHandler));
+    publisher.onEventBeforeCompletion(new TestEvent());
+    publisher.cleanUp();
+
+    verify(channel).basicPublish(eq("exchange"), eq("routingKey"), any(), any());
+    verify(channel).close();
+  }
+
+  @Test
+  public void testOnEventAfterCompletion()
+      throws IOException, TimeoutException, NoSuchAlgorithmException {
+    EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_COMPLETION);
+    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connection.createChannel()).thenReturn(channel);
+
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
+        basicProperties, encoder, errorHandler));
+    publisher.onEventAfterCompletion(new TestEvent());
+    publisher.cleanUp();
+
+    verify(channel).basicPublish(eq("exchange"), eq("routingKey"), any(), any());
+    verify(channel).close();
+  }
+
+  @Test
+  public void testOnEventAfterFailure()
+      throws IOException, TimeoutException, NoSuchAlgorithmException {
+    EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_FAILURE);
+    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connection.createChannel()).thenReturn(channel);
+
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
+        basicProperties, encoder, errorHandler));
+    publisher.onEventAfterFailure(new TestEvent());
+    publisher.cleanUp();
+
+    verify(channel).basicPublish(eq("exchange"), eq("routingKey"), any(), any());
+    verify(channel).close();
+  }
+
+  @Test
+  public void testOnEventAfterSuccess()
+      throws IOException, TimeoutException, NoSuchAlgorithmException {
+    EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_SUCCESS);
+    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connection.createChannel()).thenReturn(channel);
+
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
+        basicProperties, encoder, errorHandler));
+    publisher.onEventAfterSuccess(new TestEvent());
+    publisher.cleanUp();
+
+    verify(channel).basicPublish(eq("exchange"), eq("routingKey"), any(), any());
+    verify(channel).close();
+  }
 }
