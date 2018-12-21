@@ -1,18 +1,5 @@
 package net.reini.rabbitmq.cdi;
 
-import com.rabbitmq.client.AMQP.BasicProperties;
-import net.reini.rabbitmq.cdi.EventBinder.ExchangeBinding;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.BiConsumer;
-
 import static com.rabbitmq.client.MessageProperties.BASIC;
 import static com.rabbitmq.client.MessageProperties.PERSISTENT_BASIC;
 import static java.util.Collections.emptyMap;
@@ -22,9 +9,23 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.rabbitmq.client.AMQP.BasicProperties;
+
+import net.reini.rabbitmq.cdi.EventBinder.ExchangeBinding;
+
 @ExtendWith(MockitoExtension.class)
-class ExchangeBindingTest
-{
+class ExchangeBindingTest {
   @Mock
   private Encoder<TestEvent> encoder;
   @Mock
@@ -78,9 +79,9 @@ class ExchangeBindingTest
   @Test
   void withErrorHandler() {
     assertNotNull(binding.getErrorHandler());
-    assertSame(binding, binding.setErrorHandler(errorHandler));
+    assertSame(binding, binding.withErrorHandler(errorHandler));
     assertEquals(errorHandler, binding.getErrorHandler());
-    assertSame(binding, binding.setErrorHandler(null));
+    assertSame(binding, binding.withErrorHandler(null));
     assertNotEquals(errorHandler, binding.getErrorHandler());
   }
 
@@ -135,5 +136,4 @@ class ExchangeBindingTest
 
     assertEquals(binding1, binding1);
   }
-
 }

@@ -25,7 +25,6 @@ import net.reini.rabbitmq.cdi.EventBinder.BinderConfiguration;
  */
 @ExtendWith(MockitoExtension.class)
 public class BinderConfigurationTest {
-
   @Mock
   private ConnectionConfigHolder config;
 
@@ -39,7 +38,7 @@ public class BinderConfigurationTest {
   /**
    * Test method for {@link BinderConfiguration#setHost(String)}.
    */
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings({"deprecation", "javadoc"})
   @Test
   public void testSetHost() {
     assertSame(binderConfig, binderConfig.setHost("hostName"));

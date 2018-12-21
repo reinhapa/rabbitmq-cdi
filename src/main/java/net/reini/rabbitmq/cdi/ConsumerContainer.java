@@ -10,23 +10,30 @@ import org.slf4j.LoggerFactory;
 
 class ConsumerContainer {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerContainer.class);
-  private final ConnectionConfiguration config;
+
+  private final ConnectionConfig config;
   private final ConnectionRepository connectionRepository;
   private final List<ConsumerHolder> consumerHolders;
   private final ExchangeDeclarationConfig exchangeDeclarationConfig;
   private final QueueDeclarationConfig queueDeclarationConfig;
   private final Condition noConnectionCondition;
   private final ReentrantLock lock;
+
   private ConsumerContainerWatcherThread consumerWatcherThread;
   private ConsumerHolderFactory consumerHolderFactory;
+
   private volatile boolean connectionAvailable = false;
 
-  ConsumerContainer(ConnectionConfiguration config, ConnectionRepository connectionRepository) {
-    this(config, connectionRepository, new CopyOnWriteArrayList<>(), new ExchangeDeclarationConfig(), new QueueDeclarationConfig(), new ConsumerHolderFactory(), new ReentrantLock());
+  ConsumerContainer(ConnectionConfig config, ConnectionRepository connectionRepository) {
+    this(config, connectionRepository, new CopyOnWriteArrayList<>(),
+        new ExchangeDeclarationConfig(), new QueueDeclarationConfig(), new ConsumerHolderFactory(),
+        new ReentrantLock());
   }
 
-  ConsumerContainer(ConnectionConfiguration config, ConnectionRepository connectionRepository, List<ConsumerHolder> consumerHolders, ExchangeDeclarationConfig exchangeDeclarationConfig,
-      QueueDeclarationConfig queueDeclarationConfig, ConsumerHolderFactory consumerHolderFactory, ReentrantLock lock) {
+  ConsumerContainer(ConnectionConfig config, ConnectionRepository connectionRepository,
+      List<ConsumerHolder> consumerHolders, ExchangeDeclarationConfig exchangeDeclarationConfig,
+      QueueDeclarationConfig queueDeclarationConfig, ConsumerHolderFactory consumerHolderFactory,
+      ReentrantLock lock) {
     this.config = config;
     this.connectionRepository = connectionRepository;
     this.consumerHolders = consumerHolders;
@@ -38,14 +45,17 @@ class ConsumerContainer {
   }
 
   public void addConsumer(EventConsumer consumer, String queue, boolean autoAck) {
-    ConsumerHolder consumerHolder = consumerHolderFactory.createConsumerHolder(consumer, queue, autoAck, connectionRepository, config, exchangeDeclarationConfig, queueDeclarationConfig);
+    ConsumerHolder consumerHolder = consumerHolderFactory.createConsumerHolder(consumer, queue,
+        autoAck, connectionRepository, config, exchangeDeclarationConfig, queueDeclarationConfig);
     consumerHolders.add(consumerHolder);
   }
 
   public void start() {
-    connectionRepository.registerConnectionListener(config, new ContainerConnectionListener(this, lock, noConnectionCondition));
+    connectionRepository.registerConnectionListener(config,
+        new ContainerConnectionListener(this, lock, noConnectionCondition));
     connectionRepository.connect(config);
-    consumerWatcherThread = new ConsumerContainerWatcherThread(this, config.getFailedConsumerActivationRetryTime(), lock, noConnectionCondition);
+    consumerWatcherThread = new ConsumerContainerWatcherThread(this,
+        config.getFailedConsumerActivationRetryTime(), lock, noConnectionCondition);
     consumerWatcherThread.start();
   }
 

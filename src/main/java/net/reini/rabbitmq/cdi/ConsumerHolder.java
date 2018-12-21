@@ -10,6 +10,7 @@ import com.rabbitmq.client.ShutdownListener;
 
 class ConsumerHolder {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerHolder.class);
+
   private final boolean autoAck;
   private final String queueName;
   private final Object activeLock;
@@ -19,10 +20,14 @@ class ConsumerHolder {
   private final ConsumerExchangeAndQueueDeclarer consumerExchangeAndQueueDeclarer;
   private final ResourceCloser resourceCloser;
   private final ConsumerFactory consumerFactory;
+
   private Channel channel;
+
   private volatile boolean active;
 
-  ConsumerHolder(EventConsumer consumer, String queueName, boolean autoAck, ConsumerChannelFactory consumerChannelFactory, ConsumerExchangeAndQueueDeclarer consumerExchangeAndQueueDeclarer,
+  ConsumerHolder(EventConsumer consumer, String queueName, boolean autoAck,
+      ConsumerChannelFactory consumerChannelFactory,
+      ConsumerExchangeAndQueueDeclarer consumerExchangeAndQueueDeclarer,
       ConsumerFactory consumerFactory) {
     this.consumer = consumer;
     this.queueName = queueName;
@@ -55,8 +60,8 @@ class ConsumerHolder {
           channel = this.consumerChannelFactory.createChannel();
           channel.addShutdownListener(shutdownListener);
           this.consumerExchangeAndQueueDeclarer.declareQueuesAndExchanges(channel);
-          channel.basicConsume(queueName, autoAck,
-              autoAck ? consumerFactory.create(consumer) : consumerFactory.createAcknowledged(consumer, channel));
+          channel.basicConsume(queueName, autoAck, autoAck ? consumerFactory.create(consumer)
+              : consumerFactory.createAcknowledged(consumer, channel));
           LOGGER.info("Activated consumer of class {}", consumer.getClass());
           active = true;
         } catch (IOException e) {

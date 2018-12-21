@@ -10,13 +10,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,13 +22,14 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+
+@SuppressWarnings("boxing")
 @ExtendWith(MockitoExtension.class)
 class ConnectionManagerTest {
-
-
-  private ConnectionManager sut;
   @Mock
-  private ConnectionConfiguration configMock;
+  private ConnectionConfig configMock;
   @Mock
   private ConnectionManagerWatcherThread watcherThreadMock;
   @Mock
@@ -46,9 +45,12 @@ class ConnectionManagerTest {
   @Mock
   private Condition conditionMock;
 
+  private ConnectionManager sut;
+
   @BeforeEach
   public void setUp() {
-    sut = new ConnectionManager(configMock, watcherThreadMock, shutdownListenerMock, connectionFactoryMock, lockMock,conditionMock);
+    sut = new ConnectionManager(configMock, watcherThreadMock, shutdownListenerMock,
+        connectionFactoryMock, lockMock, conditionMock);
     sut.addListener(listener);
   }
 
@@ -59,12 +61,11 @@ class ConnectionManagerTest {
   }
 
   @Test
-  public void testGetConnection() throws IOException {
+  public void testGetConnection() {
     Throwable exception = assertThrows(IOException.class, () -> {
       sut.getConnection();
     });
-    assertEquals(exception.getMessage(),
-        "Unable to retrieve connection");
+    assertEquals(exception.getMessage(), "Unable to retrieve connection");
   }
 
 
@@ -124,11 +125,12 @@ class ConnectionManagerTest {
   }
 
   @Test
-  public void testCreateConnection() throws TimeoutException, NoSuchAlgorithmException, IOException {
+  public void testCreateConnection()
+      throws TimeoutException, IOException {
     when(configMock.createConnection(connectionFactoryMock)).thenReturn(connectionMock);
     boolean result = sut.tryToEstablishConnection();
     assertTrue(result);
-    assertEquals(connectionMock,sut.getConnection());
+    assertEquals(connectionMock, sut.getConnection());
     verify(connectionMock).addShutdownListener(shutdownListenerMock);
     verify(listener).onConnectionEstablished(connectionMock);
     verify(listener, never()).onConnectionLost(Mockito.any());
@@ -137,7 +139,8 @@ class ConnectionManagerTest {
   }
 
   @Test
-  public void testCreateConnectionMultipleTimes() throws TimeoutException, NoSuchAlgorithmException, IOException {
+  public void testCreateConnectionMultipleTimes()
+      throws TimeoutException, IOException {
     when(configMock.createConnection(connectionFactoryMock)).thenReturn(connectionMock);
     boolean result = sut.tryToEstablishConnection();
     assertTrue(result);
@@ -155,7 +158,8 @@ class ConnectionManagerTest {
 
 
   @Test
-  public void testCreateConnectionWithIoException() throws TimeoutException, NoSuchAlgorithmException, IOException {
+  public void testCreateConnectionWithIoException()
+      throws TimeoutException, IOException {
     doThrow(new IOException()).when(configMock).createConnection(connectionFactoryMock);
     boolean result = sut.tryToEstablishConnection();
     assertFalse(result);
@@ -166,7 +170,8 @@ class ConnectionManagerTest {
   }
 
   @Test
-  public void testCreateConnectionWithTimeoutException() throws TimeoutException, NoSuchAlgorithmException, IOException {
+  public void testCreateConnectionWithTimeoutException()
+      throws TimeoutException, IOException {
     doThrow(new TimeoutException()).when(configMock).createConnection(connectionFactoryMock);
     boolean result = sut.tryToEstablishConnection();
     assertFalse(result);
@@ -176,7 +181,8 @@ class ConnectionManagerTest {
   }
 
   @Test
-  public void testCreateConnectionAndCloseAgain() throws TimeoutException, NoSuchAlgorithmException, IOException, InterruptedException {
+  public void testCreateConnectionAndCloseAgain()
+      throws TimeoutException, IOException {
     when(configMock.createConnection(connectionFactoryMock)).thenReturn(connectionMock);
     when(watcherThreadMock.isRunning()).thenReturn(true);
     boolean result = sut.tryToEstablishConnection();
@@ -210,7 +216,7 @@ class ConnectionManagerTest {
   }
 
   @Test
-  void testConstructor(){
+  void testConstructor() {
     ConnectionManager connectionManager = new ConnectionManager(configMock);
     assertNotNull(connectionManager);
   }

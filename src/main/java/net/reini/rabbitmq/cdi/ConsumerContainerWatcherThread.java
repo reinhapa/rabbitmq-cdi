@@ -6,8 +6,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ConsumerContainerWatcherThread extends Thread {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerContainerWatcherThread.class);
+final class ConsumerContainerWatcherThread extends Thread {
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(ConsumerContainerWatcherThread.class);
   private final ConsumerContainer consumerContainer;
   private final ReentrantLock lock;
   private final Condition noConnectionCondition;
@@ -15,7 +16,8 @@ class ConsumerContainerWatcherThread extends Thread {
   private long attempt;
   private long retryTime;
 
-  ConsumerContainerWatcherThread(ConsumerContainer consumerContainer, long retryTime, ReentrantLock lock, Condition noConnectionCondition) {
+  ConsumerContainerWatcherThread(ConsumerContainer consumerContainer, long retryTime,
+      ReentrantLock lock, Condition noConnectionCondition) {
     this.threadStopper = new ThreadStopper();
     this.consumerContainer = consumerContainer;
     this.retryTime = retryTime;

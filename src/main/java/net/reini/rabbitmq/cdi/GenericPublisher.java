@@ -23,13 +23,13 @@ public class GenericPublisher implements MessagePublisher {
   /**
    * Handles an exception depending on the already used attempts to send a message. Also performs a
    * soft reset of the currently used channel.
+   * 
    * @param attempt Current attempt count
    * @param cause The thrown exception
    *
    * @throws PublishException if the maximum amount of attempts is exceeded
    */
-  protected void handleIoException(int attempt, Throwable cause)
-      throws PublishException {
+  protected void handleIoException(int attempt, Throwable cause) throws PublishException {
     if (attempt == DEFAULT_RETRY_ATTEMPTS) {
       throw new PublishException("Unable to send message after " + attempt + " attempts", cause);
     }

@@ -11,15 +11,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ConsumerContainerFactoryTest {
 
   @Mock
-  private ConnectionConfiguration configMock;
+  private ConnectionConfig configMock;
   @Mock
   private ConnectionRepository repositoryMock;
 
   @Test
   void testCreate() {
     ConsumerContainerFactory consumerContainerFactory = new ConsumerContainerFactory();
-    ConsumerContainer consumerContainer = consumerContainerFactory.create(configMock, repositoryMock);
+    ConsumerContainer consumerContainer =
+        consumerContainerFactory.create(configMock, repositoryMock);
     assertNotNull(consumerContainer);
-
   }
 }

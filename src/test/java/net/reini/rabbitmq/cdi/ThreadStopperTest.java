@@ -1,6 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +18,7 @@ class ThreadStopperTest {
         try {
           Thread.sleep(500);
         } catch (InterruptedException e) {
-          //ignore
+          // ignore
         }
       }
     });
@@ -26,7 +27,7 @@ class ThreadStopperTest {
 
     Thread stopperThread = new Thread(() -> {
       sut.stopThread(threadToStop);
-      threadShouldStopCalled=true;
+      threadShouldStopCalled = true;
     });
     stopperThread.start();
     Thread.sleep(100);
@@ -35,10 +36,10 @@ class ThreadStopperTest {
     stopperThread.join(500);
     assertFalse(stopperThread.isAlive());
     assertTrue(threadShouldStopCalled);
-    threadShouldStop=true;
+    threadShouldStop = true;
     threadToStop.join(500);
     assertFalse(threadToStop.isAlive());
-    
+
 
   }
 

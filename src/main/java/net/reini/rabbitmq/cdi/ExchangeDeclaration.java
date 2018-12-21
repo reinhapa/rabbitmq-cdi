@@ -5,14 +5,18 @@ import java.util.Map;
 
 import com.rabbitmq.client.BuiltinExchangeType;
 
-public class ExchangeDeclaration {
+public final class ExchangeDeclaration {
+  private final Map<String, Object> arguments;
+
+  private boolean durable;
+  private boolean autoDelete;
   private String exchangeName;
-  private String exchangeType = BuiltinExchangeType.DIRECT.getType();
-  private boolean durable = false;
-  private boolean autoDelete = true;
-  private Map<String, Object> arguments = new HashMap<>();
+  private String exchangeType;
 
   public ExchangeDeclaration(String exchangeName) {
+    arguments = new HashMap<>();
+    autoDelete = true;
+    exchangeType = BuiltinExchangeType.DIRECT.getType();
     this.exchangeName = exchangeName;
   }
 
@@ -36,8 +40,8 @@ public class ExchangeDeclaration {
     return this;
   }
 
-  public ExchangeDeclaration withArguments(Map<String, Object> arguments) {
-    this.arguments = arguments;
+  public ExchangeDeclaration withArgument(String key, Object argument) {
+    arguments.put(key, argument);
     return this;
   }
 
@@ -100,10 +104,7 @@ public class ExchangeDeclaration {
 
   @Override
   public String toString() {
-    return "exchangeName='" + exchangeName + '\'' +
-        ", exchangeType='" + exchangeType + '\'' +
-        ", durable=" + durable +
-        ", autoDelete=" + autoDelete +
-        ", arguments=" + arguments;
+    return "exchangeName='" + exchangeName + '\'' + ", exchangeType='" + exchangeType + '\''
+        + ", durable=" + durable + ", autoDelete=" + autoDelete + ", arguments=" + arguments;
   }
 }

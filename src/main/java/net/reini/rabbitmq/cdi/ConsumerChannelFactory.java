@@ -10,10 +10,11 @@ import com.rabbitmq.client.Connection;
 
 class ConsumerChannelFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerChannelFactory.class);
-  private final ConnectionRepository connectionRepository;
-  private final ConnectionConfiguration config;
 
-  ConsumerChannelFactory(ConnectionRepository connectionRepository, ConnectionConfiguration config) {
+  private final ConnectionRepository connectionRepository;
+  private final ConnectionConfig config;
+
+  ConsumerChannelFactory(ConnectionRepository connectionRepository, ConnectionConfig config) {
     this.connectionRepository = connectionRepository;
     this.config = config;
   }

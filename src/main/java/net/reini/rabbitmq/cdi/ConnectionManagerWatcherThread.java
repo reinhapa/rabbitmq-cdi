@@ -8,13 +8,17 @@ import org.slf4j.LoggerFactory;
 
 class ConnectionManagerWatcherThread extends Thread {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionManager.class);
+
   private final ReentrantLock connectionManagerLock;
   private final Condition noConnectionCondition;
   private final ThreadStopper threadStopper;
-  private ConnectionManager connectionManager;
-  private long connectRetryWaitTime;
 
-  ConnectionManagerWatcherThread(ReentrantLock connectionManagerLock, Condition noConnectionCondition, ConnectionManager connectionManager, long connectRetryWaitTime) {
+  private long connectRetryWaitTime;
+  private ConnectionManager connectionManager;
+
+  ConnectionManagerWatcherThread(ReentrantLock connectionManagerLock,
+      Condition noConnectionCondition, ConnectionManager connectionManager,
+      long connectRetryWaitTime) {
     this.threadStopper = new ThreadStopper();
     this.connectionManagerLock = connectionManagerLock;
     this.noConnectionCondition = noConnectionCondition;
@@ -59,7 +63,8 @@ class ConnectionManagerWatcherThread extends Thread {
   }
 
   private boolean reconnectNeeded() {
-    return connectionManager.getState() == ConnectionState.NEVER_CONNECTED || connectionManager.getState() == ConnectionState.CONNECTING;
+    return connectionManager.getState() == ConnectionState.NEVER_CONNECTED
+        || connectionManager.getState() == ConnectionState.CONNECTING;
   }
 
   private void waitForRetry() {

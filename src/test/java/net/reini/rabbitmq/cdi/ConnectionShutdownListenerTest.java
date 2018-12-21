@@ -3,8 +3,8 @@ package net.reini.rabbitmq.cdi;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.rabbitmq.client.ShutdownSignalException;
 import java.util.concurrent.locks.ReentrantLock;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,9 +12,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.rabbitmq.client.ShutdownSignalException;
+
+@SuppressWarnings("boxing")
 @ExtendWith(MockitoExtension.class)
 class ConnectionShutdownListenerTest {
-
   @Mock
   private ConnectionManager connectionManager;
   @Mock

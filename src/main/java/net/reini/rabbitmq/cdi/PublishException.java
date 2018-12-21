@@ -2,7 +2,7 @@ package net.reini.rabbitmq.cdi;
 
 /**
  * A general exception that occurs when trying to publish a RabbitMQ message.
- *
+ * 
  * @author Patrick Reinhart
  */
 public class PublishException extends Exception {

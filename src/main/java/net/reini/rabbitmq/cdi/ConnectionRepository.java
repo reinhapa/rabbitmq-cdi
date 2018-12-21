@@ -11,26 +11,25 @@ import javax.enterprise.context.ApplicationScoped;
 import com.rabbitmq.client.Connection;
 
 /**
- * <p>
  * Repository to hold one single connection to each broker
- * </p>
  *
  * <p>
- * It is recommended by the RabbitMQ documentation (v2.7) to use one single connection within a client and to use one channel for every client thread.
- * </p>
+ * It is recommended by the RabbitMQ documentation (v2.7) to use one single connection within a
+ * client and to use one channel for every client thread.
  *
  * @author Patrick Reinhart
  */
 @ApplicationScoped
 public class ConnectionRepository {
-  private final Map<ConnectionConfiguration, ConnectionManager> connectionManagers;
-  private Function<ConnectionConfiguration, ConnectionManager> connectionManagerFactoryFunction;
+  private final Map<ConnectionConfig, ConnectionManager> connectionManagers;
+  private Function<ConnectionConfig, ConnectionManager> connectionManagerFactoryFunction;
 
   public ConnectionRepository() {
     this(ConnectionManager::new);
   }
 
-  ConnectionRepository(Function<ConnectionConfiguration, ConnectionManager> connectionManagerFactoryFunction) {
+  ConnectionRepository(
+      Function<ConnectionConfig, ConnectionManager> connectionManagerFactoryFunction) {
     connectionManagers = new ConcurrentHashMap<>();
     this.connectionManagerFactoryFunction = connectionManagerFactoryFunction;
   }
@@ -48,22 +47,21 @@ public class ConnectionRepository {
    * @return The connection
    * @throws IOException if the connection is not yet available
    */
-  public Connection getConnection(ConnectionConfiguration config)
-      throws IOException {
+  public Connection getConnection(ConnectionConfig config) throws IOException {
     return connectionManagers.computeIfAbsent(config, connectionManagerFactoryFunction)
         .getConnection();
   }
 
   /**
    * <p>
-   * Triggers the repository to create a ConnectionManager for the broker configuration if not present and to start connection attempts to the broker
+   * Triggers the repository to create a ConnectionManager for the broker configuration if not
+   * present and to start connection attempts to the broker
    * </p>
    *
    * @param config the broker connection configuration
    */
-  public void connect(ConnectionConfiguration config) {
-    connectionManagers.computeIfAbsent(config, connectionManagerFactoryFunction)
-        .connect();
+  public void connect(ConnectionConfig config) {
+    connectionManagers.computeIfAbsent(config, connectionManagerFactoryFunction).connect();
   }
 
 
@@ -73,7 +71,8 @@ public class ConnectionRepository {
    * </p>
    *
    * <p>
-   * Note: Make sure to close the connection factory when not used any more as otherwise the connection may remain established and ghost threads may reside.
+   * Note: Make sure to close the connection factory when not used any more as otherwise the
+   * connection may remain established and ghost threads may reside.
    * </p>
    */
   @PreDestroy
@@ -82,13 +81,15 @@ public class ConnectionRepository {
   }
 
   /**
-   * Registers a connection listener at the factory which is notified about changes of connection states.
+   * Registers a connection listener at the factory which is notified about changes of connection
+   * states.
    *
    * @param config the connection configuration
    * @param listener The connection listener
    */
-  public void registerConnectionListener(ConnectionConfiguration config, ConnectionListener listener) {
-    connectionManagers.computeIfAbsent(config, connectionManagerFactoryFunction).addListener(listener);
+  public void registerConnectionListener(ConnectionConfig config, ConnectionListener listener) {
+    connectionManagers.computeIfAbsent(config, connectionManagerFactoryFunction)
+        .addListener(listener);
   }
 
   /**
@@ -97,7 +98,8 @@ public class ConnectionRepository {
    * @param config the connection configuration
    * @param listener The connection listener
    */
-  public void removeConnectionListener(ConnectionConfiguration config, ConnectionListener listener) {
-    connectionManagers.computeIfAbsent(config, connectionManagerFactoryFunction).removeListener(listener);
+  public void removeConnectionListener(ConnectionConfig config, ConnectionListener listener) {
+    connectionManagers.computeIfAbsent(config, connectionManagerFactoryFunction)
+        .removeListener(listener);
   }
 }

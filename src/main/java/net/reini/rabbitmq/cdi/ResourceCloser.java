@@ -3,7 +3,7 @@ package net.reini.rabbitmq.cdi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ResourceCloser {
+final class ResourceCloser {
   private static final Logger LOGGER = LoggerFactory.getLogger(ResourceCloser.class);
 
   void closeResource(AutoCloseable autoCloseable, String logTextIfFailed) {

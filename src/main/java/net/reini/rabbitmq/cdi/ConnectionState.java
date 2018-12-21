@@ -6,7 +6,8 @@ enum ConnectionState {
    */
   NEVER_CONNECTED,
   /**
-   * The factory has established a connection in the past but the connection was lost and the factory is currently trying to reestablish the connection.
+   * The factory has established a connection in the past but the connection was lost and the
+   * factory is currently trying to reestablish the connection.
    */
   CONNECTING,
   /**
@@ -14,7 +15,8 @@ enum ConnectionState {
    */
   CONNECTED,
   /**
-   * The factory and its underlying connection are closed and the factory cannot be used to retrieve new connections.
+   * The factory and its underlying connection are closed and the factory cannot be used to retrieve
+   * new connections.
    */
   CLOSED
 }

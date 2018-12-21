@@ -7,13 +7,10 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.AMQP.BasicProperties.Builder;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.function.BiConsumer;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,11 +20,15 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.AMQP.BasicProperties.Builder;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+
 @ExtendWith(MockitoExtension.class)
 public class GenericPublisherTest {
-
   @Mock
-  private ConnectionConfiguration config;
+  private ConnectionConfig config;
   @Mock
   private ConnectionRepository connectionRepository;
   @Mock
@@ -72,7 +73,6 @@ public class GenericPublisherTest {
         eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
     assertEquals("application/json", propsCaptor.getValue().getContentType());
   }
-
 
   @Test
   public void testPublish_with_error() throws Exception {
@@ -166,7 +166,6 @@ public class GenericPublisherTest {
   }
 
   public static class CustomEncoder implements Encoder<TestEvent> {
-
     @Override
     public String contentType() {
       return "text/plain";

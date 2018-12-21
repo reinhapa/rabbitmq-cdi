@@ -7,13 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import javax.net.ssl.SSLContext;
@@ -116,15 +114,14 @@ public class ConnectionConfigurationTest {
   @Test
   public void testSetConnectRetryWaitTime() throws Exception {
     configuration.setConnectRetryWaitTime(300);
-    assertEquals(300,configuration.getConnectRetryWaitTime());
+    assertEquals(300, configuration.getConnectRetryWaitTime());
   }
 
   @Test
   public void testSetFailedConsumerActivationRetryTime() throws Exception {
     configuration.setFailedConsumerActivationRetryTime(300);
-    assertEquals(300,configuration.getFailedConsumerActivationRetryTime());
+    assertEquals(300, configuration.getFailedConsumerActivationRetryTime());
   }
-
 
   /**
    * Test method for {@link ConnectionConfiguration#setSecure(boolean)}.
@@ -192,7 +189,7 @@ public class ConnectionConfigurationTest {
    * Test method for {@link ConnectionConfiguration#hashCode()}.
    */
   @Test
-  public void testHashCode() throws IOException, TimeoutException {
+  public void testHashCode() {
     assertEquals(Arrays.asList().hashCode(), configuration.hashCode());
     configuration.addHost(expectedAddress);
     assertEquals(Arrays.asList(expectedAddress).hashCode(), configuration.hashCode());
@@ -244,8 +241,7 @@ public class ConnectionConfigurationTest {
       configuration.createConnection(connectionFactory);
 
     });
-    assertEquals("error during connect, fatal system configuration",exception.getMessage());
-
+    assertEquals("error during connect, fatal system configuration", exception.getMessage());
   }
 
   private static ConnectionConfiguration connectionConfiguration(

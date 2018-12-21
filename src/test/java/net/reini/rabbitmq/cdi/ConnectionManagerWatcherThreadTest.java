@@ -12,23 +12,24 @@ import static org.mockito.Mockito.when;
 import java.lang.Thread.State;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@SuppressWarnings("boxing")
 @ExtendWith(MockitoExtension.class)
 class ConnectionManagerWatcherThreadTest {
 
-
-
   @Test
   void testEstablishConnectionNotPossible() throws InterruptedException {
-    ReentrantLock lock=new ReentrantLock();
-    Condition condition=lock.newCondition();
+    ReentrantLock lock = new ReentrantLock();
+    Condition condition = lock.newCondition();
     ConnectionManager connectionManagerMock = mock(ConnectionManager.class);
     when(connectionManagerMock.tryToEstablishConnection()).thenReturn(false);
     when(connectionManagerMock.getState()).thenReturn(ConnectionState.NEVER_CONNECTED);
-    ConnectionManagerWatcherThread sut = new ConnectionManagerWatcherThread(lock,condition,connectionManagerMock, 50);
+    ConnectionManagerWatcherThread sut =
+        new ConnectionManagerWatcherThread(lock, condition, connectionManagerMock, 50);
     sut.start();
     Thread.sleep(300);
     assertTrue(sut.isAlive());
@@ -39,42 +40,42 @@ class ConnectionManagerWatcherThreadTest {
 
   @Test
   void testEstablishConnectionSuccessfull() throws InterruptedException {
-    ReentrantLock lock=new ReentrantLock();
-    Condition condition=lock.newCondition();
+    ReentrantLock lock = new ReentrantLock();
+    Condition condition = lock.newCondition();
     ConnectionManager connectionManagerMock = mock(ConnectionManager.class);
     when(connectionManagerMock.tryToEstablishConnection()).thenReturn(true);
     when(connectionManagerMock.getState()).thenReturn(ConnectionState.NEVER_CONNECTED);
-    ConnectionManagerWatcherThread sut = new ConnectionManagerWatcherThread(lock,condition, connectionManagerMock, 50);
+    ConnectionManagerWatcherThread sut =
+        new ConnectionManagerWatcherThread(lock, condition, connectionManagerMock, 50);
     sut.start();
     Thread.sleep(200);
     assertTrue(sut.isAlive());
-    assertEquals(sut.isAlive(),sut.isRunning());
+    assertEquals(sut.isAlive(), sut.isRunning());
     verify(connectionManagerMock).tryToEstablishConnection();
     assertEquals(State.WAITING, sut.getState());
     killThreadAndVerifyState(sut);
-    assertEquals(sut.isAlive(),sut.isRunning());
+    assertEquals(sut.isAlive(), sut.isRunning());
   }
 
 
   @Test
   void testEstablishConnectionSuccessfullButLostAfterSomeTime() throws InterruptedException {
-    ReentrantLock lock=new ReentrantLock();
-    Condition condition=lock.newCondition();
+    ReentrantLock lock = new ReentrantLock();
+    Condition condition = lock.newCondition();
     ConnectionManager connectionManagerMock = mock(ConnectionManager.class);
     when(connectionManagerMock.tryToEstablishConnection()).thenReturn(true);
     when(connectionManagerMock.getState()).thenReturn(ConnectionState.NEVER_CONNECTED);
-    ConnectionManagerWatcherThread sut = new ConnectionManagerWatcherThread(lock,condition, connectionManagerMock, 50);
+    ConnectionManagerWatcherThread sut =
+        new ConnectionManagerWatcherThread(lock, condition, connectionManagerMock, 50);
     sut.start();
     Thread.sleep(200);
     assertTrue(sut.isAlive());
     verify(connectionManagerMock).tryToEstablishConnection();
     assertEquals(State.WAITING, sut.getState());
-    try
-    {
+    try {
       lock.lock();
       condition.signalAll();
-    }
-    finally {
+    } finally {
       lock.unlock();
     }
     Thread.sleep(200);
@@ -82,8 +83,8 @@ class ConnectionManagerWatcherThreadTest {
     assertEquals(State.WAITING, sut.getState());
     killThreadAndVerifyState(sut);
   }
-  
-  private void killThreadAndVerifyState(ConnectionManagerWatcherThread sut) throws InterruptedException {
+
+  private void killThreadAndVerifyState(ConnectionManagerWatcherThread sut) {
     sut.stopThread();
     assertFalse(sut.isAlive());
   }

@@ -5,9 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class QueueDeclarationConfig {
-
-  private Set<QueueDeclaration> queueDeclarations;
+final class QueueDeclarationConfig {
+  private final Set<QueueDeclaration> queueDeclarations;
 
   QueueDeclarationConfig() {
     this.queueDeclarations = new HashSet<>();

@@ -19,20 +19,22 @@ import com.rabbitmq.client.ConnectionFactory;
  *
  * @author Patrick Reinhart
  */
-class ConnectionConfiguration implements ConnectionConfigHolder {
+final class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolder {
   private static final int DEFAULT_CONNECTION_HEARTBEAT_TIMEOUT_IN_SEC = 3;
   private static final int DEFAULT_CONNECT_TIMEOUT_IN_MS = 10000;
   private static final int DEFAULT_WAIT_TIME_RETRY_CONNECT_IN_MS = 10_000;
   private static final long DEFAULT_WAIT_TIME_RETRY_ACTIVATE_CONSUMER_IN_MS = 10000;
+
   private final List<Address> brokerHosts;
-  private boolean secure;
-  private String username;
-  private String password;
-  private String virtualHost;
+
   private int requestedConnectionHeartbeatTimeout;
   private int connectTimeout;
   private long connectRetryWaitTime;
   private long failedConsumerActivationRetryTime;
+  private boolean secure;
+  private String username;
+  private String password;
+  private String virtualHost;
   private SSLContextFactory sslContextFactory;
 
   ConnectionConfiguration(SSLContextFactory sslContextFactory) {
@@ -47,7 +49,7 @@ class ConnectionConfiguration implements ConnectionConfigHolder {
   }
 
   ConnectionConfiguration() {
-    this(new SSLContextFactory());
+    this(SSLContext::getDefault);
   }
 
   @Override
@@ -96,6 +98,7 @@ class ConnectionConfiguration implements ConnectionConfigHolder {
     this.connectRetryWaitTime = waitTime;
   }
 
+  @Override
   public Connection createConnection(ConnectionFactory connectionFactory)
       throws IOException, TimeoutException {
     connectionFactory.setUsername(username);
@@ -144,15 +147,17 @@ class ConnectionConfiguration implements ConnectionConfigHolder {
     }
     ConnectionConfiguration other = (ConnectionConfiguration) obj;
     return secure == other.secure && brokerHosts.equals(other.brokerHosts)
-        && username.equals(other.username)
-        && password.equals(other.password) && Objects.equals(virtualHost, other.virtualHost);
+        && username.equals(other.username) && password.equals(other.password)
+        && Objects.equals(virtualHost, other.virtualHost);
   }
 
-  long getConnectRetryWaitTime() {
+  @Override
+  public long getConnectRetryWaitTime() {
     return connectRetryWaitTime;
   }
 
-  long getFailedConsumerActivationRetryTime() {
+  @Override
+  public long getFailedConsumerActivationRetryTime() {
     return failedConsumerActivationRetryTime;
   }
 }

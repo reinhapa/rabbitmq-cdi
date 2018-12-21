@@ -3,14 +3,17 @@ package net.reini.rabbitmq.cdi;
 import java.util.HashMap;
 import java.util.Map;
 
-public class QueueDeclaration {
-  private String queueName;
-  private boolean durable = false;
-  private boolean autoDelete = true;
-  private Map<String, Object> arguments = new HashMap<>();
+public final class QueueDeclaration {
+  private final Map<String, Object> arguments;
+
+  private boolean durable;
+  private boolean autoDelete;
   private boolean exclusive;
+  private String queueName;
 
   QueueDeclaration(String queueName) {
+    arguments = new HashMap<>();
+    autoDelete = true;
     this.queueName = queueName;
   }
 
@@ -24,8 +27,8 @@ public class QueueDeclaration {
     return this;
   }
 
-  public QueueDeclaration withArguments(Map<String, Object> arguments) {
-    this.arguments = arguments;
+  public QueueDeclaration withArgument(String key, Object argument) {
+    arguments.put(key, argument);
     return this;
   }
 
@@ -36,11 +39,8 @@ public class QueueDeclaration {
 
   @Override
   public String toString() {
-    return "queueName='" + queueName + '\'' +
-        ", durable=" + durable +
-        ", autoDelete=" + autoDelete +
-        ", arguments=" + arguments +
-        ", exclusive=" + exclusive;
+    return "queueName='" + queueName + '\'' + ", durable=" + durable + ", autoDelete=" + autoDelete
+        + ", arguments=" + arguments + ", exclusive=" + exclusive;
   }
 
   boolean isExclusive() {

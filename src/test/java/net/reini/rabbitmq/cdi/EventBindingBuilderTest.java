@@ -1,18 +1,19 @@
 package net.reini.rabbitmq.cdi;
 
-import net.reini.rabbitmq.cdi.EventBinder.EventBindingBuilder;
-import net.reini.rabbitmq.cdi.EventBinder.ExchangeBinding;
-import net.reini.rabbitmq.cdi.EventBinder.QueueBinding;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.verify;
+
+import java.util.function.Consumer;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.function.Consumer;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.verify;
+import net.reini.rabbitmq.cdi.EventBinder.EventBindingBuilder;
+import net.reini.rabbitmq.cdi.EventBinder.ExchangeBinding;
+import net.reini.rabbitmq.cdi.EventBinder.QueueBinding;
 
 @ExtendWith(MockitoExtension.class)
 class EventBindingBuilderTest {

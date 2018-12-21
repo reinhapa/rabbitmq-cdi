@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.Instance;
-import net.reini.rabbitmq.cdi.EventBinder.ExchangeBinding;
-import net.reini.rabbitmq.cdi.EventBinder.QueueBinding;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,9 +17,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import net.reini.rabbitmq.cdi.EventBinder.ExchangeBinding;
+import net.reini.rabbitmq.cdi.EventBinder.QueueBinding;
+
 @ExtendWith(MockitoExtension.class)
 class EventBinderTest {
-
   @Mock
   private Event<Object> remoteEventControl;
   @Mock
@@ -37,10 +39,10 @@ class EventBinderTest {
   @InjectMocks
   private TestEventBinder eventBinder;
 
-
   @BeforeEach
   void prepare() {
-    Mockito.when(consumerContainerFactory.create(Mockito.any(),Mockito.any())).thenReturn(consumerContainerMock);
+    Mockito.when(consumerContainerFactory.create(Mockito.any(), Mockito.any()))
+        .thenReturn(consumerContainerMock);
     eventBinder.initializeConsumerContainer();
   }
 
@@ -108,7 +110,6 @@ class EventBinderTest {
 
 
   static class TestEventBinder extends EventBinder {
-
     @Override
     protected void bindEvents() {
     }

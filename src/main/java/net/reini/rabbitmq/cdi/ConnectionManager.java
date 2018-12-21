@@ -14,36 +14,39 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 /**
- * <p>
- * Manager manages one connection to one broker. The Manager will reconnect in case the connection is lost, and keeps constantly checking the connection status.
- * </p>
+ * Manager manages one connection to one broker. The Manager will reconnect in case the connection
+ * is lost, and keeps constantly checking the connection status.
  *
  * @author Patrick Reinhart
  */
 class ConnectionManager {
-  private final ConnectionConfiguration config;
-  private final Set<ConnectionListener> listeners = ConcurrentHashMap.newKeySet();
   private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionManager.class);
+
+  private final ConnectionConfig config;
+  private final Set<ConnectionListener> listeners = ConcurrentHashMap.newKeySet();
   private final ReentrantLock connectionManagerLock;
   private final Condition noConnectionCondition;
+  private final ConnectionManagerWatcherThread connectThread;
+  private final ConnectionFactory connectionFactory;
+
+  private ResourceCloser resourceCloser = new ResourceCloser();
+  private ConnectionShutdownListener shutdownListener;
 
   private volatile Connection connection;
   private volatile ConnectionState state = ConnectionState.NEVER_CONNECTED;
-  private ResourceCloser resourceCloser = new ResourceCloser();
-  private final ConnectionManagerWatcherThread connectThread;
-  private ConnectionShutdownListener shutdownListener;
-  private final ConnectionFactory connectionFactory;
 
-  ConnectionManager(ConnectionConfiguration config) {
+  ConnectionManager(ConnectionConfig config) {
     this.config = config;
     this.connectionFactory = new ConnectionFactory();
     this.connectionManagerLock = new ReentrantLock();
     this.noConnectionCondition = connectionManagerLock.newCondition();
     this.shutdownListener = new ConnectionShutdownListener(this, this.connectionManagerLock);
-    this.connectThread = new ConnectionManagerWatcherThread(connectionManagerLock, noConnectionCondition, this, config.getConnectRetryWaitTime());
+    this.connectThread = new ConnectionManagerWatcherThread(connectionManagerLock,
+        noConnectionCondition, this, config.getConnectRetryWaitTime());
   }
 
-  ConnectionManager(ConnectionConfiguration config, ConnectionManagerWatcherThread connectThread, ConnectionShutdownListener shutdownListener, ConnectionFactory connectionFactory,
+  ConnectionManager(ConnectionConfig config, ConnectionManagerWatcherThread connectThread,
+      ConnectionShutdownListener shutdownListener, ConnectionFactory connectionFactory,
       ReentrantLock connectionManagerLock, Condition noConnectionCondition) {
     this.connectThread = connectThread;
     this.shutdownListener = shutdownListener;
@@ -55,7 +58,8 @@ class ConnectionManager {
 
   void connect() {
     if (state == ConnectionState.CLOSED) {
-      throw new IllegalStateException("Attempt to initiate a connect from a closed connection manager");
+      throw new IllegalStateException(
+          "Attempt to initiate a connect from a closed connection manager");
     }
     startConnectThread();
   }
@@ -91,8 +95,7 @@ class ConnectionManager {
     return state;
   }
 
-  Connection getConnection()
-      throws IOException {
+  Connection getConnection() throws IOException {
     // Retrieve the connection if it is established
     if (state == ConnectionState.CLOSED) {
       throw new IOException("Attempt to retrieve a connection from a closed connection factory");
@@ -107,9 +110,11 @@ class ConnectionManager {
   }
 
   boolean tryToEstablishConnection() {
-    String connectWarning = "could not establish connection to host " + connectionFactory.getHost() + " on port " + connectionFactory.getPort() + ", retry to establish connection...";
+    String connectWarning = "could not establish connection to host " + connectionFactory.getHost()
+        + " on port " + connectionFactory.getPort() + ", retry to establish connection...";
     if (state == ConnectionState.CONNECTED || state == ConnectionState.CLOSED) {
-      throw new IllegalStateException("connection manager illegal state to establish a connection: " + state);
+      throw new IllegalStateException(
+          "connection manager illegal state to establish a connection: " + state);
     }
 
     try {
@@ -153,8 +158,7 @@ class ConnectionManager {
    * @throws IOException if establishing a new connection fails
    * @throws TimeoutException if establishing a new connection times out
    */
-  private Connection createNewConnection()
-      throws IOException, TimeoutException {
+  private Connection createNewConnection() throws IOException, TimeoutException {
     LOGGER.debug("Trying to establish connection using {}", config);
     connection = config.createConnection(connectionFactory);
     connection.addShutdownListener(this.shutdownListener);

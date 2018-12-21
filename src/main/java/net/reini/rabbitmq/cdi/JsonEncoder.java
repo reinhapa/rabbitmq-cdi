@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * Specialized encoder that encodes a event type into Json using Jackson {@link ObjectMapper}.
- *
+ * 
  * @author André Ignacio
  */
 public final class JsonEncoder<T> implements Encoder<T> {

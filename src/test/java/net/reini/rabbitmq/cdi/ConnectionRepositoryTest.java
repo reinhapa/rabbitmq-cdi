@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.util.function.Function;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class ConnectionRepositoryTest {
 
   @Mock
-  private ConnectionConfiguration configMock;
+  private ConnectionConfig configMock;
   @Mock
   private ConnectionListener listener;
 
@@ -25,7 +26,7 @@ public class ConnectionRepositoryTest {
   private ConnectionManager connectionManagerMock;
 
   @Mock
-  private Function<ConnectionConfiguration, ConnectionManager> factoryFunctionMock;
+  private Function<ConnectionConfig, ConnectionManager> factoryFunctionMock;
 
   private ConnectionRepository sut;
 
