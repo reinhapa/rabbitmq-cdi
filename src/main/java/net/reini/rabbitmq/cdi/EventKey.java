@@ -1,5 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
+import java.util.StringJoiner;
+
 import javax.enterprise.event.TransactionPhase;
 
 final class EventKey<T> {
@@ -9,17 +11,23 @@ final class EventKey<T> {
   static <T> EventKey<T> of(Class<T> type, TransactionPhase phase) {
     return new EventKey<>(type, phase);
   }
-  
+
   private EventKey(Class<T> type, TransactionPhase phase) {
     this.phase = phase;
     this.type = type;
   }
-  
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", "EventKey[", "]").add(type.getSimpleName()).add(phase.name())
+        .toString();
+  }
+
   @Override
   public int hashCode() {
     return type.hashCode();
   }
-  
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {
@@ -27,7 +35,7 @@ final class EventKey<T> {
     } else if (!(obj instanceof EventKey)) {
       return false;
     }
-    EventKey<?> other = (EventKey<?>)obj;
+    EventKey<?> other = (EventKey<?>) obj;
     return phase.equals(other.phase) && type.equals(other.type);
   }
 }
