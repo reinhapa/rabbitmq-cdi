@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
+import javax.enterprise.event.TransactionPhase;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -83,6 +85,13 @@ class ExchangeBindingTest {
     assertEquals(errorHandler, binding.getErrorHandler());
     assertSame(binding, binding.withErrorHandler(null));
     assertNotEquals(errorHandler, binding.getErrorHandler());
+  }
+
+  @Test
+  void inPhase() {
+    assertEquals(TransactionPhase.IN_PROGRESS, binding.getTransactionPhase());
+    assertSame(binding, binding.inPhase(TransactionPhase.AFTER_COMPLETION));
+    assertEquals(TransactionPhase.AFTER_COMPLETION, binding.getTransactionPhase());
   }
 
   @Test

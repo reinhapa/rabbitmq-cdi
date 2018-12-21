@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Event;
+import javax.enterprise.event.TransactionPhase;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 
@@ -207,12 +208,18 @@ public abstract class EventBinder {
   }
 
   void bindExchange(ExchangeBinding<?> exchangeBinding) {
-    Class<?> eventType = exchangeBinding.getEventType();
+    @SuppressWarnings("unchecked")
+    Class<Object> eventType = (Class<Object>) exchangeBinding.getEventType();
+    @SuppressWarnings("unchecked")
+    BiConsumer<Object, PublishException> errorHandler =
+        (BiConsumer<Object, PublishException>) exchangeBinding.getErrorHandler();
+    @SuppressWarnings("unchecked")
+    Encoder<Object> encoder = (Encoder<Object>) exchangeBinding.getEncoder();
     String exchange = exchangeBinding.getExchange();
-    PublisherConfiguration cfg = new PublisherConfiguration(configuration, exchange,
-        exchangeBinding.getRoutingKey(), exchangeBinding.getBasicPropertiesBuilder(),
-        exchangeBinding.getEncoder(), exchangeBinding.getErrorHandler());
-    eventPublisher.addEvent(eventType, cfg);
+    PublisherConfiguration<Object> cfg =
+        new PublisherConfiguration<>(configuration, exchange, exchangeBinding.getRoutingKey(),
+            exchangeBinding.getBasicPropertiesBuilder(), encoder, errorHandler);
+    eventPublisher.addEvent(EventKey.of(eventType, exchangeBinding.getTransactionPhase()), cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchange,
         eventType.getName());
   }
@@ -265,7 +272,7 @@ public abstract class EventBinder {
     return exchangeDeclarationConfigEntry;
   }
 
-  public final static class EventBindingBuilder<T> {
+  public static final class EventBindingBuilder<T> {
     private final Class<T> eventType;
     private final Consumer<QueueBinding<T>> queueBindingConsumer;
     private final Consumer<ExchangeBinding<T>> exchangeBindingConsumer;
@@ -404,6 +411,7 @@ public abstract class EventBinder {
     private String routingKey;
     private Encoder<T> encoder;
     private Builder basicPropertiesBuilder;
+    private TransactionPhase transactionPhase;
     private BiConsumer<T, PublishException> errorHandler;
 
     ExchangeBinding(Class<T> eventType, String exchange) {
@@ -412,6 +420,7 @@ public abstract class EventBinder {
       this.headers = new HashMap<>();
       this.encoder = new JsonEncoder<>();
       routingKey = "";
+      transactionPhase = TransactionPhase.IN_PROGRESS;
       errorHandler = nop();
       basicPropertiesBuilder = MessageProperties.BASIC.builder().headers(headers);
       LOGGER.info("Binding created between exchange {} and event type {}", exchange,
@@ -440,6 +449,10 @@ public abstract class EventBinder {
 
     Builder getBasicPropertiesBuilder() {
       return basicPropertiesBuilder;
+    }
+
+    TransactionPhase getTransactionPhase() {
+      return transactionPhase;
     }
 
     /**
@@ -498,6 +511,18 @@ public abstract class EventBinder {
       if (newHeaders != null) {
         headers.putAll(newHeaders);
       }
+      return this;
+    }
+
+    /**
+     * Sets the event observation phase to the given transaction phase on which the event will be
+     * published to the configured exchange.
+     *
+     * @param phase The transaction phase for the event to publish
+     * @return the exchange binding
+     */
+    public ExchangeBinding<T> inPhase(TransactionPhase phase) {
+      this.transactionPhase = Objects.requireNonNull(phase, "phase must not be null");
       return this;
     }
 

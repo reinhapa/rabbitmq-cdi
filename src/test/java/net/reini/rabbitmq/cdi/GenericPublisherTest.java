@@ -36,7 +36,7 @@ public class GenericPublisherTest {
   @Mock
   private Encoder<TestEvent> encoder;
   @Mock
-  private BiConsumer<?, PublishException> errorHandler;
+  private BiConsumer<TestEvent, PublishException> errorHandler;
 
   private GenericPublisher publisher;
   private TestEvent event;
@@ -57,8 +57,8 @@ public class GenericPublisherTest {
   @Test
   public void testPublish() throws Exception {
     Builder builder = new Builder();
-    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
-        "routingKey", builder, new JsonEncoder<>(), errorHandler);
+    PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
+        "exchange", "routingKey", builder, new JsonEncoder<>(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
@@ -74,8 +74,8 @@ public class GenericPublisherTest {
   @Test
   public void testPublish_with_error() throws Exception {
     Builder builder = new Builder();
-    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
-        "routingKey", builder, new JsonEncoder<>(), errorHandler);
+    PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
+        "exchange", "routingKey", builder, new JsonEncoder<>(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
@@ -94,8 +94,8 @@ public class GenericPublisherTest {
   @Test
   public void testPublish_withEncodeException() throws Exception {
     Builder builder = new Builder();
-    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
-        "routingKey", builder, encoder, errorHandler);
+    PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
+        "exchange", "routingKey", builder, encoder, errorHandler);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
@@ -122,8 +122,8 @@ public class GenericPublisherTest {
     };
 
     Builder builder = new Builder();
-    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
-        "routingKey", builder, new JsonEncoder<>(), errorHandler);
+    PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
+        "exchange", "routingKey", builder, new JsonEncoder<>(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
@@ -139,7 +139,8 @@ public class GenericPublisherTest {
   @Test
   public void testPublish_with_FatalError() throws Exception {
     Builder builder = new Builder();
-    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
+    PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
+        "exchange",
         "routingKey", builder, new JsonEncoder<>(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
@@ -159,8 +160,8 @@ public class GenericPublisherTest {
   @Test
   public void testPublish_with_custom_MessageConverter() throws Exception {
     Builder builder = new Builder();
-    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
-        "routingKey", builder, new CustomEncoder(), errorHandler);
+    PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
+        "exchange", "routingKey", builder, new CustomEncoder(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);

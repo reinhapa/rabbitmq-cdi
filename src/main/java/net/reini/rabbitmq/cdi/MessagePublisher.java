@@ -9,7 +9,8 @@ public interface MessagePublisher {
    * @param publisherConfiguration the default publisher configuration
    * @throws PublishException if the event could not be delivered to RabbitMQ
    */
-  void publish(Object event, PublisherConfiguration publisherConfiguration) throws PublishException;
+  void publish(Object event, PublisherConfiguration<?> publisherConfiguration)
+      throws PublishException;
 
   /**
    * Closes the publisher by closing its underlying channel.

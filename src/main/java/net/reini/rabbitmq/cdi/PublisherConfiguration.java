@@ -13,17 +13,17 @@ import com.rabbitmq.client.Channel;
  *
  * @author Patrick Reinhart
  */
-final class PublisherConfiguration implements BiConsumer<Object, PublishException> {
+final class PublisherConfiguration<T> implements BiConsumer<T, PublishException> {
   private final ConnectionConfig config;
   private final BasicProperties basicProperties;
-  private final Encoder<?> messageEncoder;
+  private final Encoder<T> messageEncoder;
   private final String exchange;
   private final String routingKey;
-  private final BiConsumer<?, PublishException> errorHandler;
+  private final BiConsumer<T, PublishException> errorHandler;
 
   PublisherConfiguration(ConnectionConfig config, String exchange, String routingKey,
-      Builder basicPropertiesBuilder, Encoder<?> encoder,
-      BiConsumer<?, PublishException> errorHandler) {
+      Builder basicPropertiesBuilder, Encoder<T> encoder,
+      BiConsumer<T, PublishException> errorHandler) {
     this.config = config;
     this.exchange = exchange;
     this.routingKey = routingKey;
@@ -55,10 +55,7 @@ final class PublisherConfiguration implements BiConsumer<Object, PublishExceptio
   }
 
   @Override
-  public void accept(Object event, PublishException publishError) {
-    @SuppressWarnings("unchecked")
-    BiConsumer<Object, PublishException> consumer =
-        (BiConsumer<Object, PublishException>) errorHandler;
-    consumer.accept(event, publishError);
+  public void accept(T event, PublishException publishError) {
+    errorHandler.accept(event, publishError);
   }
 }

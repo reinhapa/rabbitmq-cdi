@@ -45,7 +45,7 @@ public class GenericPublisher implements MessagePublisher {
   }
 
   @Override
-  public void publish(Object event, PublisherConfiguration publisherConfiguration)
+  public void publish(Object event, PublisherConfiguration<?> publisherConfiguration)
       throws PublishException {
     for (int attempt = 1; attempt <= DEFAULT_RETRY_ATTEMPTS; attempt++) {
       if (attempt > 1) {
