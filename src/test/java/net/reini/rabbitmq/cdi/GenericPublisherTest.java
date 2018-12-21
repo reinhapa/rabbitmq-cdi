@@ -11,13 +11,11 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.function.BiConsumer;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
@@ -36,10 +34,9 @@ public class GenericPublisherTest {
   @Mock
   private Channel channel;
   @Mock
-  BiConsumer<?, PublishException> errorHandler;
-
+  private Encoder<TestEvent> encoder;
   @Mock
-  private Encoder<?> failingEncoderMock;
+  private BiConsumer<?, PublishException> errorHandler;
 
   private GenericPublisher publisher;
   private TestEvent event;
@@ -95,6 +92,51 @@ public class GenericPublisherTest {
   }
 
   @Test
+  public void testPublish_withEncodeException() throws Exception {
+    Builder builder = new Builder();
+    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
+        "routingKey", builder, encoder, errorHandler);
+
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
+    when(connection.createChannel()).thenReturn(channel);
+    doThrow(new EncodeException(new RuntimeException("someError"))).when(encoder).encode(event);
+
+    Throwable exception = assertThrows(PublishException.class, () -> {
+      publisher.publish(event, publisherConfiguration);
+    });
+    assertEquals("Unable to serialize event", exception.getMessage());
+  }
+
+  @Test
+  public void testPublish_withTooManyAttempts() throws Exception {
+    publisher = new GenericPublisher(connectionRepository) {
+      @Override
+      protected void handleIoException(int attempt, Throwable cause) throws PublishException {
+        // do not throw to allow attempts to overrun DEFAULT_RETRY_ATTEMPTS
+      }
+
+      @Override
+      protected void sleepBeforeRetry() {
+        // no delay
+      }
+    };
+
+    Builder builder = new Builder();
+    PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
+        "routingKey", builder, new JsonEncoder<>(), errorHandler);
+    ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
+
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
+    when(connection.createChannel()).thenReturn(channel);
+    doThrow(new IOException("someError")).when(channel).basicPublish(eq("exchange"),
+        eq("routingKey"), propsCaptor.capture(),
+        eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
+
+    publisher.publish(event, publisherConfiguration);
+    assertEquals("application/json", propsCaptor.getValue().getContentType());
+  }
+
+  @Test
   public void testPublish_with_FatalError() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
@@ -132,24 +174,6 @@ public class GenericPublisherTest {
   }
 
   @Test
-  public void testPublish_with_custom_MessageConverterAndEncodingProblem() throws Exception {
-
-    Assertions.assertThrows(PublishException.class, () -> {
-      doThrow(new EncodeException(null)).when(failingEncoderMock).encode(Mockito.any());
-
-      Builder builder = new Builder();
-      PublisherConfiguration publisherConfiguration = new PublisherConfiguration(config, "exchange",
-          "routingKey", builder, failingEncoderMock, errorHandler);
-      ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
-
-      when(connectionRepository.getConnection(config)).thenReturn(connection);
-      when(connection.createChannel()).thenReturn(channel);
-
-      publisher.publish(event, publisherConfiguration);
-    });
-  }
-
-  @Test
   public void testClose() {
     publisher.close();
   }
@@ -157,6 +181,12 @@ public class GenericPublisherTest {
   @Test
   public void testHandleIoException_channel_null() throws PublishException {
     publisher.handleIoException(1, null);
+  }
+
+  @Test
+  public void testSleepBeforeRetry_real_wait() {
+    publisher = new GenericPublisher(connectionRepository);
+    publisher.sleepBeforeRetry();
   }
 
   @Test
