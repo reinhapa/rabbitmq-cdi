@@ -29,7 +29,7 @@ public class JsonDecoderTest {
 
 
   @Test
-  public void testDecode_withFailure() throws DecodeException {
+  public void testDecode_withFailure() {
     byte[] messageBody = "illegal message".getBytes();
 
     Throwable exception = assertThrows(DecodeException.class, () -> {

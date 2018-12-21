@@ -173,8 +173,8 @@ public abstract class EventBinder {
   void bindQueue(QueueBinding<?> queueBinding) {
     @SuppressWarnings("unchecked")
     Class<Object> eventType = (Class<Object>) queueBinding.getEventType();
-    Event<Object> eventControl = (Event<Object>) remoteEventControl.select(eventType);
-    Instance<Object> eventPool = (Instance<Object>) remoteEventPool.select(eventType);
+    Event<Object> eventControl = remoteEventControl.select(eventType);
+    Instance<Object> eventPool = remoteEventPool.select(eventType);
     EventConsumer consumer = new EventConsumer(queueBinding.getDecoder(), eventControl, eventPool);
     String queue = queueBinding.getQueue();
     consumerContainer.addConsumer(consumer, queue, queueBinding.isAutoAck());

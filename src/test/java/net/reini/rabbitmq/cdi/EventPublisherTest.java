@@ -55,7 +55,7 @@ public class EventPublisherTest {
   }
 
   /**
-   * Test method for {@link EventPublisher#publishEvent(Object)}.
+   * Test method for {@link EventPublisher#publishEvent(Object, TransactionPhase)}.
    */
   @Test
   public void testPublishEvent_no_configuration() {
@@ -63,8 +63,9 @@ public class EventPublisherTest {
   }
 
   /**
-   * Test method for {@link EventPublisher#addEvent(Class, PublisherConfiguration)},
-   * {@link EventPublisher#publishEvent(Object)} and {@link EventPublisher#cleanUp()}.
+   * Test method for {@link EventPublisher#addEvent(EventKey, PublisherConfiguration)},
+   * {@link EventPublisher#publishEvent(Object, TransactionPhase)} and
+   * {@link EventPublisher#cleanUp()}.
    * 
    * @throws TimeoutException
    * @throws IOException
@@ -86,8 +87,9 @@ public class EventPublisherTest {
   }
 
   /**
-   * Test method for {@link EventPublisher#addEvent(Class, PublisherConfiguration)},
-   * {@link EventPublisher#publishEvent(Object)} and {@link EventPublisher#cleanUp()}.
+   * Test method for {@link EventPublisher#addEvent(EventKey, PublisherConfiguration)},
+   * {@link EventPublisher#publishEvent(Object, TransactionPhase)} and
+   * {@link EventPublisher#cleanUp()}.
    * 
    * @throws TimeoutException
    * @throws IOException

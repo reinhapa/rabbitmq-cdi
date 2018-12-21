@@ -29,6 +29,7 @@ import com.rabbitmq.client.ShutdownSignalException;
 import net.reini.rabbitmq.cdi.ConnectionProducer.ConnectionState;
 import net.reini.rabbitmq.cdi.ConnectionProducer.State;
 
+@SuppressWarnings("boxing")
 @ExtendWith(MockitoExtension.class)
 public class ConnectionProducerTest {
   @Mock
