@@ -38,7 +38,7 @@ public class BinderConfigurationTest {
   /**
    * Test method for {@link BinderConfiguration#setHost(String)}.
    */
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings({"deprecation", "javadoc"})
   @Test
   public void testSetHost() {
     assertSame(binderConfig, binderConfig.setHost("hostName"));
