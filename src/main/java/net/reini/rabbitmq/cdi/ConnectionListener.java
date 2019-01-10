@@ -1,5 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
+import java.util.EventListener;
+
 import com.rabbitmq.client.Connection;
 
 /**
@@ -8,7 +10,7 @@ import com.rabbitmq.client.Connection;
  * 
  * @author Patrick Reinhart
  */
-public interface ConnectionListener {
+public interface ConnectionListener extends EventListener {
 
   /**
    * Called when a connection was established the first time.

@@ -1,7 +1,6 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeoutException;
 
 import com.rabbitmq.client.Connection;
@@ -19,8 +18,17 @@ public interface ConnectionConfig {
    * 
    * @throws TimeoutException if a timeout occurs
    * @throws IOException if the connection error occurs
-   * @throws NoSuchAlgorithmException if the security context creation for secured connection fails
    */
   Connection createConnection(ConnectionFactory connectionFactory)
-      throws IOException, TimeoutException, NoSuchAlgorithmException;
+      throws IOException, TimeoutException;
+
+  /**
+   * @return the wait time between connection retry
+   */
+  long getConnectRetryWaitTime();
+
+  /**
+   * @return the wait time between consumers failed to activate will be tried to restart
+   */
+  long getFailedConsumerActivationRetryTime();
 }

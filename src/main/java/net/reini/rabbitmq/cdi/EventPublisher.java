@@ -28,13 +28,13 @@ import org.slf4j.LoggerFactory;
 public class EventPublisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventPublisher.class);
 
-  private final ConnectionProducer connectionProducer;
+  private final ConnectionRepository connectionRepository;
   private final Map<EventKey<?>, PublisherConfiguration<?>> publisherConfigurations;
   private final ThreadLocal<Map<EventKey<?>, MessagePublisher>> publishers;
 
   @Inject
-  public EventPublisher(ConnectionProducer connectionProducer) {
-    this.connectionProducer = connectionProducer;
+  public EventPublisher(ConnectionRepository connectionRepository) {
+    this.connectionRepository = connectionRepository;
     this.publisherConfigurations = new HashMap<>();
     this.publishers = ThreadLocal.withInitial(HashMap::new);
   }
@@ -130,13 +130,12 @@ public class EventPublisher {
    * Provides a publisher with the specified reliability. Within the same thread, the same producer
    * instance is provided for the given event type.
    *
-   * @param reliability The desired publisher reliability
    * @param eventKey The event key
    * @param transactionPhase The actual transaction phase of the event
    * @return The provided publisher
    */
   MessagePublisher providePublisher(EventKey<?> eventKey, TransactionPhase transactionPhase) {
     Map<EventKey<?>, MessagePublisher> localPublishers = publishers.get();
-    return localPublishers.computeIfAbsent(eventKey, key -> new GenericPublisher(connectionProducer));
+    return localPublishers.computeIfAbsent(eventKey, key -> new GenericPublisher(connectionRepository));
   }
 }

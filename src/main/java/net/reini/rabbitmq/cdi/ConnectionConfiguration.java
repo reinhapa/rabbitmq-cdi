@@ -19,18 +19,37 @@ import com.rabbitmq.client.ConnectionFactory;
  *
  * @author Patrick Reinhart
  */
-class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolder {
+final class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolder {
+  private static final int DEFAULT_CONNECTION_HEARTBEAT_TIMEOUT_IN_SEC = 3;
+  private static final int DEFAULT_CONNECT_TIMEOUT_IN_MS = 10000;
+  private static final int DEFAULT_WAIT_TIME_RETRY_CONNECT_IN_MS = 10_000;
+  private static final long DEFAULT_WAIT_TIME_RETRY_ACTIVATE_CONSUMER_IN_MS = 10000;
+
   private final List<Address> brokerHosts;
 
+  private int requestedConnectionHeartbeatTimeout;
+  private int connectTimeout;
+  private long connectRetryWaitTime;
+  private long failedConsumerActivationRetryTime;
   private boolean secure;
   private String username;
   private String password;
   private String virtualHost;
+  private SSLContextFactory sslContextFactory;
 
-  ConnectionConfiguration() {
+  ConnectionConfiguration(SSLContextFactory sslContextFactory) {
+    this.sslContextFactory = sslContextFactory;
     brokerHosts = new ArrayList<>();
     username = "guest";
     password = "guest";
+    this.connectTimeout = DEFAULT_CONNECT_TIMEOUT_IN_MS;
+    this.requestedConnectionHeartbeatTimeout = DEFAULT_CONNECTION_HEARTBEAT_TIMEOUT_IN_SEC;
+    this.connectRetryWaitTime = DEFAULT_WAIT_TIME_RETRY_CONNECT_IN_MS;
+    this.failedConsumerActivationRetryTime = DEFAULT_WAIT_TIME_RETRY_ACTIVATE_CONSUMER_IN_MS;
+  }
+
+  ConnectionConfiguration() {
+    this(SSLContext::getDefault);
   }
 
   @Override
@@ -65,12 +84,34 @@ class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolde
   }
 
   @Override
+  public void setRequestedConnectionHeartbeatTimeout(int requestedHeartbeat) {
+    this.requestedConnectionHeartbeatTimeout = requestedHeartbeat;
+  }
+
+  @Override
+  public void setConnectTimeout(int timeout) {
+    this.connectTimeout = timeout;
+  }
+
+  @Override
+  public void setConnectRetryWaitTime(long waitTime) {
+    this.connectRetryWaitTime = waitTime;
+  }
+
+  @Override
   public Connection createConnection(ConnectionFactory connectionFactory)
-      throws IOException, TimeoutException, NoSuchAlgorithmException {
+      throws IOException, TimeoutException {
     connectionFactory.setUsername(username);
     connectionFactory.setPassword(password);
+    connectionFactory.setRequestedHeartbeat(requestedConnectionHeartbeatTimeout);
+    connectionFactory.setConnectionTimeout(connectTimeout);
     if (secure) {
-      SSLContext sslContext = SSLContext.getDefault();
+      final SSLContext sslContext;
+      try {
+        sslContext = sslContextFactory.createSSLContext();
+      } catch (NoSuchAlgorithmException e) {
+        throw new IllegalStateException("error during connect, fatal system configuration", e);
+      }
       connectionFactory.setSslContextFactory(name -> sslContext);
     }
     if (virtualHost != null) {
@@ -80,6 +121,11 @@ class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolde
       throw new IllegalArgumentException("No broker host defined");
     }
     return connectionFactory.newConnection(new ArrayList<>(brokerHosts));
+  }
+
+  @Override
+  public void setFailedConsumerActivationRetryTime(long failedConsumerActivationRetryTime) {
+    this.failedConsumerActivationRetryTime = failedConsumerActivationRetryTime;
   }
 
   @Override
@@ -101,7 +147,17 @@ class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolde
     }
     ConnectionConfiguration other = (ConnectionConfiguration) obj;
     return secure == other.secure && brokerHosts.equals(other.brokerHosts)
-        && username.equals(other.username)
-        && password.equals(other.password) && Objects.equals(virtualHost, other.virtualHost);
+        && username.equals(other.username) && password.equals(other.password)
+        && Objects.equals(virtualHost, other.virtualHost);
+  }
+
+  @Override
+  public long getConnectRetryWaitTime() {
+    return connectRetryWaitTime;
+  }
+
+  @Override
+  public long getFailedConsumerActivationRetryTime() {
+    return failedConsumerActivationRetryTime;
   }
 }

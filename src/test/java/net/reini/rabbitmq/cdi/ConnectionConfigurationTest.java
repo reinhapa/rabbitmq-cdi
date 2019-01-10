@@ -4,8 +4,10 @@ import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -34,6 +36,8 @@ import com.rabbitmq.client.SslContextFactory;
 public class ConnectionConfigurationTest {
   @Mock
   private ConnectionFactory connectionFactory;
+  @Mock
+  private SSLContextFactory sslContextFactoryMock;
 
   private Address expectedAddress;
   private ConnectionConfiguration configuration;
@@ -87,6 +91,36 @@ public class ConnectionConfigurationTest {
   public void testSetVirtualHost() throws Exception {
     configuration.setVirtualHost("virtualHost");
     assertConnection(null, null, "virtualHost", false, null);
+  }
+
+  @Test
+  public void testSetRequestedConnectionHeartbeatTimeout() throws Exception {
+    configuration.setRequestedConnectionHeartbeatTimeout(300);
+    Address hostAddress = new Address("host.somedomain", 5671);
+    configuration.addHost(hostAddress);
+    configuration.createConnection(connectionFactory);
+    verify(connectionFactory).setRequestedHeartbeat(300);
+  }
+
+  @Test
+  public void testSetConnectTimeout() throws Exception {
+    configuration.setConnectTimeout(300);
+    Address hostAddress = new Address("host.somedomain", 5671);
+    configuration.addHost(hostAddress);
+    configuration.createConnection(connectionFactory);
+    verify(connectionFactory).setConnectionTimeout(300);
+  }
+
+  @Test
+  public void testSetConnectRetryWaitTime() throws Exception {
+    configuration.setConnectRetryWaitTime(300);
+    assertEquals(300, configuration.getConnectRetryWaitTime());
+  }
+
+  @Test
+  public void testSetFailedConsumerActivationRetryTime() throws Exception {
+    configuration.setFailedConsumerActivationRetryTime(300);
+    assertEquals(300, configuration.getFailedConsumerActivationRetryTime());
   }
 
   /**
@@ -193,6 +227,21 @@ public class ConnectionConfigurationTest {
     assertNotEquals(configuration, connectionConfiguration(c -> c.setUsername("username")));
     assertNotEquals(configuration, connectionConfiguration(c -> c.setVirtualHost("virtualHost")));
     assertNotEquals(configuration, connectionConfiguration(c -> c.setSecure(true)));
+  }
+
+
+  @Test
+  public void testProblemWithSSLContextInitialisation() throws Exception {
+    doThrow(new NoSuchAlgorithmException()).when(sslContextFactoryMock).createSSLContext();
+
+    Throwable exception = assertThrows(IllegalStateException.class, () -> {
+      configuration = new ConnectionConfiguration(sslContextFactoryMock);
+      configuration.setSecure(true);
+      configuration.addHost(expectedAddress);
+      configuration.createConnection(connectionFactory);
+
+    });
+    assertEquals("error during connect, fatal system configuration", exception.getMessage());
   }
 
   private static ConnectionConfiguration connectionConfiguration(

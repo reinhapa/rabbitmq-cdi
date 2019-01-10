@@ -73,6 +73,8 @@ import com.rabbitmq.client.MessageProperties;
 public abstract class EventBinder {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventBinder.class);
 
+  private final Set<ExchangeDeclaration> exchangeDeclarations;
+  private final Set<QueueDeclaration> queueDeclarations;
   private final Set<QueueBinding<?>> queueBindings;
   private final Set<ExchangeBinding<?>> exchangeBindings;
 
@@ -83,7 +85,9 @@ public abstract class EventBinder {
   @Inject
   private EventPublisher eventPublisher;
   @Inject
-  private ConnectionProducer connectionProducer;
+  private ConnectionRepository connectionRepository;
+  @Inject
+  private ConsumerContainerFactory consumerContainerFactory;
 
   private ConnectionConfiguration configuration;
   private ConsumerContainer consumerContainer;
@@ -91,6 +95,8 @@ public abstract class EventBinder {
   public EventBinder() {
     exchangeBindings = new HashSet<>();
     queueBindings = new HashSet<>();
+    exchangeDeclarations = new HashSet<>();
+    queueDeclarations = new HashSet<>();
   }
 
   /**
@@ -148,16 +154,36 @@ public abstract class EventBinder {
    */
   public void initialize() throws IOException {
     bindEvents();
-    processQueueBindings();
-    consumerContainer.startAllConsumers();
+    processExchangeDeclarations();
+    processQueueDeclarations();
     processExchangeBindings();
+    processQueueBindings();
+    consumerContainer.start();
   }
 
 
   @PostConstruct
   void initializeConsumerContainer() {
     configuration = new ConnectionConfiguration();
-    consumerContainer = new ConsumerContainer(configuration, connectionProducer);
+    consumerContainer = consumerContainerFactory.create(configuration, connectionRepository);
+  }
+
+  void stop() {
+    consumerContainer.stop();
+  }
+
+  void processExchangeDeclarations() {
+    for (ExchangeDeclaration exchangeDeclaration : exchangeDeclarations) {
+      consumerContainer.addExchangeDeclaration(exchangeDeclaration);
+    }
+    exchangeDeclarations.clear();
+  }
+
+  void processQueueDeclarations() {
+    for (QueueDeclaration queueDeclaration : queueDeclarations) {
+      consumerContainer.addQueueDeclaration(queueDeclaration);
+    }
+    queueDeclarations.clear();
   }
 
   void processExchangeBindings() {
@@ -232,6 +258,18 @@ public abstract class EventBinder {
    */
   public <M> EventBindingBuilder<M> bind(Class<M> event) {
     return new EventBindingBuilder<>(event, queueBindings::add, exchangeBindings::add);
+  }
+
+  public ExchangeDeclaration declareExchange(String exchangeName) {
+    ExchangeDeclaration exchangeDeclaration = new ExchangeDeclaration(exchangeName);
+    exchangeDeclarations.add(exchangeDeclaration);
+    return exchangeDeclaration;
+  }
+
+  public QueueDeclaration declareQueue(String queueName) {
+    QueueDeclaration exchangeDeclarationConfigEntry = new QueueDeclaration(queueName);
+    queueDeclarations.add(exchangeDeclarationConfigEntry);
+    return exchangeDeclarationConfigEntry;
   }
 
   public static final class EventBindingBuilder<T> {
@@ -464,9 +502,8 @@ public abstract class EventBinder {
      * @see #withHeader(String, Object)
      */
     public ExchangeBinding<T> withProperties(BasicProperties properties) {
-      this.basicPropertiesBuilder =
-          Objects.requireNonNull(properties, "propeties must not be null").builder()
-              .headers(headers);
+      this.basicPropertiesBuilder = Objects.requireNonNull(properties, "propeties must not be null")
+          .builder().headers(headers);
       LOGGER.info("Publisher properties for event type {} set to {}", eventType.getSimpleName(),
           properties.toString());
       headers.clear();
@@ -596,6 +633,17 @@ public abstract class EventBinder {
     }
 
     /**
+     * Set the time to sleep between retries to activate consumers
+     *
+     * @param waitTime time in milli seconds to wait between retries
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setFailedConsumerActivationRetryTime(long waitTime) {
+      config.setFailedConsumerActivationRetryTime(waitTime);
+      return this;
+    }
+
+    /**
      * Set the connection security setting.
      * 
      * @param secure {@code true} to use secured connection, {@code false} otherwise
@@ -659,5 +707,44 @@ public abstract class EventBinder {
       }
       return this;
     }
+
+    /**
+     * Set the TCP connection timeout.
+     *
+     * @param timeout connection TCP establishment timeout in milliseconds; zero for infinite
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setConnectTimeout(int timeout) {
+      config.setConnectTimeout(timeout);
+      return this;
+    }
+
+    /**
+     * Set the time to sleep between connection attempts, this only applies if the connection was
+     * not recoverable and a complete reconnect is needed and also during the first connect attempt.
+     *
+     * @param waitTime time in milli seconds to wait between retries
+     * @return the binder configuration object
+     */
+    public BinderConfiguration setConnectRetryWaitTime(int waitTime) {
+      config.setConnectRetryWaitTime(waitTime);
+      return this;
+    }
+
+    /**
+     * Set the requested heartbeat timeout. Heartbeat frames will be sent at about 1/2 the timeout
+     * interval. If server heartbeat timeout is configured to a non-zero value, this method can only
+     * be used to lower the value; otherwise any value provided by the client will be used.
+     *
+     * @param requestedHeartbeat the initially requested heartbeat timeout, in seconds; zero for
+     *        none
+     * @return the binder configuration object
+     * @see <a href="http://rabbitmq.com/heartbeats.html">RabbitMQ Heartbeats Guide</a>
+     */
+    public BinderConfiguration setRequestedConnectionHeartbeatTimeout(int requestedHeartbeat) {
+      config.setRequestedConnectionHeartbeatTimeout(requestedHeartbeat);
+      return this;
+    }
+
   }
 }

@@ -17,7 +17,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Envelope;
 
-@SuppressWarnings("boxing")
 @ExtendWith(MockitoExtension.class)
 public class EventConsumerTest {
   @Mock
@@ -66,6 +65,7 @@ public class EventConsumerTest {
     assertFalse(consumer.consume("consumerTag", envelope, properties, body));
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void testHandleDelivery() throws Exception {
     TestEvent event = new TestEvent();

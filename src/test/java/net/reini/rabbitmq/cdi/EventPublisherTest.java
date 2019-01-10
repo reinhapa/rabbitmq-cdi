@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
@@ -33,7 +32,7 @@ import com.rabbitmq.client.Connection;
 @ExtendWith(MockitoExtension.class)
 public class EventPublisherTest {
   @Mock
-  private ConnectionProducer connectionProducer;
+  private ConnectionRepository connectionRepository;
   @Mock
   private ConnectionConfig config;
   @Mock
@@ -49,7 +48,7 @@ public class EventPublisherTest {
 
   @BeforeEach
   public void setUp() throws Exception {
-    publisher = new EventPublisher(connectionProducer);
+    publisher = new EventPublisher(connectionRepository);
     basicProperties = new BasicProperties.Builder();
     encoder = new JsonEncoder<>();
   }
@@ -69,12 +68,11 @@ public class EventPublisherTest {
    * 
    * @throws TimeoutException
    * @throws IOException
-   * @throws NoSuchAlgorithmException
    */
   @Test
-  public void testPublishEvent() throws IOException, TimeoutException, NoSuchAlgorithmException {
+  public void testPublishEvent() throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_SUCCESS);
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
@@ -93,14 +91,13 @@ public class EventPublisherTest {
    * 
    * @throws TimeoutException
    * @throws IOException
-   * @throws NoSuchAlgorithmException
    */
   @Test
   public void testPublishEvent_failing()
-      throws IOException, TimeoutException, NoSuchAlgorithmException {
+      throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_FAILURE);
 
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
     doThrow(IOException.class).when(channel).basicPublish(eq("exchange"), eq("routingKey"), any(),
         any());
@@ -115,9 +112,10 @@ public class EventPublisherTest {
 
   @Test
   public void testOnEventInProgress()
-      throws IOException, TimeoutException, NoSuchAlgorithmException {
+      throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.IN_PROGRESS);
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
@@ -131,9 +129,10 @@ public class EventPublisherTest {
 
   @Test
   public void testOnEventInBeforeCompletion()
-      throws IOException, TimeoutException, NoSuchAlgorithmException {
+      throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.BEFORE_COMPLETION);
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
@@ -147,9 +146,10 @@ public class EventPublisherTest {
 
   @Test
   public void testOnEventAfterCompletion()
-      throws IOException, TimeoutException, NoSuchAlgorithmException {
+      throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_COMPLETION);
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
@@ -163,9 +163,10 @@ public class EventPublisherTest {
 
   @Test
   public void testOnEventAfterFailure()
-      throws IOException, TimeoutException, NoSuchAlgorithmException {
+      throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_FAILURE);
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
@@ -179,9 +180,10 @@ public class EventPublisherTest {
 
   @Test
   public void testOnEventAfterSuccess()
-      throws IOException, TimeoutException, NoSuchAlgorithmException {
+      throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_SUCCESS);
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",

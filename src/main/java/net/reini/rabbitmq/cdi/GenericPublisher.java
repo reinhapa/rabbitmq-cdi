@@ -1,7 +1,6 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
@@ -15,22 +14,22 @@ public class GenericPublisher implements MessagePublisher {
   public static final int DEFAULT_RETRY_ATTEMPTS = 3;
   public static final int DEFAULT_RETRY_INTERVAL = 1000;
 
-  private final ConnectionProducer connectionProducer;
+  private final ConnectionRepository connectionRepository;
 
-  public GenericPublisher(ConnectionProducer connectionProducer) {
-    this.connectionProducer = connectionProducer;
+  public GenericPublisher(ConnectionRepository connectionRepository) {
+    this.connectionRepository = connectionRepository;
   }
 
   /**
    * Handles an exception depending on the already used attempts to send a message. Also performs a
    * soft reset of the currently used channel.
+   * 
    * @param attempt Current attempt count
    * @param cause The thrown exception
    *
    * @throws PublishException if the maximum amount of attempts is exceeded
    */
-  protected void handleIoException(int attempt, Throwable cause)
-      throws PublishException {
+  protected void handleIoException(int attempt, Throwable cause) throws PublishException {
     if (attempt == DEFAULT_RETRY_ATTEMPTS) {
       throw new PublishException("Unable to send message after " + attempt + " attempts", cause);
     }
@@ -53,12 +52,12 @@ public class GenericPublisher implements MessagePublisher {
         LOGGER.debug("Attempt {} to send message", Integer.valueOf(attempt));
       }
       try (Channel channel =
-          connectionProducer.getConnection(publisherConfiguration.getConfig()).createChannel()) {
+          connectionRepository.getConnection(publisherConfiguration.getConfig()).createChannel()) {
         publisherConfiguration.publish(channel, event);
         return;
       } catch (EncodeException e) {
         throw new PublishException("Unable to serialize event", e);
-      } catch (IOException | TimeoutException | NoSuchAlgorithmException e) {
+      } catch (IOException | TimeoutException e) {
         handleIoException(attempt, e);
       }
     }

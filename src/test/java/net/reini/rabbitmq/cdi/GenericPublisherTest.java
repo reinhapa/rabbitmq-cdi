@@ -28,7 +28,7 @@ public class GenericPublisherTest {
   @Mock
   private ConnectionConfig config;
   @Mock
-  private ConnectionProducer connectionProducer;
+  private ConnectionRepository connectionRepository;
   @Mock
   private Connection connection;
   @Mock
@@ -43,7 +43,7 @@ public class GenericPublisherTest {
 
   @BeforeEach
   public void setUp() throws Exception {
-    publisher = new GenericPublisher(connectionProducer) {
+    publisher = new GenericPublisher(connectionRepository) {
       @Override
       protected void sleepBeforeRetry() {
         // no delay
@@ -61,7 +61,7 @@ public class GenericPublisherTest {
         "exchange", "routingKey", builder, new JsonEncoder<>(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.publish(event, publisherConfiguration);
@@ -78,7 +78,7 @@ public class GenericPublisherTest {
         "exchange", "routingKey", builder, new JsonEncoder<>(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
     doThrow(new IOException("someError")).when(channel).basicPublish(eq("exchange"),
         eq("routingKey"), propsCaptor.capture(),
@@ -97,7 +97,7 @@ public class GenericPublisherTest {
     PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
         "exchange", "routingKey", builder, encoder, errorHandler);
 
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
     doThrow(new EncodeException(new RuntimeException("someError"))).when(encoder).encode(event);
 
@@ -109,7 +109,7 @@ public class GenericPublisherTest {
 
   @Test
   public void testPublish_withTooManyAttempts() throws Exception {
-    publisher = new GenericPublisher(connectionProducer) {
+    publisher = new GenericPublisher(connectionRepository) {
       @Override
       protected void handleIoException(int attempt, Throwable cause) throws PublishException {
         // do not throw to allow attempts to overrun DEFAULT_RETRY_ATTEMPTS
@@ -126,7 +126,7 @@ public class GenericPublisherTest {
         "exchange", "routingKey", builder, new JsonEncoder<>(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
     doThrow(new IOException("someError")).when(channel).basicPublish(eq("exchange"),
         eq("routingKey"), propsCaptor.capture(),
@@ -137,13 +137,34 @@ public class GenericPublisherTest {
   }
 
   @Test
+  public void testPublish_with_FatalError() throws Exception {
+    Builder builder = new Builder();
+    PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
+        "exchange",
+        "routingKey", builder, new JsonEncoder<>(), errorHandler);
+    ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
+
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
+    when(connection.createChannel()).thenReturn(channel);
+    doThrow(new IOException("someError")).when(channel).basicPublish(eq("exchange"),
+        eq("routingKey"), propsCaptor.capture(),
+        eq("{\"id\":\"theId\",\"booleanValue\":true}".getBytes()));
+
+    Throwable exception = assertThrows(PublishException.class, () -> {
+      publisher.publish(event, publisherConfiguration);
+    });
+    assertEquals("Unable to send message after 3 attempts", exception.getMessage());
+    assertEquals("application/json", propsCaptor.getValue().getContentType());
+  }
+
+  @Test
   public void testPublish_with_custom_MessageConverter() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
         "exchange", "routingKey", builder, new CustomEncoder(), errorHandler);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
-    when(connectionProducer.getConnection(config)).thenReturn(connection);
+    when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.publish(event, publisherConfiguration);
@@ -164,8 +185,14 @@ public class GenericPublisherTest {
   }
 
   @Test
+  public void testSleepBeforeRetry_real_wait() {
+    publisher = new GenericPublisher(connectionRepository);
+    publisher.sleepBeforeRetry();
+  }
+
+  @Test
   public void testSleepBeforeRetry_InterruptedException() throws InterruptedException {
-    publisher = new GenericPublisher(connectionProducer);
+    publisher = new GenericPublisher(connectionRepository);
     call_SleepBeforeRetry_InAnotherThread_AndInterrupt();
   }
 

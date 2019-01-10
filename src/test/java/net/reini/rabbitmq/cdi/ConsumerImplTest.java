@@ -44,7 +44,7 @@ public class ConsumerImplTest {
    */
   @Test
   public void testHandleConsumeOk() {
-    consumer.handleCancelOk("consumerTag");
+    consumer.handleConsumeOk("consumerTag");
     consumerAcknowledged.handleCancelOk("consumerTag");
   }
 
