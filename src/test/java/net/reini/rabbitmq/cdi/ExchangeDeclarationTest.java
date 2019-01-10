@@ -58,4 +58,17 @@ class ExchangeDeclarationTest {
 
     assertNotEquals(new ExchangeDeclaration("hello"), new ExchangeDeclaration("hello2"));
   }
+
+  @Test
+  void testToString() {
+    ExchangeDeclaration sut = new ExchangeDeclaration("hello");
+    sut.withExchangeType(BuiltinExchangeType.DIRECT);
+    sut.withAutoDelete(true);
+    sut.withDurable(true);
+    sut.withArgument("key","value");
+    
+    String result = sut.toString();
+    assertEquals("exchangeName='hello', exchangeType='direct', durable=true, autoDelete=true, arguments={key=value}",result);
+
+  }
 }

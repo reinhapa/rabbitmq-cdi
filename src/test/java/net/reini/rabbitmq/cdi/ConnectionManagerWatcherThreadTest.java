@@ -39,6 +39,23 @@ class ConnectionManagerWatcherThreadTest {
   }
 
   @Test
+  void testEstablishConnectionNotPossibleWhileAlreadyConnecting() throws InterruptedException {
+    ReentrantLock lock = new ReentrantLock();
+    Condition condition = lock.newCondition();
+    ConnectionManager connectionManagerMock = mock(ConnectionManager.class);
+    when(connectionManagerMock.tryToEstablishConnection()).thenReturn(false);
+    when(connectionManagerMock.getState()).thenReturn(ConnectionState.CONNECTING);
+    ConnectionManagerWatcherThread sut =
+        new ConnectionManagerWatcherThread(lock, condition, connectionManagerMock, 50);
+    sut.start();
+    Thread.sleep(300);
+    assertTrue(sut.isAlive());
+    verify(connectionManagerMock, atLeast(2)).tryToEstablishConnection();
+    assertEquals(State.TIMED_WAITING, sut.getState());
+    killThreadAndVerifyState(sut);
+  }
+
+  @Test
   void testEstablishConnectionSuccessfull() throws InterruptedException {
     ReentrantLock lock = new ReentrantLock();
     Condition condition = lock.newCondition();
