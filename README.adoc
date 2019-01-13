@@ -17,7 +17,7 @@ respective queues and will be handed over to all JavaEE event observers.
 The RabbitMQ message content is done via JSON serialization of a Java Bean 
 compatible PoJo object and vice versa.
 
-## Usage example
+== Usage example
 
 First you need to define event objects using standard Java Bean syntax:
 
@@ -129,7 +129,7 @@ public class BindingInitializer {
 <7> Set the heartbeat timeout to 3 sec (To detect connection problems)
 
 
-### Alternative connection definition
+=== Alternative connection definition
 
 Alternatively the connection can also be configured using a respective URI
 string:
@@ -160,7 +160,7 @@ More information about the detailed URI can be found in the
 https://www.rabbitmq.com/uri-spec.html[RabbitMQ URI specification].
 
 
-### Multiple server connections
+=== Multiple server connections
 
 In case you have to support two different servers, create a binder implementation
 for each host and initialize them in one single binding initializer:
@@ -197,7 +197,7 @@ public class BindingInitializer {
 ----
 
 
-### Usage in a container
+=== Usage in a container
 
 Now the events can be used within your JavaEE container:
 
@@ -222,7 +222,9 @@ public class EventDemoBean {
 
 
 == Contribute
+
 Contributions are always welcome. Use https://google.github.io/styleguide/javaguide.html[Google code style format] for your changes. 
 
 == License
+
 This project is licensed under the https://github.com/{project-full-path}/blob/{github-branch}/LICENSE[MIT license]
