@@ -3,7 +3,7 @@ package net.reini.rabbitmq.cdi;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class QueueDeclaration {
+public final class QueueDeclaration implements Declaration {
   private final Map<String, Object> arguments;
 
   private boolean durable;
@@ -13,7 +13,6 @@ public final class QueueDeclaration {
 
   QueueDeclaration(String queueName) {
     arguments = new HashMap<>();
-    autoDelete = true;
     this.queueName = queueName;
   }
 

@@ -41,7 +41,7 @@ class EventBinderTest {
 
   @BeforeEach
   void prepare() {
-    Mockito.when(consumerContainerFactory.create(Mockito.any(), Mockito.any()))
+    Mockito.when(consumerContainerFactory.create(Mockito.any(), Mockito.any(),Mockito.any()))
         .thenReturn(consumerContainerMock);
     eventBinder.initializeConsumerContainer();
   }
@@ -83,24 +83,6 @@ class EventBinderTest {
 
     eventBinder.bindExchange(exchangeBinding);
     eventBinder.initialize();
-  }
-
-  @Test
-  void testDeclareExchange() throws IOException {
-    ExchangeDeclaration exchangeDeclaration = eventBinder.declareExchange("hello");
-    assertEquals("hello", exchangeDeclaration.getExchangeName());
-    assertNotNull(exchangeDeclaration);
-    eventBinder.initialize();
-    verify(consumerContainerMock).addExchangeDeclaration(exchangeDeclaration);
-  }
-
-  @Test
-  void testDeclareQueue() throws IOException {
-    QueueDeclaration queue = eventBinder.declareQueue("hello");
-    assertEquals("hello", queue.getQueueName());
-    assertNotNull(queue);
-    eventBinder.initialize();
-    verify(consumerContainerMock).addQueueDeclaration(queue);
   }
 
   @Test

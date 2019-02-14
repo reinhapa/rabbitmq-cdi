@@ -1,6 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,23 +18,22 @@ class ConsumerHolder {
   private final EventConsumer consumer;
   private final ShutdownListener shutdownListener;
   private final ConsumerChannelFactory consumerChannelFactory;
-  private final ConsumerExchangeAndQueueDeclarer consumerExchangeAndQueueDeclarer;
   private final ResourceCloser resourceCloser;
   private final ConsumerFactory consumerFactory;
-
+  private final DeclarerRepository declarerRepository;
+  private final List<Declaration> declarations;
   private Channel channel;
 
   private volatile boolean active;
 
   ConsumerHolder(EventConsumer consumer, String queueName, boolean autoAck,
-      ConsumerChannelFactory consumerChannelFactory,
-      ConsumerExchangeAndQueueDeclarer consumerExchangeAndQueueDeclarer,
-      ConsumerFactory consumerFactory) {
+      ConsumerChannelFactory consumerChannelFactory, ConsumerFactory consumerFactory, List<Declaration> declarations,DeclarerRepository declarerRepository) {
     this.consumer = consumer;
     this.queueName = queueName;
     this.autoAck = autoAck;
     this.consumerChannelFactory = consumerChannelFactory;
-    this.consumerExchangeAndQueueDeclarer = consumerExchangeAndQueueDeclarer;
+    this.declarations = declarations;
+    this.declarerRepository = declarerRepository;
     this.activeLock = new Object();
     this.resourceCloser = new ResourceCloser();
     this.shutdownListener = new ConsumerHolderChannelShutdownListener(this);
@@ -59,7 +59,7 @@ class ConsumerHolder {
         try {
           channel = this.consumerChannelFactory.createChannel();
           channel.addShutdownListener(shutdownListener);
-          this.consumerExchangeAndQueueDeclarer.declareQueuesAndExchanges(channel);
+          declarerRepository.declare(channel, declarations);
           channel.basicConsume(queueName, autoAck, autoAck ? consumerFactory.create(consumer)
               : consumerFactory.createAcknowledged(consumer, channel));
           LOGGER.info("Activated consumer of class {}", consumer.getClass());

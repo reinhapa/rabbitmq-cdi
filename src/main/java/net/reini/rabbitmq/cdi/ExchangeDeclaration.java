@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.rabbitmq.client.BuiltinExchangeType;
 
-public final class ExchangeDeclaration {
+public final class ExchangeDeclaration implements Declaration {
   private final Map<String, Object> arguments;
 
   private boolean durable;

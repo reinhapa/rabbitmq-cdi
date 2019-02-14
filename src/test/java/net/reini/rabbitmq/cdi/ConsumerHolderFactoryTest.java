@@ -2,7 +2,8 @@ package net.reini.rabbitmq.cdi;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.jupiter.api.BeforeEach;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -16,22 +17,18 @@ class ConsumerHolderFactoryTest {
   private ConnectionRepository connectionRepositoryMock;
   @Mock
   private ConnectionConfig configMock;
+  @Mock
+  private List<Declaration> declarations;
+  @Mock
+  private DeclarerRepository declarerRepositoryMock;
 
-  private ExchangeDeclarationConfig exchangeDeclaration;
-  private QueueDeclarationConfig queueDeclaration;
-
-  @BeforeEach
-  void prepare() {
-    exchangeDeclaration = new ExchangeDeclarationConfig();
-    queueDeclaration = new QueueDeclarationConfig();
-  }
 
   @Test
   void testCreate() {
     ConsumerHolderFactory consumerHolderFactory = new ConsumerHolderFactory();
     ConsumerHolder consumerHolder =
         consumerHolderFactory.createConsumerHolder(eventConsumerMock, "queue", true,
-            connectionRepositoryMock, configMock, exchangeDeclaration, queueDeclaration);
+            connectionRepositoryMock, configMock, declarations,declarerRepositoryMock);
     assertNotNull(consumerHolder);
   }
 }

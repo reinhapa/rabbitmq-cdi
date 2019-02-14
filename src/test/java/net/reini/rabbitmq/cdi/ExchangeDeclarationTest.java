@@ -9,6 +9,8 @@ import com.rabbitmq.client.BuiltinExchangeType;
 
 class ExchangeDeclarationTest {
 
+  private static final int EXPECTED_HASHCODE = -606493483;
+
   @Test
   void testExchangeType() {
     ExchangeDeclaration sut = new ExchangeDeclaration("hello");
@@ -57,6 +59,17 @@ class ExchangeDeclarationTest {
     assertNotEquals(sut, copy);
 
     assertNotEquals(new ExchangeDeclaration("hello"), new ExchangeDeclaration("hello2"));
+  }
+
+  @Test
+  void testHashCode() {
+    ExchangeDeclaration sut = new ExchangeDeclaration("hello");
+    sut.withDurable(true);
+    sut.withAutoDelete(true);
+    sut.withExchangeType("FANOUT");
+    sut.withArgument("key", Long.valueOf(1));
+    int result = sut.hashCode();
+    assertEquals(EXPECTED_HASHCODE,result);
   }
 
   @Test

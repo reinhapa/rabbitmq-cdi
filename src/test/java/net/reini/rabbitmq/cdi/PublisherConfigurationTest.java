@@ -4,6 +4,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,8 @@ class PublisherConfigurationTest {
   private BiConsumer<Object, PublishException> errorHandler;
   @Mock
   private Channel channel;
+  @Mock
+  private List<Declaration> declarationsMock;
 
   private Builder propertiesBuilder;
   private Object event;
@@ -45,7 +48,7 @@ class PublisherConfigurationTest {
 
     PublisherConfiguration<Object> publisherConfig =
         new PublisherConfiguration<>(config, "exchange",
-        "routingKey", propertiesBuilder, encoder, errorHandler);
+        "routingKey", propertiesBuilder, encoder, errorHandler, declarationsMock);
 
     publisherConfig.publish(channel, event);
 
@@ -58,7 +61,7 @@ class PublisherConfigurationTest {
     PublishException publishError = new PublishException("some error", null);
     PublisherConfiguration<Object> publisherConfig = new PublisherConfiguration<>(config,
         "exchange",
-        "routingKey", propertiesBuilder, encoder, errorHandler);
+        "routingKey", propertiesBuilder, encoder, errorHandler, declarationsMock);
 
     publisherConfig.accept(event, publishError);
     

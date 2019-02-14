@@ -1,11 +1,14 @@
 package net.reini.rabbitmq.cdi;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +53,17 @@ class QueueBindingTest {
     assertEquals(JsonDecoder.class, binding.getDecoder().getClass());
     assertSame(binding, binding.withDecoder(decoder));
     assertEquals(decoder, binding.getDecoder());
+  }
+
+  @Test
+  void testAddDeclarations() {
+    List<Declaration> expectedDeclarations=new ArrayList<>();
+    expectedDeclarations.add(new QueueDeclaration("hello"));
+    expectedDeclarations.add(new QueueDeclaration("hello2"));
+    
+    binding.withDeclarations(expectedDeclarations);
+    List<Declaration> result = binding.getDeclarations();
+    assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
   }
 
   @Test

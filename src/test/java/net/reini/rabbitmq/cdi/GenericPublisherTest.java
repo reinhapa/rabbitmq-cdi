@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +40,7 @@ public class GenericPublisherTest {
   @Mock
   private BiConsumer<TestEvent, PublishException> errorHandler;
 
+  private List<Declaration> declarations = new ArrayList<>();
   private GenericPublisher publisher;
   private TestEvent event;
 
@@ -58,7 +61,7 @@ public class GenericPublisherTest {
   public void testPublish() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
-        "exchange", "routingKey", builder, new JsonEncoder<>(), errorHandler);
+        "exchange", "routingKey", builder, new JsonEncoder<>(), errorHandler, declarations);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
@@ -75,7 +78,7 @@ public class GenericPublisherTest {
   public void testPublish_with_error() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
-        "exchange", "routingKey", builder, new JsonEncoder<>(), errorHandler);
+        "exchange", "routingKey", builder, new JsonEncoder<>(), errorHandler, declarations);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
@@ -95,7 +98,7 @@ public class GenericPublisherTest {
   public void testPublish_withEncodeException() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
-        "exchange", "routingKey", builder, encoder, errorHandler);
+        "exchange", "routingKey", builder, encoder, errorHandler, declarations);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
@@ -123,7 +126,7 @@ public class GenericPublisherTest {
 
     Builder builder = new Builder();
     PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
-        "exchange", "routingKey", builder, new JsonEncoder<>(), errorHandler);
+        "exchange", "routingKey", builder, new JsonEncoder<>(), errorHandler, declarations);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
@@ -141,7 +144,7 @@ public class GenericPublisherTest {
     Builder builder = new Builder();
     PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
         "exchange",
-        "routingKey", builder, new JsonEncoder<>(), errorHandler);
+        "routingKey", builder, new JsonEncoder<>(), errorHandler, declarations);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
@@ -161,7 +164,7 @@ public class GenericPublisherTest {
   public void testPublish_with_custom_MessageConverter() throws Exception {
     Builder builder = new Builder();
     PublisherConfiguration<TestEvent> publisherConfiguration = new PublisherConfiguration<>(config,
-        "exchange", "routingKey", builder, new CustomEncoder(), errorHandler);
+        "exchange", "routingKey", builder, new CustomEncoder(), errorHandler, declarations);
     ArgumentCaptor<BasicProperties> propsCaptor = ArgumentCaptor.forClass(BasicProperties.class);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
