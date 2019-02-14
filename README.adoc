@@ -58,13 +58,13 @@ public class RabbitBinder extends EventBinder {
   @Override
   protected void bindEvents() {
 
-    ExchangeDeclaration testExchangeOne = declarerFactory
+    ExchangeDeclaration testExchangeOne = declarerFactory()
     .createExchangeDeclaration("test.exchange.one")
       .withExchangeType(BuiltinExchangeType.DIRECT)
       .withAutoDelete(false)
       .withDurable(false); // <1>
 
-    QueueDeclaration testQueue = declarerFactory
+    QueueDeclaration testQueue = declarerFactory()
     .createQueueDeclaration("test.queue")
       .withAutoDelete(false)
       .withDurable(false)
