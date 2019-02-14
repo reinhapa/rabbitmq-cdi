@@ -31,7 +31,6 @@ import com.rabbitmq.client.Address;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.MessageProperties;
 
-
 /**
  * <p>
  * Binds incoming CDI events to queues and outgoing CDI events to exchanges of a broker.
@@ -77,8 +76,7 @@ import com.rabbitmq.client.MessageProperties;
 public abstract class EventBinder {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventBinder.class);
 
-  protected final DeclarerFactory declarerFactory;
-
+  private final DeclarerFactory declarerFactory;
   private final Set<QueueBinding<?>> queueBindings;
   private final Set<ExchangeBinding<?>> exchangeBindings;
 
@@ -140,6 +138,26 @@ public abstract class EventBinder {
    */
   public BinderConfiguration configuration() {
     return new BinderConfiguration(configuration);
+  }
+
+  /**
+   * Returns the DeclarerFactory which can be used to declare exchanges, queues and binding between exchanges and queues.
+   * The declaration can later be added to an event binding bia bind()
+   * @see #bind(Class)
+   *
+   * <p>
+   *
+   * <b>Declaration example:</b>
+   *
+   * <pre>
+   * ExchangeDeclaration exchangeDeclaration = declarerFactory().createExchangeDeclaration("exchangename")
+   *      .withExchangeType(BuiltinExchangeType.FANOUT);
+   * </pre>
+   *
+   * @return The DeclarerFactory
+   */
+  public DeclarerFactory declarerFactory(){
+    return this.declarerFactory;
   }
 
   /**
@@ -361,10 +379,24 @@ public abstract class EventBinder {
       return this;
     }
 
+    /**
+     * Specify all declarations which should be applied to the channel used by this queue binding.
+     * These declarations are automatically applied to the publisher channel responsible for this queue binding.
+     *
+     * @param declarations All declarations which should be applied
+     * @return the queue binding
+     */
     public QueueBinding<T> withDeclarations(Declaration... declarations) {
       return this.withDeclarations(Arrays.asList(declarations));
     }
 
+    /**
+     * Specify all declarations which should be applied to the channel used by this queue binding.
+     * These declarations are automatically applied to the publisher channel responsible for this queue binding.
+     *
+     * @param declarations All declarations which should be applied
+     * @return the queue binding
+     */
     public QueueBinding<T> withDeclarations(List<Declaration> declarations) {
       this.declarations = new ArrayList<>(declarations);
       return this;
@@ -535,6 +567,13 @@ public abstract class EventBinder {
       return this;
     }
 
+    /**
+     * Specify all declarations which should be applied to the channel used by this exchange binding.
+     * These declarations are automatically applied to the consumer channel responsible for this exchange binding.
+     *
+     * @param declarations All declarations which should be applied
+     * @return the exchange binding
+     */
     public ExchangeBinding<T> withDeclarations(Declaration ...declarations) {
       return this.withDeclarations(Arrays.asList(declarations));
     }

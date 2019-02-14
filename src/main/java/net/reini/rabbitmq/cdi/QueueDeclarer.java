@@ -17,5 +17,4 @@ final class QueueDeclarer implements Declarer<QueueDeclaration> {
     channel.queueDeclare(declaration.getQueueName(), declaration.isDurable(), declaration.isExclusive(),
         declaration.isAutoDelete(), declaration.getArguments());
   }
-
 }

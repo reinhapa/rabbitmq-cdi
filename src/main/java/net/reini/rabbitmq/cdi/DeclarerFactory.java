@@ -15,5 +15,4 @@ public class DeclarerFactory {
     QueueToExchangeBindingDeclaration queueToExchangeBindingDeclaration = new QueueToExchangeBindingDeclaration(queueDeclaration, exchangeDeclaration);
     return queueToExchangeBindingDeclaration;
   }
-
 }

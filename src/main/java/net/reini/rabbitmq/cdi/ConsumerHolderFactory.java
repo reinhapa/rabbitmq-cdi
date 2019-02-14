@@ -8,6 +8,7 @@ class ConsumerHolderFactory {
     ConsumerChannelFactory consumerChannelFactory =
         new ConsumerChannelFactory(connectionRepository, config);
     ConsumerFactory consumerFactory = new ConsumerFactory();
-    return new ConsumerHolder(consumer, queue, autoAck, consumerChannelFactory, consumerFactory, declarations,declarerRepository);
+    return new ConsumerHolder(consumer, queue, autoAck, consumerChannelFactory, consumerFactory,
+        declarations, declarerRepository);
   }
 }
