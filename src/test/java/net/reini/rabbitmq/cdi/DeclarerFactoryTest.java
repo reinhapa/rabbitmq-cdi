@@ -14,14 +14,14 @@ class DeclarerFactoryTest {
 
   @Test
   void testCreateExchangeDeclaration() {
-    ExchangeDeclaration result = sut.declareExchange(EXPECTED_EXCHANGE_NAME);
+    ExchangeDeclaration result = sut.createExchangeDeclaration(EXPECTED_EXCHANGE_NAME);
     Assert.assertNotNull(result);
     Assert.assertEquals(EXPECTED_EXCHANGE_NAME, result.getExchangeName());
   }
 
   @Test
   void testCreateQueueDeclaration() {
-    QueueDeclaration result = sut.declareQueue(EXPECTED_QUEUE_NAME);
+    QueueDeclaration result = sut.createQueueDeclaration(EXPECTED_QUEUE_NAME);
     Assert.assertNotNull(result);
     Assert.assertEquals(EXPECTED_QUEUE_NAME, result.getQueueName());
   }
@@ -30,7 +30,7 @@ class DeclarerFactoryTest {
   void testCreateQueueToExchangeBinding() {
     QueueDeclaration queueDeclaration = new QueueDeclaration(EXPECTED_QUEUE_NAME);
     ExchangeDeclaration exchangeDeclaration =new ExchangeDeclaration(EXPECTED_EXCHANGE_NAME);
-    QueueToExchangeBindingDeclaration result = sut.declareQueueToExchangeBinding(queueDeclaration,exchangeDeclaration);
+    QueueToExchangeBindingDeclaration result = sut.createQueueToExchangeBindingDeclaration(queueDeclaration,exchangeDeclaration);
     Assert.assertNotNull(result);
     Assert.assertSame(exchangeDeclaration, result.getExchangeDeclaration());
     Assert.assertSame(queueDeclaration, result.getQueueDeclaration());

@@ -60,11 +60,26 @@ class QueueBindingTest {
     List<Declaration> expectedDeclarations=new ArrayList<>();
     expectedDeclarations.add(new QueueDeclaration("hello"));
     expectedDeclarations.add(new QueueDeclaration("hello2"));
-    
+
     binding.withDeclarations(expectedDeclarations);
     List<Declaration> result = binding.getDeclarations();
     assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
   }
+
+  @Test
+  void testAddDeclarationsWithArray() {
+    QueueDeclaration declaration1 = new QueueDeclaration("hello");
+    QueueDeclaration declaration2 = new QueueDeclaration("hello2");
+
+    List<Declaration> expectedDeclarations=new ArrayList<>();
+    expectedDeclarations.add(declaration1);
+    expectedDeclarations.add(declaration2);
+
+    binding.withDeclarations(declaration1, declaration2);
+    List<Declaration> result = binding.getDeclarations();
+    assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
+  }
+
 
   @Test
   void testToString() {

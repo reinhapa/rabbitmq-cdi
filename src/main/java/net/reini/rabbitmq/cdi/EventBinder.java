@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -99,8 +100,8 @@ public abstract class EventBinder {
   public EventBinder() {
     exchangeBindings = new HashSet<>();
     queueBindings = new HashSet<>();
-    this.declarerFactory=new DeclarerFactory();
-    this.declarerRepository=new DeclarerRepository();
+    this.declarerFactory = new DeclarerFactory();
+    this.declarerRepository = new DeclarerRepository();
   }
 
   /**
@@ -167,7 +168,7 @@ public abstract class EventBinder {
   @PostConstruct
   void initializeConsumerContainer() {
     configuration = new ConnectionConfiguration();
-    consumerContainer = consumerContainerFactory.create(configuration, connectionRepository,declarerRepository);
+    consumerContainer = consumerContainerFactory.create(configuration, connectionRepository, declarerRepository);
   }
 
   void stop() {
@@ -247,7 +248,7 @@ public abstract class EventBinder {
   public <M> EventBindingBuilder<M> bind(Class<M> event) {
     return new EventBindingBuilder<>(event, queueBindings::add, exchangeBindings::add);
   }
-  
+
   public static final class EventBindingBuilder<T> {
     private final Class<T> eventType;
     private final Consumer<QueueBinding<T>> queueBindingConsumer;
@@ -301,7 +302,7 @@ public abstract class EventBinder {
     QueueBinding(Class<T> eventType, String queue) {
       this.eventType = eventType;
       this.queue = queue;
-      this.declarations=new ArrayList<>();
+      this.declarations = new ArrayList<>();
       this.decoder = new JsonDecoder<>(eventType);
       LOGGER.info("Binding created between queue {} and event type {}", queue,
           eventType.getSimpleName());
@@ -358,6 +359,10 @@ public abstract class EventBinder {
       this.decoder = Objects.requireNonNull(messageDecoder, "decoder must not be null");
       LOGGER.info("Decoder set to {} for event type {}", messageDecoder, eventType.getSimpleName());
       return this;
+    }
+
+    public QueueBinding<T> withDeclarations(Declaration... declarations) {
+      return this.withDeclarations(Arrays.asList(declarations));
     }
 
     public QueueBinding<T> withDeclarations(List<Declaration> declarations) {
@@ -528,6 +533,10 @@ public abstract class EventBinder {
     public ExchangeBinding<T> withErrorHandler(BiConsumer<T, PublishException> handler) {
       this.errorHandler = handler == null ? nop() : handler;
       return this;
+    }
+
+    public ExchangeBinding<T> withDeclarations(Declaration ...declarations) {
+      return this.withDeclarations(Arrays.asList(declarations));
     }
 
     public ExchangeBinding<T> withDeclarations(List<Declaration> declarations) {

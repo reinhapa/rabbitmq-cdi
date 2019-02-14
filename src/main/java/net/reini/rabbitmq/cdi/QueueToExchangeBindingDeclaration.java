@@ -3,7 +3,7 @@ package net.reini.rabbitmq.cdi;
 import java.util.HashMap;
 import java.util.Map;
 
-final class QueueToExchangeBindingDeclaration implements Declaration {
+public final class QueueToExchangeBindingDeclaration implements Declaration {
   private final QueueDeclaration queueDeclaration;
   private final ExchangeDeclaration exchangeDeclaration;
   private String routingKey;
