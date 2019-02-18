@@ -90,6 +90,10 @@ class EventBinderTest {
     assertEquals("stock + stein", EventBinder.uriDecode("stock%20+%20stein"));
   }
 
+  @Test
+  void testDeclarerFactoryNotNUll() {
+    assertNotNull(eventBinder.declarerFactory());
+  }
 
   static class TestEventBinder extends EventBinder {
     @Override
