@@ -1,6 +1,9 @@
 package net.reini.rabbitmq.cdi;
 
-import org.junit.Assert;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -15,15 +18,15 @@ class DeclarerFactoryTest {
   @Test
   void testCreateExchangeDeclaration() {
     ExchangeDeclaration result = sut.createExchangeDeclaration(EXPECTED_EXCHANGE_NAME);
-    Assert.assertNotNull(result);
-    Assert.assertEquals(EXPECTED_EXCHANGE_NAME, result.getExchangeName());
+    assertNotNull(result);
+    assertEquals(EXPECTED_EXCHANGE_NAME, result.getExchangeName());
   }
 
   @Test
   void testCreateQueueDeclaration() {
     QueueDeclaration result = sut.createQueueDeclaration(EXPECTED_QUEUE_NAME);
-    Assert.assertNotNull(result);
-    Assert.assertEquals(EXPECTED_QUEUE_NAME, result.getQueueName());
+    assertNotNull(result);
+    assertEquals(EXPECTED_QUEUE_NAME, result.getQueueName());
   }
 
   @Test
@@ -31,9 +34,9 @@ class DeclarerFactoryTest {
     QueueDeclaration queueDeclaration = new QueueDeclaration(EXPECTED_QUEUE_NAME);
     ExchangeDeclaration exchangeDeclaration =new ExchangeDeclaration(EXPECTED_EXCHANGE_NAME);
     QueueToExchangeBindingDeclaration result = sut.createQueueToExchangeBindingDeclaration(queueDeclaration,exchangeDeclaration);
-    Assert.assertNotNull(result);
-    Assert.assertSame(exchangeDeclaration, result.getExchangeDeclaration());
-    Assert.assertSame(queueDeclaration, result.getQueueDeclaration());
+    assertNotNull(result);
+    assertSame(exchangeDeclaration, result.getExchangeDeclaration());
+    assertSame(queueDeclaration, result.getQueueDeclaration());
   }
 
 }
