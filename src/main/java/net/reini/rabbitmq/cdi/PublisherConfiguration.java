@@ -21,7 +21,7 @@ final class PublisherConfiguration<T> implements BiConsumer<T, PublishException>
   private final String exchange;
   private final String routingKey;
   private final BiConsumer<T, PublishException> errorHandler;
-  private List<Declaration> declarations;
+  private final List<Declaration> declarations;
 
   PublisherConfiguration(ConnectionConfig config, String exchange, String routingKey,
       Builder basicPropertiesBuilder, Encoder<T> encoder,

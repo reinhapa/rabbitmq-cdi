@@ -30,10 +30,10 @@ class DeclarerFactoryTest {
   }
 
   @Test
-  void testCreateQueueToExchangeBinding() {
+  void testBinding() {
     QueueDeclaration queueDeclaration = new QueueDeclaration(EXPECTED_QUEUE_NAME);
     ExchangeDeclaration exchangeDeclaration =new ExchangeDeclaration(EXPECTED_EXCHANGE_NAME);
-    QueueToExchangeBindingDeclaration result = sut.createQueueToExchangeBindingDeclaration(queueDeclaration,exchangeDeclaration);
+    BindingDeclaration result = sut.createBindingDeclaration(queueDeclaration,exchangeDeclaration);
     assertNotNull(result);
     assertSame(exchangeDeclaration, result.getExchangeDeclaration());
     assertSame(queueDeclaration, result.getQueueDeclaration());

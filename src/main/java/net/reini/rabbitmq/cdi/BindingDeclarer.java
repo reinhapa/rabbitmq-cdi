@@ -8,12 +8,12 @@ import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.Channel;
 
-public class QueueToExchangeBindingDeclarer implements Declarer<QueueToExchangeBindingDeclaration> {
+public class BindingDeclarer implements Declarer<BindingDeclaration> {
   private static final Logger LOGGER =
-      LoggerFactory.getLogger(QueueToExchangeBindingDeclaration.class);
+      LoggerFactory.getLogger(BindingDeclaration.class);
 
   @Override
-  public void declare(Channel channel, QueueToExchangeBindingDeclaration declaration) throws IOException {
+  public void declare(Channel channel, BindingDeclaration declaration) throws IOException {
     ExchangeDeclaration exchangeDeclaration = declaration.getExchangeDeclaration();
     QueueDeclaration queueDeclaration = declaration.getQueueDeclaration();
     String queueName = queueDeclaration.getQueueName();

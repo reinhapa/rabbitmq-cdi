@@ -4,12 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-class QueueToExchangeBindingDeclarationTest {
+class BindingDeclarationTest {
   @Test
   void testToString() {
     ExchangeDeclaration exchange = new ExchangeDeclaration("hello");
     QueueDeclaration queue = new QueueDeclaration("hello2");
-    QueueToExchangeBindingDeclaration sut = new QueueToExchangeBindingDeclaration(queue, exchange);
+    BindingDeclaration sut = new BindingDeclaration(queue, exchange);
     sut.withRoutingKey("route");
     sut.withArgument("key", Long.valueOf(1));
     String result = sut.toString();

@@ -18,7 +18,7 @@ class DeclarerRepository {
     this.declarerMap = new HashMap<>();
     this.declarerMap.put(ExchangeDeclaration.class, new ExchangeDeclarer());
     this.declarerMap.put(QueueDeclaration.class, new QueueDeclarer());
-    this.declarerMap.put(QueueToExchangeBindingDeclaration.class, new QueueToExchangeBindingDeclarer());
+    this.declarerMap.put(BindingDeclaration.class, new BindingDeclarer());
   }
 
   void declare(Channel channel, List<Declaration> declarations) throws IOException {

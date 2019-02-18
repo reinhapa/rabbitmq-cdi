@@ -11,8 +11,8 @@ public class DeclarerFactory {
     return exchangeDeclarationConfigEntry;
   }
 
-  public QueueToExchangeBindingDeclaration createQueueToExchangeBindingDeclaration(QueueDeclaration queueDeclaration, ExchangeDeclaration exchangeDeclaration) {
-    QueueToExchangeBindingDeclaration queueToExchangeBindingDeclaration = new QueueToExchangeBindingDeclaration(queueDeclaration, exchangeDeclaration);
-    return queueToExchangeBindingDeclaration;
+  public BindingDeclaration createBindingDeclaration(QueueDeclaration queueDeclaration, ExchangeDeclaration exchangeDeclaration) {
+    BindingDeclaration bindingDeclaration = new BindingDeclaration(queueDeclaration, exchangeDeclaration);
+    return bindingDeclaration;
   }
 }

@@ -15,7 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.rabbitmq.client.Channel;
 
 @ExtendWith(MockitoExtension.class)
-class QueueToExchangeBindingDeclarerTest {
+class BindingDeclarerTest {
   private static final String EXPECTED_EXCHANGE_NAME = "exchange";
   private static final String EXPECTED_EXCHANGE_TYPE = "direct";
   private static final String EXPECTED_ARGUMENT_NAME = "argument";
@@ -29,17 +29,17 @@ class QueueToExchangeBindingDeclarerTest {
   private Channel channelMock;
 
   @Test
-  void testDeclareQueueToExchangeBinding() throws IOException {
+  void testDeclareBinding() throws IOException {
 
     ExchangeDeclaration exchangeDeclaration = new ExchangeDeclaration(EXPECTED_EXCHANGE_NAME);
     QueueDeclaration queueDeclaration = new QueueDeclaration(EXPECTED_QUEUE_NAME);
 
-    QueueToExchangeBindingDeclaration queueToExchangeBindingDeclaration = new QueueToExchangeBindingDeclaration(queueDeclaration, exchangeDeclaration);
-    queueToExchangeBindingDeclaration.withRoutingKey(EXPECTED_ROUTING_KEY);
-    queueToExchangeBindingDeclaration.withArgument(EXPECTED_ARGUMENT_NAME, EXPECTED_ARGUMENT_VALUE);
+    BindingDeclaration bindingDeclaration = new BindingDeclaration(queueDeclaration, exchangeDeclaration);
+    bindingDeclaration.withRoutingKey(EXPECTED_ROUTING_KEY);
+    bindingDeclaration.withArgument(EXPECTED_ARGUMENT_NAME, EXPECTED_ARGUMENT_VALUE);
 
-    QueueToExchangeBindingDeclarer sut = new QueueToExchangeBindingDeclarer();
-    sut.declare(channelMock, queueToExchangeBindingDeclaration);
+    BindingDeclarer sut = new BindingDeclarer();
+    sut.declare(channelMock, bindingDeclaration);
 
     Map<String, Object> expectedArgumens = new HashMap();
     expectedArgumens.put(EXPECTED_ARGUMENT_NAME, EXPECTED_ARGUMENT_VALUE);

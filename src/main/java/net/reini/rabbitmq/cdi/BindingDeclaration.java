@@ -3,25 +3,25 @@ package net.reini.rabbitmq.cdi;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class QueueToExchangeBindingDeclaration implements Declaration {
+public final class BindingDeclaration implements Declaration {
   private final QueueDeclaration queueDeclaration;
   private final ExchangeDeclaration exchangeDeclaration;
   private String routingKey;
   private Map<String, Object> arguments;
 
-  public QueueToExchangeBindingDeclaration(QueueDeclaration queueDeclaration, ExchangeDeclaration exchangeDeclaration) {
+  public BindingDeclaration(QueueDeclaration queueDeclaration, ExchangeDeclaration exchangeDeclaration) {
     this.queueDeclaration = queueDeclaration;
     this.exchangeDeclaration = exchangeDeclaration;
     this.routingKey = "";
     this.arguments = new HashMap<>();
   }
 
-  public QueueToExchangeBindingDeclaration withArgument(String key, Object argument) {
+  public BindingDeclaration withArgument(String key, Object argument) {
     arguments.put(key, argument);
     return this;
   }
 
-  public QueueToExchangeBindingDeclaration withRoutingKey(String routingKey) {
+  public BindingDeclaration withRoutingKey(String routingKey) {
     this.routingKey = routingKey;
     return this;
   }
