@@ -28,7 +28,7 @@ class ExchangeDeclarerTest {
   void testExchangeDeclaration() throws IOException {
 
     ExchangeDeclaration exchangeDeclaration = new ExchangeDeclaration(EXPECTED_EXCHANGE_NAME);
-    exchangeDeclaration.withExchangeType(EXPECTED_EXCHANGE_TYPE);
+    exchangeDeclaration.withType(EXPECTED_EXCHANGE_TYPE);
     exchangeDeclaration.withArgument(EXPECTED_ARGUMENT_NAME, EXPECTED_ARGUMENT_VALUE);
     exchangeDeclaration.withAutoDelete(EXPECTED_EXCHANGE_AUTODELETE_SETTING);
     exchangeDeclaration.withDurable(EXPECTED_EXCHANGE_DURABLE_SETTING);

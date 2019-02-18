@@ -30,12 +30,12 @@ public final class ExchangeDeclaration implements Declaration {
     return this;
   }
 
-  public ExchangeDeclaration withExchangeType(String exchangeType) {
+  public ExchangeDeclaration withType(String exchangeType) {
     this.exchangeType = exchangeType;
     return this;
   }
 
-  public ExchangeDeclaration withExchangeType(BuiltinExchangeType exchangeType) {
+  public ExchangeDeclaration withType(BuiltinExchangeType exchangeType) {
     this.exchangeType = exchangeType.getType();
     return this;
   }

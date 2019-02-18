@@ -151,7 +151,7 @@ public abstract class EventBinder {
    *
    * <pre>
    * ExchangeDeclaration exchangeDeclaration = declarerFactory().createExchangeDeclaration("exchangename")
-   *      .withExchangeType(BuiltinExchangeType.FANOUT);
+   *      .withType(BuiltinExchangeType.FANOUT);
    * </pre>
    *
    * @return The DeclarerFactory

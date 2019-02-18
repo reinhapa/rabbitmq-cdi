@@ -14,7 +14,7 @@ class ExchangeDeclarationTest {
   @Test
   void testExchangeType() {
     ExchangeDeclaration sut = new ExchangeDeclaration("hello");
-    ExchangeDeclaration result = sut.withExchangeType(BuiltinExchangeType.FANOUT);
+    ExchangeDeclaration result = sut.withType(BuiltinExchangeType.FANOUT);
     assertEquals(BuiltinExchangeType.FANOUT.getType(), result.getExchangeType());
   }
 
@@ -23,7 +23,7 @@ class ExchangeDeclarationTest {
     ExchangeDeclaration sut = new ExchangeDeclaration("hello");
     sut.withDurable(true);
     sut.withAutoDelete(true);
-    sut.withExchangeType("FANOUT");
+    sut.withType("FANOUT");
     sut.withArgument("key", Long.valueOf(1));
 
 
@@ -35,7 +35,7 @@ class ExchangeDeclarationTest {
     ExchangeDeclaration copy = new ExchangeDeclaration("hello");
     copy.withDurable(true);
     copy.withAutoDelete(true);
-    copy.withExchangeType("FANOUT");
+    copy.withType("FANOUT");
     copy.withArgument("key", Long.valueOf(1));
 
     assertEquals(sut, copy);
@@ -50,9 +50,9 @@ class ExchangeDeclarationTest {
     copy.withAutoDelete(true);
     assertEquals(sut, copy);
 
-    copy.withExchangeType("DIRECT");
+    copy.withType("DIRECT");
     assertNotEquals(sut, copy);
-    copy.withExchangeType("FANOUT");
+    copy.withType("FANOUT");
     assertEquals(sut, copy);
 
     copy.withArgument("test", "test");
@@ -66,7 +66,7 @@ class ExchangeDeclarationTest {
     ExchangeDeclaration sut = new ExchangeDeclaration("hello");
     sut.withDurable(true);
     sut.withAutoDelete(true);
-    sut.withExchangeType("FANOUT");
+    sut.withType("FANOUT");
     sut.withArgument("key", Long.valueOf(1));
     int result = sut.hashCode();
     assertEquals(EXPECTED_HASHCODE,result);
@@ -75,7 +75,7 @@ class ExchangeDeclarationTest {
   @Test
   void testToString() {
     ExchangeDeclaration sut = new ExchangeDeclaration("hello");
-    sut.withExchangeType(BuiltinExchangeType.DIRECT);
+    sut.withType(BuiltinExchangeType.DIRECT);
     sut.withAutoDelete(true);
     sut.withDurable(true);
     sut.withArgument("key","value");
