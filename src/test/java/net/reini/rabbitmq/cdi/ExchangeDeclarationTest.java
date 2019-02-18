@@ -81,7 +81,8 @@ class ExchangeDeclarationTest {
     sut.withArgument("key","value");
     
     String result = sut.toString();
-    assertEquals("exchangeName='hello', exchangeType='direct', durable=true, autoDelete=true, arguments={key=value}",result);
+    System.out.println(result);
+    assertEquals("exchange declaration for exchangeName='hello', exchangeType='direct', durable=true, autoDelete=true, arguments={key=value}",result);
 
   }
 }

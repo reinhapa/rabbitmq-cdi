@@ -55,8 +55,7 @@ class ConsumerContainerTest {
              consumerHolderFactoryMock, lockMock);
     when(consumerHolderFactoryMock.createConsumerHolder(consumerMock, EXPECTED_QUEUE_NAME,
         EXPECTED_AUTOACK, connectionRepositoryMock, connectionConfigMock, declarations,declarerRepositoryMock)).thenReturn(consumerHolderMock);
-    sut.addDeclaration(declaration);
-    sut.addConsumer(consumerMock, EXPECTED_QUEUE_NAME, EXPECTED_AUTOACK);
+    sut.addConsumer(consumerMock, EXPECTED_QUEUE_NAME, EXPECTED_AUTOACK, declarations);
 
     assertEquals(1, consumerHolders.size());
     ConsumerHolder consumerHolder = consumerHolders.get(0);

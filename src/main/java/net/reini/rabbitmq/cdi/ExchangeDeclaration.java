@@ -104,7 +104,7 @@ public final class ExchangeDeclaration implements Declaration {
 
   @Override
   public String toString() {
-    return "exchangeName='" + exchangeName + '\'' + ", exchangeType='" + exchangeType + '\''
+    return "exchange declaration for exchangeName='" + exchangeName + '\'' + ", exchangeType='" + exchangeType + '\''
         + ", durable=" + durable + ", autoDelete=" + autoDelete + ", arguments=" + arguments;
   }
 }

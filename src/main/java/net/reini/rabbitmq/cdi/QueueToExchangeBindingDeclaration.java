@@ -41,4 +41,12 @@ public final class QueueToExchangeBindingDeclaration implements Declaration {
   Map<String, Object> getArguments() {
     return arguments;
   }
+
+  @Override
+  public String toString() {
+    return "queue to exchange binding" +
+        " for queue " + queueDeclaration.getQueueName() + " to exchange " + exchangeDeclaration.getExchangeName() +
+        ", routingKey='" + routingKey + '\'' +
+        ", arguments=" + arguments;
+  }
 }

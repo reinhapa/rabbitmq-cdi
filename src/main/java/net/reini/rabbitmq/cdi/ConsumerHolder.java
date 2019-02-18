@@ -27,7 +27,7 @@ class ConsumerHolder {
   private volatile boolean active;
 
   ConsumerHolder(EventConsumer consumer, String queueName, boolean autoAck,
-      ConsumerChannelFactory consumerChannelFactory, ConsumerFactory consumerFactory, List<Declaration> declarations,DeclarerRepository declarerRepository) {
+      ConsumerChannelFactory consumerChannelFactory, ConsumerFactory consumerFactory, List<Declaration> declarations, DeclarerRepository declarerRepository) {
     this.consumer = consumer;
     this.queueName = queueName;
     this.autoAck = autoAck;

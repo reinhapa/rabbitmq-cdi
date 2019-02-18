@@ -38,7 +38,7 @@ public final class QueueDeclaration implements Declaration {
 
   @Override
   public String toString() {
-    return "queueName='" + queueName + '\'' + ", durable=" + durable + ", autoDelete=" + autoDelete
+    return "queue declaration for queueName='" + queueName + '\'' + ", durable=" + durable + ", autoDelete=" + autoDelete
         + ", arguments=" + arguments + ", exclusive=" + exclusive;
   }
 

@@ -210,7 +210,7 @@ public abstract class EventBinder {
     Instance<Object> eventPool = remoteEventPool.select(eventType);
     EventConsumer consumer = new EventConsumer(queueBinding.getDecoder(), eventControl, eventPool);
     String queue = queueBinding.getQueue();
-    consumerContainer.addConsumer(consumer, queue, queueBinding.isAutoAck());
+    consumerContainer.addConsumer(consumer, queue, queueBinding.isAutoAck(),queueBinding.getDeclarations());
     LOGGER.info("Binding between queue {} and event type {} activated", queue, eventType.getName());
   }
 

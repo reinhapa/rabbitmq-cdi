@@ -1,6 +1,5 @@
 package net.reini.rabbitmq.cdi;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Condition;
@@ -23,7 +22,6 @@ class ConsumerContainer {
   private ConsumerHolderFactory consumerHolderFactory;
 
   private volatile boolean connectionAvailable = false;
-  private List<Declaration> declarations;
 
   ConsumerContainer(ConnectionConfig config, ConnectionRepository connectionRepository,DeclarerRepository declarerRepository) {
     this(config, connectionRepository, declarerRepository, new CopyOnWriteArrayList<>(), new ConsumerHolderFactory(),
@@ -40,10 +38,9 @@ class ConsumerContainer {
     this.lock = lock;
     this.noConnectionCondition = lock.newCondition();
     this.declarerRepository = declarerRepository;
-    this.declarations = new ArrayList<>();
   }
 
-  public void addConsumer(EventConsumer consumer, String queue, boolean autoAck) {
+  public void addConsumer(EventConsumer consumer, String queue, boolean autoAck, List<Declaration> declarations) {
     ConsumerHolder consumerHolder = consumerHolderFactory.createConsumerHolder(consumer, queue,
         autoAck, connectionRepository, config, declarations, declarerRepository);
     consumerHolders.add(consumerHolder);
@@ -60,11 +57,6 @@ class ConsumerContainer {
 
   public void stop() {
     consumerWatcherThread.stopThread();
-  }
-
-
-  public void addDeclaration(Declaration declaration) {
-    this.declarations.add(declaration);
   }
 
   public void setConnectionAvailable(boolean connectionAvailable) {
