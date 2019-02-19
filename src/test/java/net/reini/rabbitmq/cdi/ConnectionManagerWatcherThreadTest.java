@@ -31,7 +31,7 @@ class ConnectionManagerWatcherThreadTest {
     ConnectionManagerWatcherThread sut =
         new ConnectionManagerWatcherThread(lock, condition, connectionManagerMock, 50);
     sut.start();
-    Thread.sleep(300);
+    Thread.sleep(500);
     assertTrue(sut.isAlive());
     verify(connectionManagerMock, atLeast(2)).tryToEstablishConnection();
     assertEquals(State.TIMED_WAITING, sut.getState());
@@ -48,7 +48,7 @@ class ConnectionManagerWatcherThreadTest {
     ConnectionManagerWatcherThread sut =
         new ConnectionManagerWatcherThread(lock, condition, connectionManagerMock, 50);
     sut.start();
-    Thread.sleep(300);
+    Thread.sleep(500);
     assertTrue(sut.isAlive());
     verify(connectionManagerMock, atLeast(2)).tryToEstablishConnection();
     assertEquals(State.TIMED_WAITING, sut.getState());
@@ -85,7 +85,7 @@ class ConnectionManagerWatcherThreadTest {
     ConnectionManagerWatcherThread sut =
         new ConnectionManagerWatcherThread(lock, condition, connectionManagerMock, 50);
     sut.start();
-    Thread.sleep(200);
+    Thread.sleep(300);
     assertTrue(sut.isAlive());
     verify(connectionManagerMock).tryToEstablishConnection();
     assertEquals(State.WAITING, sut.getState());
