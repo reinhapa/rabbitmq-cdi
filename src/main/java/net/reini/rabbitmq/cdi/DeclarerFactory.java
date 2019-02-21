@@ -5,8 +5,12 @@ package net.reini.rabbitmq.cdi;
  * consumer or producer. This class only creates objects and does not declare anything
  * To apply declarations to rabbitmq channels of consumers or producers the declarations
  * need to be added via methods:
- * @see net.reini.rabbitmq.cdi.EventBinder.QueueBinding#withDeclarations(Declaration...)
- * @see net.reini.rabbitmq.cdi.EventBinder.ExchangeBinding#withDeclarations(Declaration...)
+ * @see net.reini.rabbitmq.cdi.EventBinder.QueueBinding#withDeclaration(QueueDeclaration)
+ * @see net.reini.rabbitmq.cdi.EventBinder.QueueBinding#withDeclaration(ExchangeDeclaration)
+ * @see net.reini.rabbitmq.cdi.EventBinder.QueueBinding#withDeclaration(BindingDeclaration)
+ * @see net.reini.rabbitmq.cdi.EventBinder.ExchangeBinding#withDeclaration(QueueDeclaration)
+ * @see net.reini.rabbitmq.cdi.EventBinder.ExchangeBinding#withDeclaration(ExchangeDeclaration)
+ * @see net.reini.rabbitmq.cdi.EventBinder.ExchangeBinding#withDeclaration(BindingDeclaration)
  *
  */
 public class DeclarerFactory {

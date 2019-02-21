@@ -70,30 +70,47 @@ class ExchangeBindingTest {
   }
 
   @Test
-  void testAddDeclarations() {
+  void testAddExchangeDeclarations() {
     List<Declaration> expectedDeclarations=new ArrayList<>();
-    expectedDeclarations.add(new ExchangeDeclaration("hello"));
-    expectedDeclarations.add(new ExchangeDeclaration("hello2"));
+    ExchangeDeclaration declaration1 = new ExchangeDeclaration("hello");
+    ExchangeDeclaration declaration2 = new ExchangeDeclaration("hello2");
+    expectedDeclarations.add(declaration1);
+    expectedDeclarations.add(declaration2);
 
-    binding.withDeclarations(expectedDeclarations);
+    binding.withDeclaration(declaration1);
+    binding.withDeclaration(declaration2);
+    
     List<Declaration> result = binding.getDeclarations();
     assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
   }
 
   @Test
-  void testAddDeclarationsWithArray() {
-    ExchangeDeclaration declaration1 = new ExchangeDeclaration("hello");
-    ExchangeDeclaration declaration2 = new ExchangeDeclaration("hello2");
-
+  void testAddQueueDeclarations() {
     List<Declaration> expectedDeclarations=new ArrayList<>();
+    QueueDeclaration declaration1 = new QueueDeclaration("hello");
+    QueueDeclaration declaration2 = new QueueDeclaration("hello2");
     expectedDeclarations.add(declaration1);
     expectedDeclarations.add(declaration2);
 
-    binding.withDeclarations(declaration1, declaration2);
+    binding.withDeclaration(declaration1);
+    binding.withDeclaration(declaration2);
+
     List<Declaration> result = binding.getDeclarations();
     assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
   }
 
+  @Test
+  void testAddBindingDeclarations() {
+    QueueDeclaration qd = new QueueDeclaration("hello");
+    ExchangeDeclaration bd = new ExchangeDeclaration("hello2");
+    List<Declaration> expectedDeclarations=new ArrayList<>();
+    BindingDeclaration declaration1 = new BindingDeclaration(qd,bd);
+    expectedDeclarations.add(declaration1);
+    binding.withDeclaration(declaration1);
+
+    List<Declaration> result = binding.getDeclarations();
+    assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
+  }
 
   @Test
   void withProperties() {

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -380,25 +379,38 @@ public abstract class EventBinder {
     }
 
     /**
-     * Specify all declarations which should be applied to the channel used by this queue binding.
-     * These declarations are automatically applied to the publisher channel responsible for this queue binding.
+     * Adds a queue declaration to this QueueBinding
+     * The declaration is automatically applied to the publisher channel
      *
-     * @param declarations All declarations which should be applied
+     * @param queueDeclaration The queue declaration
      * @return the queue binding
      */
-    public QueueBinding<T> withDeclarations(Declaration... declarations) {
-      return this.withDeclarations(Arrays.asList(declarations));
+    public QueueBinding<T> withDeclaration(QueueDeclaration queueDeclaration) {
+      this.declarations.add(queueDeclaration);
+      return this;
     }
 
     /**
-     * Specify all declarations which should be applied to the channel used by this queue binding.
-     * These declarations are automatically applied to the publisher channel responsible for this queue binding.
+     * Adds a exchange declaration to this QueueBinding
+     * The declaration is automatically applied to the publisher channel
      *
-     * @param declarations All declarations which should be applied
+     * @param exchangeDeclaration The exchange declaration
      * @return the queue binding
      */
-    public QueueBinding<T> withDeclarations(List<Declaration> declarations) {
-      this.declarations = new ArrayList<>(declarations);
+    public QueueBinding<T> withDeclaration(ExchangeDeclaration exchangeDeclaration) {
+      this.declarations.add(exchangeDeclaration);
+      return this;
+    }
+
+    /**
+     * Adds a BindingDeclaration declaration to this QueueBinding
+     * The declaration is automatically applied to the publisher channel
+     *
+     * @param bindingDeclaration The exchange declaration
+     * @return the queue binding
+     */
+    public QueueBinding<T> withDeclaration(BindingDeclaration bindingDeclaration) {
+      this.declarations.add(bindingDeclaration);
       return this;
     }
 
@@ -567,19 +579,40 @@ public abstract class EventBinder {
       return this;
     }
 
+
     /**
-     * Specify all declarations which should be applied to the channel used by this exchange binding.
-     * These declarations are automatically applied to the consumer channel responsible for this exchange binding.
+     * Adds a queue declaration to this ExchangeBinding
+     * The declaration is automatically applied to the consumer channel
      *
-     * @param declarations All declarations which should be applied
-     * @return the exchange binding
+     * @param queueDeclaration The queue declaration
+     * @return the queue binding
      */
-    public ExchangeBinding<T> withDeclarations(Declaration ...declarations) {
-      return this.withDeclarations(Arrays.asList(declarations));
+    public ExchangeBinding<T> withDeclaration(QueueDeclaration queueDeclaration) {
+      this.declarations.add(queueDeclaration);
+      return this;
     }
 
-    public ExchangeBinding<T> withDeclarations(List<Declaration> declarations) {
-      this.declarations = new ArrayList<>(declarations);
+    /**
+     * Adds a exchange declaration to this ExchangeBinding
+     * The declaration is automatically applied to the consumer channel
+     *
+     * @param exchangeDeclaration The exchange declaration
+     * @return the queue binding
+     */
+    public ExchangeBinding<T> withDeclaration(ExchangeDeclaration exchangeDeclaration) {
+      this.declarations.add(exchangeDeclaration);
+      return this;
+    }
+
+    /**
+     * Adds a BindingDeclaration declaration to this ExchangeBinding
+     * The declaration is automatically applied to the consumer channel
+     *
+     * @param bindingDeclaration The exchange declaration
+     * @return the queue binding
+     */
+    public ExchangeBinding<T> withDeclaration(BindingDeclaration bindingDeclaration) {
+      this.declarations.add(bindingDeclaration);
       return this;
     }
 

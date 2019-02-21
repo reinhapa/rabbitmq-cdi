@@ -72,7 +72,7 @@ public class RabbitBinder extends EventBinder {
 
     bind(EventOne.class)
       .toExchange("test.exchange.one");
-      .withDeclarations(testExchangeOne) // <3>
+      .withDeclaration(testExchangeOne) // <3>
     bind(EventOne.class)
       .toExchange("test.exchange.two")
       .withRoutingKey("test.key")
@@ -83,7 +83,7 @@ public class RabbitBinder extends EventBinder {
     bind(EventTwo.class)
       .toQueue("test.queue")
       .withDecoder(new MyCustomDecoder())
-      .withDeclarations(testQueue)
+      .withDeclaration(testQueue)
       .autoAck(); // <5>
   }
 }
@@ -98,7 +98,7 @@ Note to declarations:
 
 Created declarations are not automatically declared on broker side.
 For each consumer/producer own channels exist because of that reason it is necessary to
-add the declaration needed to a binding via .withDeclarations(..)
+add the declaration needed to a binding via .withDeclaration(..)
 Only these declarations are applied for this consumer/producer
 
 
