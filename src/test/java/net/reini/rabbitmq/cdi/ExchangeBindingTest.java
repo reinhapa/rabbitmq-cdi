@@ -4,12 +4,15 @@ import static com.rabbitmq.client.MessageProperties.BASIC;
 import static com.rabbitmq.client.MessageProperties.PERSISTENT_BASIC;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -64,6 +67,49 @@ class ExchangeBindingTest {
     assertEquals(JsonEncoder.class, binding.getEncoder().getClass());
     assertSame(binding, binding.withEncoder(encoder));
     assertEquals(encoder, binding.getEncoder());
+  }
+
+  @Test
+  void testAddExchangeDeclarations() {
+    List<Declaration> expectedDeclarations=new ArrayList<>();
+    ExchangeDeclaration declaration1 = new ExchangeDeclaration("hello");
+    ExchangeDeclaration declaration2 = new ExchangeDeclaration("hello2");
+    expectedDeclarations.add(declaration1);
+    expectedDeclarations.add(declaration2);
+
+    binding.withDeclaration(declaration1);
+    binding.withDeclaration(declaration2);
+    
+    List<Declaration> result = binding.getDeclarations();
+    assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
+  }
+
+  @Test
+  void testAddQueueDeclarations() {
+    List<Declaration> expectedDeclarations=new ArrayList<>();
+    QueueDeclaration declaration1 = new QueueDeclaration("hello");
+    QueueDeclaration declaration2 = new QueueDeclaration("hello2");
+    expectedDeclarations.add(declaration1);
+    expectedDeclarations.add(declaration2);
+
+    binding.withDeclaration(declaration1);
+    binding.withDeclaration(declaration2);
+
+    List<Declaration> result = binding.getDeclarations();
+    assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
+  }
+
+  @Test
+  void testAddBindingDeclarations() {
+    QueueDeclaration qd = new QueueDeclaration("hello");
+    ExchangeDeclaration bd = new ExchangeDeclaration("hello2");
+    List<Declaration> expectedDeclarations=new ArrayList<>();
+    BindingDeclaration declaration1 = new BindingDeclaration(qd,bd);
+    expectedDeclarations.add(declaration1);
+    binding.withDeclaration(declaration1);
+
+    List<Declaration> result = binding.getDeclarations();
+    assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
   }
 
   @Test

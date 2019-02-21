@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.rabbitmq.client.BuiltinExchangeType;
 
-public final class ExchangeDeclaration {
+public final class ExchangeDeclaration implements Declaration {
   private final Map<String, Object> arguments;
 
   private boolean durable;
@@ -30,12 +30,12 @@ public final class ExchangeDeclaration {
     return this;
   }
 
-  public ExchangeDeclaration withExchangeType(String exchangeType) {
+  public ExchangeDeclaration withType(String exchangeType) {
     this.exchangeType = exchangeType;
     return this;
   }
 
-  public ExchangeDeclaration withExchangeType(BuiltinExchangeType exchangeType) {
+  public ExchangeDeclaration withType(BuiltinExchangeType exchangeType) {
     this.exchangeType = exchangeType.getType();
     return this;
   }
@@ -104,7 +104,7 @@ public final class ExchangeDeclaration {
 
   @Override
   public String toString() {
-    return "exchangeName='" + exchangeName + '\'' + ", exchangeType='" + exchangeType + '\''
+    return "exchange declaration for exchangeName='" + exchangeName + '\'' + ", exchangeType='" + exchangeType + '\''
         + ", durable=" + durable + ", autoDelete=" + autoDelete + ", arguments=" + arguments;
   }
 }

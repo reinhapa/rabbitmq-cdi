@@ -1,11 +1,14 @@
 package net.reini.rabbitmq.cdi;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +55,49 @@ class QueueBindingTest {
     assertEquals(decoder, binding.getDecoder());
   }
 
+  @Test
+  void testAddExchangeDeclarations() {
+    List<Declaration> expectedDeclarations=new ArrayList<>();
+    ExchangeDeclaration declaration1 = new ExchangeDeclaration("hello");
+    ExchangeDeclaration declaration2 = new ExchangeDeclaration("hello2");
+    expectedDeclarations.add(declaration1);
+    expectedDeclarations.add(declaration2);
+
+    binding.withDeclaration(declaration1);
+    binding.withDeclaration(declaration2);
+
+    List<Declaration> result = binding.getDeclarations();
+    assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
+  }
+
+  @Test
+  void testAddQueueDeclarations() {
+    List<Declaration> expectedDeclarations=new ArrayList<>();
+    QueueDeclaration declaration1 = new QueueDeclaration("hello");
+    QueueDeclaration declaration2 = new QueueDeclaration("hello2");
+    expectedDeclarations.add(declaration1);
+    expectedDeclarations.add(declaration2);
+
+    binding.withDeclaration(declaration1);
+    binding.withDeclaration(declaration2);
+
+    List<Declaration> result = binding.getDeclarations();
+    assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
+  }
+
+  @Test
+  void testAddBindingDeclarations() {
+    QueueDeclaration qd = new QueueDeclaration("hello");
+    ExchangeDeclaration bd = new ExchangeDeclaration("hello2");
+    List<Declaration> expectedDeclarations=new ArrayList<>();
+    BindingDeclaration declaration1 = new BindingDeclaration(qd,bd);
+    expectedDeclarations.add(declaration1);
+    binding.withDeclaration(declaration1);
+
+    List<Declaration> result = binding.getDeclarations();
+    assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
+  }
+  
   @Test
   void testToString() {
     assertEquals("QueueBinding[type=net.reini.rabbitmq.cdi.TestEvent, queue=queue]",

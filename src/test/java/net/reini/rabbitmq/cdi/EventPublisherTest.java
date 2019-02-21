@@ -8,6 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
@@ -42,6 +44,7 @@ public class EventPublisherTest {
   @Mock
   private BiConsumer<TestEvent, PublishException> errorHandler;
 
+  private List<Declaration> declarations =new ArrayList<>();
   private EventPublisher publisher;
   private Builder basicProperties;
   private JsonEncoder<TestEvent> encoder;
@@ -76,7 +79,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
-        basicProperties, encoder, errorHandler));
+        basicProperties, encoder, errorHandler, declarations));
     publisher.publishEvent(new TestEvent(), TransactionPhase.AFTER_SUCCESS);
     publisher.cleanUp();
 
@@ -103,7 +106,7 @@ public class EventPublisherTest {
         any());
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
-        basicProperties, encoder, errorHandler));
+        basicProperties, encoder, errorHandler, declarations));
     publisher.publishEvent(new TestEvent(), TransactionPhase.AFTER_FAILURE);
     publisher.cleanUp();
 
@@ -119,7 +122,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
-        basicProperties, encoder, errorHandler));
+        basicProperties, encoder, errorHandler, declarations));
     publisher.onEventInProgress(new TestEvent());
     publisher.cleanUp();
 
@@ -136,7 +139,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
-        basicProperties, encoder, errorHandler));
+        basicProperties, encoder, errorHandler, declarations));
     publisher.onEventBeforeCompletion(new TestEvent());
     publisher.cleanUp();
 
@@ -153,7 +156,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
-        basicProperties, encoder, errorHandler));
+        basicProperties, encoder, errorHandler, declarations));
     publisher.onEventAfterCompletion(new TestEvent());
     publisher.cleanUp();
 
@@ -170,7 +173,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
-        basicProperties, encoder, errorHandler));
+        basicProperties, encoder, errorHandler, declarations));
     publisher.onEventAfterFailure(new TestEvent());
     publisher.cleanUp();
 
@@ -187,7 +190,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
-        basicProperties, encoder, errorHandler));
+        basicProperties, encoder, errorHandler, declarations));
     publisher.onEventAfterSuccess(new TestEvent());
     publisher.cleanUp();
 

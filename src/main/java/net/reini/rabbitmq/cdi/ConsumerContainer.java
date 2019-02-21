@@ -14,9 +14,8 @@ class ConsumerContainer {
   private final ConnectionConfig config;
   private final ConnectionRepository connectionRepository;
   private final List<ConsumerHolder> consumerHolders;
-  private final ExchangeDeclarationConfig exchangeDeclarationConfig;
-  private final QueueDeclarationConfig queueDeclarationConfig;
   private final Condition noConnectionCondition;
+  private DeclarerRepository declarerRepository;
   private final ReentrantLock lock;
 
   private ConsumerContainerWatcherThread consumerWatcherThread;
@@ -24,29 +23,26 @@ class ConsumerContainer {
 
   private volatile boolean connectionAvailable = false;
 
-  ConsumerContainer(ConnectionConfig config, ConnectionRepository connectionRepository) {
-    this(config, connectionRepository, new CopyOnWriteArrayList<>(),
-        new ExchangeDeclarationConfig(), new QueueDeclarationConfig(), new ConsumerHolderFactory(),
+  ConsumerContainer(ConnectionConfig config, ConnectionRepository connectionRepository,DeclarerRepository declarerRepository) {
+    this(config, connectionRepository, declarerRepository, new CopyOnWriteArrayList<>(), new ConsumerHolderFactory(),
         new ReentrantLock());
   }
 
-  ConsumerContainer(ConnectionConfig config, ConnectionRepository connectionRepository,
-      List<ConsumerHolder> consumerHolders, ExchangeDeclarationConfig exchangeDeclarationConfig,
-      QueueDeclarationConfig queueDeclarationConfig, ConsumerHolderFactory consumerHolderFactory,
+  ConsumerContainer(ConnectionConfig config, ConnectionRepository connectionRepository,DeclarerRepository declarerRepository,
+      List<ConsumerHolder> consumerHolders, ConsumerHolderFactory consumerHolderFactory,
       ReentrantLock lock) {
     this.config = config;
     this.connectionRepository = connectionRepository;
     this.consumerHolders = consumerHolders;
-    this.exchangeDeclarationConfig = exchangeDeclarationConfig;
-    this.queueDeclarationConfig = queueDeclarationConfig;
     this.consumerHolderFactory = consumerHolderFactory;
     this.lock = lock;
     this.noConnectionCondition = lock.newCondition();
+    this.declarerRepository = declarerRepository;
   }
 
-  public void addConsumer(EventConsumer consumer, String queue, boolean autoAck) {
+  public void addConsumer(EventConsumer consumer, String queue, boolean autoAck, List<Declaration> declarations) {
     ConsumerHolder consumerHolder = consumerHolderFactory.createConsumerHolder(consumer, queue,
-        autoAck, connectionRepository, config, exchangeDeclarationConfig, queueDeclarationConfig);
+        autoAck, connectionRepository, config, declarations, declarerRepository);
     consumerHolders.add(consumerHolder);
   }
 
@@ -61,15 +57,6 @@ class ConsumerContainer {
 
   public void stop() {
     consumerWatcherThread.stopThread();
-  }
-
-
-  public void addExchangeDeclaration(ExchangeDeclaration exchangeDeclaration) {
-    this.exchangeDeclarationConfig.addExchangeDeclaration(exchangeDeclaration);
-  }
-
-  public void addQueueDeclaration(QueueDeclaration queueDeclaration) {
-    this.queueDeclarationConfig.addQueueDeclaration(queueDeclaration);
   }
 
   public void setConnectionAvailable(boolean connectionAvailable) {

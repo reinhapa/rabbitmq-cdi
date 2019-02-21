@@ -58,18 +58,21 @@ public class RabbitBinder extends EventBinder {
   @Override
   protected void bindEvents() {
 
-    declareExchange("text.exchange.one")
+    ExchangeDeclaration testExchangeOne = declarerFactory()
+    .createExchangeDeclaration("test.exchange.one")
       .withExchangeType(BuiltinExchangeType.DIRECT)
       .withAutoDelete(false)
       .withDurable(false); // <1>
 
-    declareQueue("test.queue")
+    QueueDeclaration testQueue = declarerFactory()
+    .createQueueDeclaration("test.queue")
       .withAutoDelete(false)
       .withDurable(false)
       .withExclusiveAccess(false); // <2>
 
     bind(EventOne.class)
-      .toExchange("test.exchange.one"); // <3>
+      .toExchange("test.exchange.one");
+      .withDeclaration(testExchangeOne) // <3>
     bind(EventOne.class)
       .toExchange("test.exchange.two")
       .withRoutingKey("test.key")
@@ -80,15 +83,23 @@ public class RabbitBinder extends EventBinder {
     bind(EventTwo.class)
       .toQueue("test.queue")
       .withDecoder(new MyCustomDecoder())
+      .withDeclaration(testQueue)
       .autoAck(); // <5>
   }
 }
 ----
-<1> Declares an exchange with name 'test.exchange.one' and type 'direct'
-<2> Declares a queue with name 'test.queue'
-<3> Uses an empty routing key for exchange 'test.exchange.one'
+<1> Create exchange declaration for exchange with name 'test.exchange.one' and type 'direct'
+<2> Creates queue declaration for queue with name 'test.queue'
+<3> Uses an empty routing key for exchange 'test.exchange.one' and adds exchange declaration for this publisher
 <4> Specifies a custom event encoder
-<5> Specifies a custom event decoder and enables auto acknowledge
+<5> Specifies a custom event decoder, enables auto acknowledge and adds queue declaration for this consumer
+
+Note to declarations:
+
+Created declarations are not automatically declared on broker side.
+For each consumer/producer own channels exist because of that reason it is necessary to
+add the declaration needed to a binding via .withDeclaration(..)
+Only these declarations are applied for this consumer/producer
 
 
 As last step you need to initialize the binder either in a singleton
