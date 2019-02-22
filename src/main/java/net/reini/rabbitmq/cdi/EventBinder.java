@@ -15,6 +15,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.TransactionPhase;
@@ -186,6 +187,11 @@ public abstract class EventBinder {
   void initializeConsumerContainer() {
     configuration = new ConnectionConfiguration();
     consumerContainer = consumerContainerFactory.create(configuration, connectionRepository, declarerRepository);
+  }
+
+  @PreDestroy
+  void shutdownConsumerContainer(){
+    consumerContainer.stop();
   }
 
   void stop() {

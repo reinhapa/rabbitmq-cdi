@@ -1,7 +1,6 @@
 package net.reini.rabbitmq.cdi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
@@ -101,8 +100,17 @@ class ConnectionManagerWatcherThreadTest {
     killThreadAndVerifyState(sut);
   }
 
-  private void killThreadAndVerifyState(ConnectionManagerWatcherThread sut) {
+  private void killThreadAndVerifyState(ConnectionManagerWatcherThread sut) throws InterruptedException {
     sut.stopThread();
-    assertFalse(sut.isAlive());
+    waitForThreadDeathWithTimeout(50,sut);
   }
+
+  private void waitForThreadDeathWithTimeout(int retries, Thread stopperThread) throws InterruptedException {
+    int count=1;
+    while(stopperThread.isAlive() || count >=retries);
+    {
+      Thread.sleep(100);
+    }
+  }
+
 }
