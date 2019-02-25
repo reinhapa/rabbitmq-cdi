@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class ConsumerContainerWatcherThread extends StopAbleThread {
+final class ConsumerContainerWatcherThread extends StoppableThread {
   private static final Logger LOGGER =
       LoggerFactory.getLogger(ConsumerContainerWatcherThread.class);
   private final ConsumerContainer consumerContainer;
@@ -29,7 +29,7 @@ final class ConsumerContainerWatcherThread extends StopAbleThread {
 
   @Override
   public void run() {
-    while (Thread.currentThread().isInterrupted() == false && stopped==false) {
+    while (!Thread.currentThread().isInterrupted() && !stopped) {
       boolean allConsumersActive = false;
       try {
         lock.lock();

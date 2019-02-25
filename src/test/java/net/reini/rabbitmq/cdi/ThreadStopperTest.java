@@ -13,7 +13,7 @@ class ThreadStopperTest {
   @Test
   void testThreadWillNotJoinAndJoinGetsInterrupted() throws InterruptedException {
     ThreadStopper sut = new ThreadStopper();
-    StopAbleThread threadToStop = new StopAbleThread(() -> {
+    StoppableThread threadToStop = new StoppableThread(() -> {
       while (threadShouldStop == false) {
         try {
           Thread.sleep(500);

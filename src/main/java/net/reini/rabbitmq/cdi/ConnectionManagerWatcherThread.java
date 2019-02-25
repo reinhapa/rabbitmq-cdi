@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ConnectionManagerWatcherThread extends StopAbleThread {
+class ConnectionManagerWatcherThread extends StoppableThread {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionManager.class);
 
   private final ReentrantLock connectionManagerLock;
@@ -43,7 +43,7 @@ class ConnectionManagerWatcherThread extends StopAbleThread {
 
   private void ensureConnectionState() {
 
-    while (!Thread.currentThread().isInterrupted() && stopped == false) {
+    while (!Thread.currentThread().isInterrupted() && !stopped) {
       boolean connectionEstablished = false;
       try {
         connectionManagerLock.lock();
@@ -60,7 +60,7 @@ class ConnectionManagerWatcherThread extends StopAbleThread {
       } finally {
         connectionManagerLock.unlock();
       }
-      if (!connectionEstablished && (!Thread.currentThread().isInterrupted() && stopped == false)) {
+      if (!connectionEstablished && (!Thread.currentThread().isInterrupted() && !stopped)) {
         waitForRetry();
       }
     }

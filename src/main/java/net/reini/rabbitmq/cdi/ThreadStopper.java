@@ -2,7 +2,7 @@ package net.reini.rabbitmq.cdi;
 
 final class ThreadStopper {
   
-  public void stopThread(StopAbleThread thread) {
+  public void stopThread(StoppableThread thread) {
     thread.interrupt();
     thread.setStopped(true);
   }

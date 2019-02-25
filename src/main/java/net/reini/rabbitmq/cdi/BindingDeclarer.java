@@ -21,7 +21,7 @@ public class BindingDeclarer implements Declarer<BindingDeclaration> {
     String routingKey = declaration.getRoutingKey();
     Map<String, Object> arguments = declaration.getArguments();
 
-    LOGGER.info("binding queue " + queueName + " to exchange " + exchangeName + " with routingkey " + routingKey);
+    LOGGER.info("binding queue {} to exchange {} with routingkey {}",queueName,exchangeName, routingKey);
     channel.queueBind(queueName, exchangeName, routingKey, arguments);
   }
 }
