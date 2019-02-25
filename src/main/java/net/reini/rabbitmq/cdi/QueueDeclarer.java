@@ -13,7 +13,7 @@ final class QueueDeclarer implements Declarer<QueueDeclaration> {
 
   @Override
   public void declare(Channel channel, QueueDeclaration declaration) throws IOException {
-    LOGGER.info("declaring queue ", declaration.getQueueName());
+    LOGGER.info("declaring queue {}", declaration.getQueueName());
     channel.queueDeclare(declaration.getQueueName(), declaration.isDurable(), declaration.isExclusive(),
         declaration.isAutoDelete(), declaration.getArguments());
   }

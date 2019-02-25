@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class ConsumerContainerWatcherThread extends Thread {
+final class ConsumerContainerWatcherThread extends StoppableThread {
   private static final Logger LOGGER =
       LoggerFactory.getLogger(ConsumerContainerWatcherThread.class);
   private final ConsumerContainer consumerContainer;
@@ -29,7 +29,7 @@ final class ConsumerContainerWatcherThread extends Thread {
 
   @Override
   public void run() {
-    while (Thread.currentThread().isInterrupted() == false) {
+    while (!Thread.currentThread().isInterrupted() && !stopped) {
       boolean allConsumersActive = false;
       try {
         lock.lock();
@@ -44,6 +44,7 @@ final class ConsumerContainerWatcherThread extends Thread {
       } catch (InterruptedException e) {
         LOGGER.info("interrupted while waiting for notification");
         Thread.currentThread().interrupt();
+        return;
       } finally {
         lock.unlock();
       }

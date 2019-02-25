@@ -21,8 +21,7 @@ public class DeclarerFactory {
    * @return a new ExchangeDeclaration object
    */
   public ExchangeDeclaration createExchangeDeclaration(String exchangeName) {
-    ExchangeDeclaration exchangeDeclaration = new ExchangeDeclaration(exchangeName);
-    return exchangeDeclaration;
+    return new ExchangeDeclaration(exchangeName);
   }
 
   /**
@@ -31,8 +30,7 @@ public class DeclarerFactory {
    * @return a new QueueDeclaration object
    */
   public QueueDeclaration createQueueDeclaration(String queueName) {
-    QueueDeclaration exchangeDeclarationConfigEntry = new QueueDeclaration(queueName);
-    return exchangeDeclarationConfigEntry;
+    return new QueueDeclaration(queueName);
   }
 
   /**
@@ -42,7 +40,6 @@ public class DeclarerFactory {
    * @return a new BindingDeclaration object
    */
   public BindingDeclaration createBindingDeclaration(QueueDeclaration queueDeclaration, ExchangeDeclaration exchangeDeclaration) {
-    BindingDeclaration bindingDeclaration = new BindingDeclaration(queueDeclaration, exchangeDeclaration);
-    return bindingDeclaration;
+    return new BindingDeclaration(queueDeclaration, exchangeDeclaration);
   }
 }

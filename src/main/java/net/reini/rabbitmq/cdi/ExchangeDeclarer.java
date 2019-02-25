@@ -15,7 +15,7 @@ final class ExchangeDeclarer implements Declarer<ExchangeDeclaration> {
   public void declare(Channel channel, ExchangeDeclaration declaration) throws IOException {
 
     String exchangeName = declaration.getExchangeName();
-    LOGGER.info("declaring exchange ", exchangeName);
+    LOGGER.info("declaring exchange {}", exchangeName);
     channel.exchangeDeclare(exchangeName, declaration.getExchangeType(),
         declaration.isDurable(), declaration.isAutoDelete(), declaration.getArguments());
   }

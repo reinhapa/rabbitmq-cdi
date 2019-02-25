@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ConnectionManagerWatcherThread extends Thread {
+class ConnectionManagerWatcherThread extends StoppableThread {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionManager.class);
 
   private final ReentrantLock connectionManagerLock;
@@ -43,7 +43,7 @@ class ConnectionManagerWatcherThread extends Thread {
 
   private void ensureConnectionState() {
 
-    while (!interrupted()) {
+    while (!Thread.currentThread().isInterrupted() && !stopped) {
       boolean connectionEstablished = false;
       try {
         connectionManagerLock.lock();
@@ -53,10 +53,14 @@ class ConnectionManagerWatcherThread extends Thread {
             waitTillConnectionIsLost();
           }
         }
+      } catch (InterruptedException e) {
+        LOGGER.debug("connect thread was interrupted while waiting", e);
+        Thread.currentThread().interrupt();
+        return;
       } finally {
         connectionManagerLock.unlock();
       }
-      if (!connectionEstablished && !Thread.currentThread().isInterrupted()) {
+      if (!connectionEstablished && (!Thread.currentThread().isInterrupted() && !stopped)) {
         waitForRetry();
       }
     }
@@ -76,12 +80,7 @@ class ConnectionManagerWatcherThread extends Thread {
     }
   }
 
-  private void waitTillConnectionIsLost() {
-    try {
-      noConnectionCondition.await();
-    } catch (InterruptedException e) {
-      LOGGER.debug("connect thread was interrupted while waiting", e);
-      Thread.currentThread().interrupt();
-    }
+  private void waitTillConnectionIsLost() throws InterruptedException {
+    noConnectionCondition.await();
   }
 }

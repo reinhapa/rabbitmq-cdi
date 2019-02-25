@@ -24,7 +24,7 @@ class DeclarerRepository {
   void declare(Channel channel, List<Declaration> declarations) throws IOException {
     for (Declaration declaration : declarations) {
       Declarer declarer = declarerMap.get(declaration.getClass());
-      LOGGER.info("declaring: " + declaration);
+      LOGGER.info("declaring: {}" , declaration);
       declarer.declare(channel, declaration);
     }
   }

@@ -13,7 +13,7 @@ class ThreadStopperTest {
   @Test
   void testThreadWillNotJoinAndJoinGetsInterrupted() throws InterruptedException {
     ThreadStopper sut = new ThreadStopper();
-    Thread threadToStop = new Thread(() -> {
+    StoppableThread threadToStop = new StoppableThread(() -> {
       while (threadShouldStop == false) {
         try {
           Thread.sleep(500);
@@ -21,7 +21,8 @@ class ThreadStopperTest {
           // ignore
         }
       }
-    });
+    }) {
+    };
 
     threadToStop.start();
 
@@ -30,8 +31,7 @@ class ThreadStopperTest {
       threadShouldStopCalled = true;
     });
     stopperThread.start();
-    Thread.sleep(100);
-    assertTrue(stopperThread.isAlive());
+    waitForAliveWithTimeout(50,stopperThread);
     stopperThread.interrupt();
     stopperThread.join(500);
     assertFalse(stopperThread.isAlive());
@@ -41,6 +41,14 @@ class ThreadStopperTest {
     assertFalse(threadToStop.isAlive());
 
 
+  }
+
+  private void waitForAliveWithTimeout(int retries, Thread stopperThread) throws InterruptedException {
+    int count=1;
+    while(stopperThread.isAlive()==false || count >=retries);
+    {
+      Thread.sleep(100);
+    }
   }
 
 
