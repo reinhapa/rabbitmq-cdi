@@ -22,15 +22,17 @@ class ConsumerHolder {
   private final ConsumerFactory consumerFactory;
   private final DeclarerRepository declarerRepository;
   private final List<Declaration> declarations;
+  private final int prefetchCount;
   private Channel channel;
 
   private volatile boolean active;
 
-  ConsumerHolder(EventConsumer consumer, String queueName, boolean autoAck,
+  ConsumerHolder(EventConsumer consumer, String queueName, boolean autoAck,int prefetchCount,
       ConsumerChannelFactory consumerChannelFactory, ConsumerFactory consumerFactory, List<Declaration> declarations, DeclarerRepository declarerRepository) {
     this.consumer = consumer;
     this.queueName = queueName;
     this.autoAck = autoAck;
+    this.prefetchCount = prefetchCount;
     this.consumerChannelFactory = consumerChannelFactory;
     this.declarations = declarations;
     this.declarerRepository = declarerRepository;
@@ -60,6 +62,7 @@ class ConsumerHolder {
           channel = this.consumerChannelFactory.createChannel();
           channel.addShutdownListener(shutdownListener);
           declarerRepository.declare(channel, declarations);
+          channel.basicQos(this.prefetchCount);
           channel.basicConsume(queueName, autoAck, autoAck ? consumerFactory.create(consumer)
               : consumerFactory.createAcknowledged(consumer, channel));
           LOGGER.info("Activated consumer of class {}", consumer.getClass());

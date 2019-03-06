@@ -21,6 +21,7 @@ import com.rabbitmq.client.Consumer;
 
 @ExtendWith(MockitoExtension.class)
 class ConsumerHolderTest {
+  private static final int PREFETCH_COUNT = 5;
   @Mock
   private EventConsumer eventConsumerMock;
   @Mock
@@ -41,7 +42,7 @@ class ConsumerHolderTest {
 
   @Test
   void activateAndDeactivate() throws IOException, TimeoutException {
-    this.sut = new ConsumerHolder(eventConsumerMock, "queue", false, consumerChannelFactoryMock,
+    this.sut = new ConsumerHolder(eventConsumerMock, "queue", false, PREFETCH_COUNT, consumerChannelFactoryMock,
         consumerFactoryMock, declarationsListMock,declarerRepositoryMock);
     Assertions.assertEquals("queue", sut.getQueueName());
     Assertions.assertFalse(sut.isAutoAck());
@@ -61,7 +62,7 @@ class ConsumerHolderTest {
 
   @Test
   void activateAndDeactivateWithAutoAck() throws IOException, TimeoutException {
-    this.sut = new ConsumerHolder(eventConsumerMock, "queue", true, consumerChannelFactoryMock,
+    this.sut = new ConsumerHolder(eventConsumerMock, "queue", true, PREFETCH_COUNT, consumerChannelFactoryMock,
         consumerFactoryMock,declarationsListMock,declarerRepositoryMock);
     Assertions.assertEquals("queue", sut.getQueueName());
     Assertions.assertTrue(sut.isAutoAck());
@@ -73,6 +74,7 @@ class ConsumerHolderTest {
     verify(declarerRepositoryMock).declare(channelMock,declarationsListMock);
     verify(channelMock, never()).close();
     verify(channelMock, never()).removeShutdownListener(any());
+    verify(channelMock).basicQos(PREFETCH_COUNT);
 
     sut.deactivate();
     verify(channelMock).close();
@@ -82,7 +84,7 @@ class ConsumerHolderTest {
   @Test
   void errorDuringActivate() {
     Assertions.assertThrows(IOException.class, () -> {
-      this.sut = new ConsumerHolder(eventConsumerMock, "queue", true, consumerChannelFactoryMock,
+      this.sut = new ConsumerHolder(eventConsumerMock, "queue", true, 0, consumerChannelFactoryMock,
           consumerFactoryMock,declarationsListMock,declarerRepositoryMock);
       when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
       when(consumerFactoryMock.create(eventConsumerMock)).thenReturn(consmerMock);

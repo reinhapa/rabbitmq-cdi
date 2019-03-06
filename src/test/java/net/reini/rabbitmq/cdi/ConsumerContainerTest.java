@@ -54,8 +54,8 @@ class ConsumerContainerTest {
         new ConsumerContainer(connectionConfigMock, connectionRepositoryMock,declarerRepositoryMock, consumerHolders,
              consumerHolderFactoryMock, lockMock);
     when(consumerHolderFactoryMock.createConsumerHolder(consumerMock, EXPECTED_QUEUE_NAME,
-        EXPECTED_AUTOACK, connectionRepositoryMock, connectionConfigMock, declarations,declarerRepositoryMock)).thenReturn(consumerHolderMock);
-    sut.addConsumer(consumerMock, EXPECTED_QUEUE_NAME, EXPECTED_AUTOACK, declarations);
+        EXPECTED_AUTOACK, 0, connectionRepositoryMock, connectionConfigMock, declarations,declarerRepositoryMock)).thenReturn(consumerHolderMock);
+    sut.addConsumer(consumerMock, EXPECTED_QUEUE_NAME, EXPECTED_AUTOACK, 0, declarations);
 
     assertEquals(1, consumerHolders.size());
     ConsumerHolder consumerHolder = consumerHolders.get(0);
