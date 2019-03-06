@@ -124,6 +124,7 @@ public class BindingInitializer {
         .setConnectTimeout(10000) // <5>
         .setConnectRetryWaitTime(10000) // <6>
         .setRequestedConnectionHeartbeatTimeout(3) // <7>
+        .withPrefetchCount(5); //8
       binder.initialize();
     } catch (IOException e) {
       LoggerFactory.getLogger(getClass()).error("Unable to initialize", e);
@@ -138,6 +139,7 @@ public class BindingInitializer {
 <5> Sets the connect timeout to 10 sec
 <6> Set the time to wait between connection retries to 10 sec
 <7> Set the heartbeat timeout to 3 sec (To detect connection problems)
+<8> Set the prefetch count which configures how many messages are downloaded at once from broker
 
 
 === Alternative connection definition

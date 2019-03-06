@@ -49,6 +49,13 @@ class QueueBindingTest {
   }
 
   @Test
+  void testWithPrefetchCount() {
+    assertEquals(0, binding.getPrefetchCount());
+    assertSame(binding, binding.withPrefetchCount(5));
+    assertEquals(5,binding.getPrefetchCount());
+  }
+
+  @Test
   void testGetDecoder() {
     assertEquals(JsonDecoder.class, binding.getDecoder().getClass());
     assertSame(binding, binding.withDecoder(decoder));

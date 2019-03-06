@@ -27,7 +27,7 @@ class ConsumerHolderFactoryTest {
   void testCreate() {
     ConsumerHolderFactory consumerHolderFactory = new ConsumerHolderFactory();
     ConsumerHolder consumerHolder =
-        consumerHolderFactory.createConsumerHolder(eventConsumerMock, "queue", true,
+        consumerHolderFactory.createConsumerHolder(eventConsumerMock, "queue", true, 0,
             connectionRepositoryMock, configMock, declarations,declarerRepositoryMock);
     assertNotNull(consumerHolder);
   }

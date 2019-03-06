@@ -215,7 +215,7 @@ public abstract class EventBinder {
     Instance<Object> eventPool = remoteEventPool.select(eventType);
     EventConsumer consumer = new EventConsumer(queueBinding.getDecoder(), eventControl, eventPool);
     String queue = queueBinding.getQueue();
-    consumerContainer.addConsumer(consumer, queue, queueBinding.isAutoAck(),queueBinding.getDeclarations());
+    consumerContainer.addConsumer(consumer, queue, queueBinding.isAutoAck(), queueBinding.getPrefetchCount(), queueBinding.getDeclarations());
     LOGGER.info("Binding between queue {} and event type {} activated", queue, eventType.getName());
   }
 
@@ -321,12 +321,14 @@ public abstract class EventBinder {
     private boolean autoAck;
     private Decoder<T> decoder;
     private List<Declaration> declarations;
+    private int prefetchCount;
 
     QueueBinding(Class<T> eventType, String queue) {
       this.eventType = eventType;
       this.queue = queue;
       this.declarations = new ArrayList<>();
       this.decoder = new JsonDecoder<>(eventType);
+      this.prefetchCount=0;
       LOGGER.info("Binding created between queue {} and event type {}", queue,
           eventType.getSimpleName());
     }
@@ -349,6 +351,10 @@ public abstract class EventBinder {
 
     List<Declaration> getDeclarations() {
       return this.declarations;
+    }
+
+    int getPrefetchCount() {
+      return prefetchCount;
     }
 
     /**
@@ -417,6 +423,28 @@ public abstract class EventBinder {
      */
     public QueueBinding<T> withDeclaration(BindingDeclaration bindingDeclaration) {
       this.declarations.add(bindingDeclaration);
+      return this;
+    }
+
+    /**
+     * Adds a BindingDeclaration declaration to this QueueBinding
+     * The declaration is automatically applied to the publisher channel
+     *
+     * @param bindingDeclaration The exchange declaration
+     * @return the queue binding
+     */
+
+    /**
+     * Configures maximum number of unacknowledged buffered messages that are allowed
+     * for this channel.
+     *
+     * @see <a href="https://www.rabbitmq.com/confirms.html#channel-qos-prefetch">Channel Prefetch Setting (QoS)</a>
+     * @see com.rabbitmq.client.Channel#basicQos(int)
+     * @param prefetchCount maximum number of messages that will be buffered
+     */
+    public QueueBinding<T> withPrefetchCount(int prefetchCount) {
+      this.prefetchCount = prefetchCount;
+      LOGGER.info("Prefetch count of {] set for event type {}", prefetchCount,eventType.getSimpleName());
       return this;
     }
 

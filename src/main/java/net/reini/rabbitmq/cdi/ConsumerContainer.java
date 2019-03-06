@@ -40,9 +40,9 @@ class ConsumerContainer {
     this.declarerRepository = declarerRepository;
   }
 
-  public void addConsumer(EventConsumer consumer, String queue, boolean autoAck, List<Declaration> declarations) {
+  public void addConsumer(EventConsumer consumer, String queue, boolean autoAck, int prefetchCount, List<Declaration> declarations) {
     ConsumerHolder consumerHolder = consumerHolderFactory.createConsumerHolder(consumer, queue,
-        autoAck, connectionRepository, config, declarations, declarerRepository);
+        autoAck, prefetchCount, connectionRepository, config, declarations, declarerRepository);
     consumerHolders.add(consumerHolder);
   }
 
