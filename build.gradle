@@ -38,7 +38,7 @@ dependencies {
     compile 'com.rabbitmq:amqp-client:5.6.0'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
     
-    testCompile 'org.hamcrest:hamcrest:2.+'
+    testCompile 'org.hamcrest:hamcrest:2.1'
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.4.1'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.4.1'
     testCompile 'org.mockito:mockito-core:2.25.1'
