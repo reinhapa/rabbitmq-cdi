@@ -438,9 +438,10 @@ public abstract class EventBinder {
      * Configures maximum number of unacknowledged buffered messages that are allowed
      * for this channel.
      *
+     * @param prefetchCount maximum number of messages that will be buffered
+     * @return the queue binding
      * @see <a href="https://www.rabbitmq.com/confirms.html#channel-qos-prefetch">Channel Prefetch Setting (QoS)</a>
      * @see com.rabbitmq.client.Channel#basicQos(int)
-     * @param prefetchCount maximum number of messages that will be buffered
      */
     public QueueBinding<T> withPrefetchCount(int prefetchCount) {
       this.prefetchCount = prefetchCount;
