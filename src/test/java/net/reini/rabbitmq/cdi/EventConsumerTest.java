@@ -3,9 +3,12 @@ package net.reini.rabbitmq.cdi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import javax.enterprise.event.Event;
+import javax.enterprise.event.ObserverException;
 import javax.enterprise.inject.Instance;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -77,5 +80,22 @@ public class EventConsumerTest {
     when(decoder.decode(body)).thenReturn(event);
 
     assertTrue(consumer.consume("consumerTag", envelope, properties, body));
+
+    verify(eventControl).fire(event);
+  }
+
+  @SuppressWarnings("boxing")
+  @Test
+  public void testHandleDelivery_withError() throws Exception {
+    TestEvent event = new TestEvent();
+    byte[] body = "the message".getBytes();
+    Envelope envelope = new Envelope(123L, false, null, null);
+    BasicProperties properties = new BasicProperties();
+
+    when(decoder.willDecode(null)).thenReturn(true);
+    when(decoder.decode(body)).thenReturn(event);
+    doThrow(new ObserverException()).when(eventControl).fire(event);
+
+    assertFalse(consumer.consume("consumerTag", envelope, properties, body));
   }
 }

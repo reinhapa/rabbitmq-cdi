@@ -43,16 +43,21 @@ public class EventConsumer implements EnvelopeConsumer {
   }
 
   @Override
-  @SuppressWarnings("boxing")
   public boolean consume(String consumerTag, Envelope envelope, BasicProperties properties,
       byte[] body) throws IOException {
-    long deliveryTag = envelope.getDeliveryTag();
-    LOGGER.debug("Handle delivery: consumerTag: {}, deliveryTag: {}", consumerTag, deliveryTag);
+    LOGGER.debug("Handle delivery: consumerTag: {}, envelope: {}, properties: {}", consumerTag,
+        envelope, properties);
     String contentType = properties.getContentType();
     if (decoder.willDecode(contentType)) {
       Object event = buildEvent(body);
-      eventControl.fire(event);
-      return true;
+      try {
+        eventControl.fire(event);
+        LOGGER.trace("successfully fired event: {}", event);
+        return true;
+      } catch (Exception e) {
+        LOGGER.error("Failed to fire event: {}", event, e);
+        return false;
+      }
     } else {
       LOGGER.error("Unable to process unknown message content type: {}", contentType);
       return false;
