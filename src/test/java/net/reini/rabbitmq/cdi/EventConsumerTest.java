@@ -2,6 +2,7 @@ package net.reini.rabbitmq.cdi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -44,6 +45,21 @@ public class EventConsumerTest {
 
     TestEvent eventObject = consumer.buildEvent(body);
     assertEquals(event, eventObject);
+  }
+
+  @Test
+  public void testBuildEventDecodingFails() throws DecodeException {
+    byte[] body = "the message".getBytes();
+
+    when(decoder.decode(body)).thenThrow(new RuntimeException("some error"));
+
+    TestEvent eventObject = consumer.buildEvent(body);
+    assertNull(eventObject);
+  }
+
+  @Test
+  public void testFireEventNullEvent() {
+    assertFalse(consumer.fireEvent(null));
   }
 
   @Test
