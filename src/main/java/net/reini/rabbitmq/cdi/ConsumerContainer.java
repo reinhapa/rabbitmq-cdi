@@ -15,7 +15,7 @@ class ConsumerContainer {
   private final ConnectionRepository connectionRepository;
   private final List<ConsumerHolder> consumerHolders;
   private final Condition noConnectionCondition;
-  private DeclarerRepository declarerRepository;
+  private final DeclarerRepository declarerRepository;
   private final ReentrantLock lock;
 
   private ConsumerContainerWatcherThread consumerWatcherThread;
@@ -23,14 +23,15 @@ class ConsumerContainer {
 
   private volatile boolean connectionAvailable = false;
 
-  ConsumerContainer(ConnectionConfig config, ConnectionRepository connectionRepository,DeclarerRepository declarerRepository) {
-    this(config, connectionRepository, declarerRepository, new CopyOnWriteArrayList<>(), new ConsumerHolderFactory(),
-        new ReentrantLock());
+  ConsumerContainer(ConnectionConfig config, ConnectionRepository connectionRepository,
+      DeclarerRepository declarerRepository) {
+    this(config, connectionRepository, declarerRepository, new CopyOnWriteArrayList<>(),
+        new ConsumerHolderFactory(), new ReentrantLock());
   }
 
-  ConsumerContainer(ConnectionConfig config, ConnectionRepository connectionRepository,DeclarerRepository declarerRepository,
-      List<ConsumerHolder> consumerHolders, ConsumerHolderFactory consumerHolderFactory,
-      ReentrantLock lock) {
+  ConsumerContainer(ConnectionConfig config, ConnectionRepository connectionRepository,
+      DeclarerRepository declarerRepository, List<ConsumerHolder> consumerHolders,
+      ConsumerHolderFactory consumerHolderFactory, ReentrantLock lock) {
     this.config = config;
     this.connectionRepository = connectionRepository;
     this.consumerHolders = consumerHolders;
@@ -40,7 +41,8 @@ class ConsumerContainer {
     this.declarerRepository = declarerRepository;
   }
 
-  public void addConsumer(EventConsumer consumer, String queue, boolean autoAck, int prefetchCount, List<Declaration> declarations) {
+  public void addConsumer(EventConsumer<?> consumer, String queue, boolean autoAck,
+      int prefetchCount, List<Declaration> declarations) {
     ConsumerHolder consumerHolder = consumerHolderFactory.createConsumerHolder(consumer, queue,
         autoAck, prefetchCount, connectionRepository, config, declarations, declarerRepository);
     consumerHolders.add(consumerHolder);

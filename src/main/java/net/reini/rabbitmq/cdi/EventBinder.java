@@ -19,7 +19,6 @@ import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.TransactionPhase;
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 
 import org.slf4j.Logger;
@@ -81,9 +80,7 @@ public abstract class EventBinder {
   private final Set<ExchangeBinding<?>> exchangeBindings;
 
   @Inject
-  private Event<Object> remoteEventControl;
-  @Inject
-  private Instance<Object> remoteEventPool;
+  private Event<Object> eventSinkBase;
   @Inject
   private EventPublisher eventPublisher;
   @Inject
@@ -98,8 +95,8 @@ public abstract class EventBinder {
   public EventBinder() {
     exchangeBindings = new HashSet<>();
     queueBindings = new HashSet<>();
-    this.declarerFactory = new DeclarerFactory();
-    this.declarerRepository = new DeclarerRepository();
+    declarerFactory = new DeclarerFactory();
+    declarerRepository = new DeclarerRepository();
   }
 
   /**
@@ -141,22 +138,23 @@ public abstract class EventBinder {
   }
 
   /**
-   * Returns the DeclarerFactory which can be used to declare exchanges, queues and binding between exchanges and queues.
-   * The declaration can later be added to an event binding bia bind()
+   * Returns the DeclarerFactory which can be used to declare exchanges, queues and binding between
+   * exchanges and queues. The declaration can later be added to an event binding bia bind()
+   * 
    * @see #bind(Class)
    *
-   * <p>
+   *      <p>
    *
-   * <b>Declaration example:</b>
+   *      <b>Declaration example:</b>
    *
-   * <pre>
-   * ExchangeDeclaration exchangeDeclaration = declarerFactory().createExchangeDeclaration("exchangename")
-   *      .withType(BuiltinExchangeType.FANOUT);
-   * </pre>
+   *      <pre>
+   *      ExchangeDeclaration exchangeDeclaration = declarerFactory()
+   *          .createExchangeDeclaration("exchangename").withType(BuiltinExchangeType.FANOUT);
+   *      </pre>
    *
    * @return The DeclarerFactory
    */
-  public DeclarerFactory declarerFactory(){
+  public DeclarerFactory declarerFactory() {
     return this.declarerFactory;
   }
 
@@ -182,15 +180,15 @@ public abstract class EventBinder {
     consumerContainer.start();
   }
 
-
   @PostConstruct
   void initializeConsumerContainer() {
     configuration = new ConnectionConfiguration();
-    consumerContainer = consumerContainerFactory.create(configuration, connectionRepository, declarerRepository);
+    consumerContainer =
+        consumerContainerFactory.create(configuration, connectionRepository, declarerRepository);
   }
 
   @PreDestroy
-  void shutdownConsumerContainer(){
+  void shutdownConsumerContainer() {
     consumerContainer.stop();
   }
 
@@ -211,11 +209,12 @@ public abstract class EventBinder {
   void bindQueue(QueueBinding<?> queueBinding) {
     @SuppressWarnings("unchecked")
     Class<Object> eventType = (Class<Object>) queueBinding.getEventType();
-    Event<Object> eventControl = remoteEventControl.select(eventType);
-    Instance<Object> eventPool = remoteEventPool.select(eventType);
-    EventConsumer consumer = new EventConsumer(queueBinding.getDecoder(), eventControl, eventPool);
+    @SuppressWarnings("unchecked")
+    Decoder<Object> decoder = (Decoder<Object>) queueBinding.getDecoder();
+    EventConsumer<Object> consumer = new EventConsumer<>(eventType, decoder, eventSinkBase);
     String queue = queueBinding.getQueue();
-    consumerContainer.addConsumer(consumer, queue, queueBinding.isAutoAck(), queueBinding.getPrefetchCount(), queueBinding.getDeclarations());
+    consumerContainer.addConsumer(consumer, queue, queueBinding.isAutoAck(),
+        queueBinding.getPrefetchCount(), queueBinding.getDeclarations());
     LOGGER.info("Binding between queue {} and event type {} activated", queue, eventType.getName());
   }
 
@@ -228,9 +227,9 @@ public abstract class EventBinder {
     @SuppressWarnings("unchecked")
     Encoder<Object> encoder = (Encoder<Object>) exchangeBinding.getEncoder();
     String exchange = exchangeBinding.getExchange();
-    PublisherConfiguration<Object> cfg =
-        new PublisherConfiguration<>(configuration, exchange, exchangeBinding.getRoutingKey(),
-            exchangeBinding.getBasicPropertiesBuilder(), encoder, errorHandler, exchangeBinding.getDeclarations());
+    PublisherConfiguration<Object> cfg = new PublisherConfiguration<>(configuration, exchange,
+        exchangeBinding.getRoutingKey(), exchangeBinding.getBasicPropertiesBuilder(), encoder,
+        errorHandler, exchangeBinding.getDeclarations());
     eventPublisher.addEvent(EventKey.of(eventType, exchangeBinding.getTransactionPhase()), cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchange,
         eventType.getName());
@@ -328,7 +327,7 @@ public abstract class EventBinder {
       this.queue = queue;
       this.declarations = new ArrayList<>();
       this.decoder = new JsonDecoder<>(eventType);
-      this.prefetchCount=0;
+      this.prefetchCount = 0;
       LOGGER.info("Binding created between queue {} and event type {}", queue,
           eventType.getSimpleName());
     }
@@ -391,8 +390,8 @@ public abstract class EventBinder {
     }
 
     /**
-     * Adds a queue declaration to this QueueBinding
-     * The declaration is automatically applied to the publisher channel
+     * Adds a queue declaration to this QueueBinding The declaration is automatically applied to the
+     * publisher channel
      *
      * @param queueDeclaration The queue declaration
      * @return the queue binding
@@ -403,8 +402,8 @@ public abstract class EventBinder {
     }
 
     /**
-     * Adds a exchange declaration to this QueueBinding
-     * The declaration is automatically applied to the publisher channel
+     * Adds a exchange declaration to this QueueBinding The declaration is automatically applied to
+     * the publisher channel
      *
      * @param exchangeDeclaration The exchange declaration
      * @return the queue binding
@@ -415,8 +414,8 @@ public abstract class EventBinder {
     }
 
     /**
-     * Adds a BindingDeclaration declaration to this QueueBinding
-     * The declaration is automatically applied to the publisher channel
+     * Adds a BindingDeclaration declaration to this QueueBinding The declaration is automatically
+     * applied to the publisher channel
      *
      * @param bindingDeclaration The exchange declaration
      * @return the queue binding
@@ -427,25 +426,27 @@ public abstract class EventBinder {
     }
 
     /**
-     * Adds a BindingDeclaration declaration to this QueueBinding
-     * The declaration is automatically applied to the publisher channel
+     * Adds a BindingDeclaration declaration to this QueueBinding The declaration is automatically
+     * applied to the publisher channel
      *
      * @param bindingDeclaration The exchange declaration
      * @return the queue binding
      */
 
     /**
-     * Configures maximum number of unacknowledged buffered messages that are allowed
-     * for this channel.
+     * Configures maximum number of unacknowledged buffered messages that are allowed for this
+     * channel.
      *
-     * @param prefetchCount maximum number of messages that will be buffered
+     * @param newPrefetchCount maximum number of messages that will be buffered
      * @return the queue binding
-     * @see <a href="https://www.rabbitmq.com/confirms.html#channel-qos-prefetch">Channel Prefetch Setting (QoS)</a>
+     * @see <a href="https://www.rabbitmq.com/confirms.html#channel-qos-prefetch">Channel Prefetch
+     *      Setting (QoS)</a>
      * @see com.rabbitmq.client.Channel#basicQos(int)
      */
-    public QueueBinding<T> withPrefetchCount(int prefetchCount) {
-      this.prefetchCount = prefetchCount;
-      LOGGER.info("Prefetch count of {] set for event type {}", prefetchCount,eventType.getSimpleName());
+    public QueueBinding<T> withPrefetchCount(int newPrefetchCount) {
+      this.prefetchCount = newPrefetchCount;
+      LOGGER.info("Prefetch count of {] set for event type {}", Integer.valueOf(newPrefetchCount),
+          eventType.getSimpleName());
       return this;
     }
 
@@ -616,8 +617,8 @@ public abstract class EventBinder {
 
 
     /**
-     * Adds a queue declaration to this ExchangeBinding
-     * The declaration is automatically applied to the consumer channel
+     * Adds a queue declaration to this ExchangeBinding The declaration is automatically applied to
+     * the consumer channel
      *
      * @param queueDeclaration The queue declaration
      * @return the queue binding
@@ -628,8 +629,8 @@ public abstract class EventBinder {
     }
 
     /**
-     * Adds a exchange declaration to this ExchangeBinding
-     * The declaration is automatically applied to the consumer channel
+     * Adds a exchange declaration to this ExchangeBinding The declaration is automatically applied
+     * to the consumer channel
      *
      * @param exchangeDeclaration The exchange declaration
      * @return the queue binding
@@ -640,8 +641,8 @@ public abstract class EventBinder {
     }
 
     /**
-     * Adds a BindingDeclaration declaration to this ExchangeBinding
-     * The declaration is automatically applied to the consumer channel
+     * Adds a BindingDeclaration declaration to this ExchangeBinding The declaration is
+     * automatically applied to the consumer channel
      *
      * @param bindingDeclaration The exchange declaration
      * @return the queue binding

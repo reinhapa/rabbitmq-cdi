@@ -31,7 +31,7 @@ class ConsumerContainerTest {
   @Mock
   private ConnectionConfig connectionConfigMock;
   @Mock
-  private EventConsumer consumerMock;
+  private EventConsumer<?> consumerMock;
   @Mock
   private ConsumerHolderFactory consumerHolderFactoryMock;
   @Mock
@@ -43,18 +43,18 @@ class ConsumerContainerTest {
   @Mock
   private DeclarerRepository declarerRepositoryMock;
 
-  private List<Declaration> declarations=new ArrayList<>();
+  private List<Declaration> declarations = new ArrayList<>();
 
   @Test
   void testAddConsumerHolder() {
     List<ConsumerHolder> consumerHolders = new ArrayList<>();
     QueueDeclaration declaration = new QueueDeclaration(EXPECTED_QUEUE_NAME);
     declarations.add(declaration);
-    ConsumerContainer sut =
-        new ConsumerContainer(connectionConfigMock, connectionRepositoryMock,declarerRepositoryMock, consumerHolders,
-             consumerHolderFactoryMock, lockMock);
+    ConsumerContainer sut = new ConsumerContainer(connectionConfigMock, connectionRepositoryMock,
+        declarerRepositoryMock, consumerHolders, consumerHolderFactoryMock, lockMock);
     when(consumerHolderFactoryMock.createConsumerHolder(consumerMock, EXPECTED_QUEUE_NAME,
-        EXPECTED_AUTOACK, 0, connectionRepositoryMock, connectionConfigMock, declarations,declarerRepositoryMock)).thenReturn(consumerHolderMock);
+        EXPECTED_AUTOACK, 0, connectionRepositoryMock, connectionConfigMock, declarations,
+        declarerRepositoryMock)).thenReturn(consumerHolderMock);
     sut.addConsumer(consumerMock, EXPECTED_QUEUE_NAME, EXPECTED_AUTOACK, 0, declarations);
 
     assertEquals(1, consumerHolders.size());
@@ -67,7 +67,7 @@ class ConsumerContainerTest {
     List<ConsumerHolder> consumerHolders = new ArrayList<>();
     consumerHolders.add(consumerHolderMock);
     ConsumerContainer sut =
-        new ConsumerContainer(null, null,declarerRepositoryMock, consumerHolders, null, lockMock);
+        new ConsumerContainer(null, null, declarerRepositoryMock, consumerHolders, null, lockMock);
     boolean result = sut.ensureConsumersAreActive();
     verify(consumerHolderMock).activate();
     assertTrue(result);
@@ -81,7 +81,7 @@ class ConsumerContainerTest {
     consumerHolders.add(consumerHolderMock);
     doThrow(new IOException("")).when(consumerHolderMock2).activate();
     ConsumerContainer sut =
-        new ConsumerContainer(null, null,declarerRepositoryMock, consumerHolders, null, lockMock);
+        new ConsumerContainer(null, null, declarerRepositoryMock, consumerHolders, null, lockMock);
     boolean result = sut.ensureConsumersAreActive();
     verify(consumerHolderMock).activate();
     assertFalse(result);
@@ -93,7 +93,7 @@ class ConsumerContainerTest {
     List<ConsumerHolder> consumerHolders = new ArrayList<>();
     consumerHolders.add(consumerHolderMock);
     ConsumerContainer sut =
-        new ConsumerContainer(null, null,declarerRepositoryMock, consumerHolders, null, lockMock);
+        new ConsumerContainer(null, null, declarerRepositoryMock, consumerHolders, null, lockMock);
     sut.deactivateAllConsumer();
     verify(consumerHolderMock).deactivate();
   }
@@ -101,15 +101,16 @@ class ConsumerContainerTest {
 
   @Test
   void testStartAndStopConsumerContainer() {
-    ConsumerContainer sut = new ConsumerContainer(connectionConfigMock, connectionRepositoryMock,declarerRepositoryMock,
-        null, null, lockMock);
+    ConsumerContainer sut = new ConsumerContainer(connectionConfigMock, connectionRepositoryMock,
+        declarerRepositoryMock, null, null, lockMock);
     sut.start();
     sut.stop();
   }
 
   @Test
   void testSetConnectionAvailable() {
-    ConsumerContainer sut = new ConsumerContainer(null, null,declarerRepositoryMock, null, null, lockMock);
+    ConsumerContainer sut =
+        new ConsumerContainer(null, null, declarerRepositoryMock, null, null, lockMock);
     assertFalse(sut.isConnectionAvailable());
     sut.setConnectionAvailable(true);
     assertTrue(sut.isConnectionAvailable());

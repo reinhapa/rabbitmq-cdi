@@ -3,7 +3,6 @@ package net.reini.rabbitmq.cdi;
 import java.io.IOException;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.inject.Instance;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,17 +10,17 @@ import org.slf4j.LoggerFactory;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Envelope;
 
-public class EventConsumer implements EnvelopeConsumer {
+class EventConsumer<T extends Object> implements EnvelopeConsumer {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventConsumer.class);
 
-  private final Decoder<?> decoder;
+  private final Class<T> eventType;
+  private final Decoder<T> decoder;
   private final Event<Object> eventControl;
-  private final Instance<Object> eventPool;
 
-  EventConsumer(Decoder<?> decoder, Event<Object> eventControl, Instance<Object> eventPool) {
+  EventConsumer(Class<T> eventType, Decoder<T> decoder, Event<Object> eventControl) {
+    this.eventType = eventType;
     this.decoder = decoder;
     this.eventControl = eventControl;
-    this.eventPool = eventPool;
   }
 
   /**
@@ -29,17 +28,28 @@ public class EventConsumer implements EnvelopeConsumer {
    * container.
    *
    * @param messageBody The message
-   * @return The CDI event
+   * @return the converted CDI event or {@code null} if the conversion has failed
    */
-  Object buildEvent(byte[] messageBody) {
-    Object event;
+  T buildEvent(byte[] messageBody) {
     try {
-      event = decoder.decode(messageBody);
-    } catch (DecodeException e) {
-      LOGGER.error("Unable to read decode event from message: ".concat(new String(messageBody)), e);
-      event = eventPool.get();
+      return decoder.decode(messageBody);
+    } catch (Exception e) {
+      LOGGER.error("Unable to read decode event from message: {}", new String(messageBody), e);
     }
-    return event;
+    return null;
+  }
+
+  boolean fireEvent(T event) {
+    if (event != null) {
+      try {
+        eventControl.select(eventType).fire(event);
+        LOGGER.trace("successfully fired event: {}", event);
+        return true;
+      } catch (Exception e) {
+        LOGGER.error("Failed to fire event: {}", event, e);
+      }
+    }
+    return false;
   }
 
   @Override
@@ -49,15 +59,7 @@ public class EventConsumer implements EnvelopeConsumer {
         envelope, properties);
     String contentType = properties.getContentType();
     if (decoder.willDecode(contentType)) {
-      Object event = buildEvent(body);
-      try {
-        eventControl.fire(event);
-        LOGGER.trace("successfully fired event: {}", event);
-        return true;
-      } catch (Exception e) {
-        LOGGER.error("Failed to fire event: {}", event, e);
-        return false;
-      }
+      return fireEvent(buildEvent(body));
     } else {
       LOGGER.error("Unable to process unknown message content type: {}", contentType);
       return false;

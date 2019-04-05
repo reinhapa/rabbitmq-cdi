@@ -12,7 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ConsumerHolderFactoryTest {
   @Mock
-  private EventConsumer eventConsumerMock;
+  private EventConsumer<?> eventConsumerMock;
   @Mock
   private ConnectionRepository connectionRepositoryMock;
   @Mock
@@ -28,7 +28,7 @@ class ConsumerHolderFactoryTest {
     ConsumerHolderFactory consumerHolderFactory = new ConsumerHolderFactory();
     ConsumerHolder consumerHolder =
         consumerHolderFactory.createConsumerHolder(eventConsumerMock, "queue", true, 0,
-            connectionRepositoryMock, configMock, declarations,declarerRepositoryMock);
+            connectionRepositoryMock, configMock, declarations, declarerRepositoryMock);
     assertNotNull(consumerHolder);
   }
 }

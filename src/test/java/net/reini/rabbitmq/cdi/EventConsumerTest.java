@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.event.ObserverException;
-import javax.enterprise.inject.Instance;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,17 +22,17 @@ import com.rabbitmq.client.Envelope;
 @ExtendWith(MockitoExtension.class)
 public class EventConsumerTest {
   @Mock
-  private Event<Object> eventControl;
+  private Event<Object> eventSink;
   @Mock
-  private Instance<Object> eventPool;
+  private Event<TestEvent> testEventSink;
   @Mock
   private Decoder<TestEvent> decoder;
 
-  private EventConsumer consumer;
+  private EventConsumer<TestEvent> consumer;
 
   @BeforeEach
   public void setUp() throws Exception {
-    consumer = new EventConsumer(decoder, eventControl, eventPool);
+    consumer = new EventConsumer<>(TestEvent.class, decoder, eventSink);
   }
 
   @Test
@@ -43,19 +42,7 @@ public class EventConsumerTest {
 
     when(decoder.decode(body)).thenReturn(event);
 
-    TestEvent eventObject = (TestEvent) consumer.buildEvent(body);
-    assertEquals(event, eventObject);
-  }
-
-  @Test
-  public void testBuildEvent_withDecodeFailure() throws DecodeException {
-    TestEvent event = new TestEvent();
-    byte[] body = "the message".getBytes();
-
-    when(decoder.decode(body)).thenThrow(new DecodeException(null));
-    when(eventPool.get()).thenReturn(event);
-
-    TestEvent eventObject = (TestEvent) consumer.buildEvent(body);
+    TestEvent eventObject = consumer.buildEvent(body);
     assertEquals(event, eventObject);
   }
 
@@ -78,10 +65,11 @@ public class EventConsumerTest {
 
     when(decoder.willDecode(null)).thenReturn(true);
     when(decoder.decode(body)).thenReturn(event);
+    when(eventSink.select(TestEvent.class)).thenReturn(testEventSink);
 
     assertTrue(consumer.consume("consumerTag", envelope, properties, body));
 
-    verify(eventControl).fire(event);
+    verify(testEventSink).fire(event);
   }
 
   @SuppressWarnings("boxing")
@@ -94,7 +82,8 @@ public class EventConsumerTest {
 
     when(decoder.willDecode(null)).thenReturn(true);
     when(decoder.decode(body)).thenReturn(event);
-    doThrow(new ObserverException()).when(eventControl).fire(event);
+    when(eventSink.select(TestEvent.class)).thenReturn(testEventSink);
+    doThrow(new ObserverException()).when(testEventSink).fire(event);
 
     assertFalse(consumer.consume("consumerTag", envelope, properties, body));
   }

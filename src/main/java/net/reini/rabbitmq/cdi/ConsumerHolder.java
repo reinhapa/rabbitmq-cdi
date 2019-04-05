@@ -15,7 +15,7 @@ class ConsumerHolder {
   private final boolean autoAck;
   private final String queueName;
   private final Object activeLock;
-  private final EventConsumer consumer;
+  private final EventConsumer<?> consumer;
   private final ShutdownListener shutdownListener;
   private final ConsumerChannelFactory consumerChannelFactory;
   private final ResourceCloser resourceCloser;
@@ -27,7 +27,7 @@ class ConsumerHolder {
 
   private volatile boolean active;
 
-  ConsumerHolder(EventConsumer consumer, String queueName, boolean autoAck,int prefetchCount,
+  ConsumerHolder(EventConsumer<?> consumer, String queueName, boolean autoAck, int prefetchCount,
       ConsumerChannelFactory consumerChannelFactory, ConsumerFactory consumerFactory, List<Declaration> declarations, DeclarerRepository declarerRepository) {
     this.consumer = consumer;
     this.queueName = queueName;

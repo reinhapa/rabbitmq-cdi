@@ -13,7 +13,7 @@ import com.rabbitmq.client.Consumer;
 @ExtendWith(MockitoExtension.class)
 class ConsumerFactoryTest {
   @Mock
-  private EventConsumer eventConsumerMock;
+  private EventConsumer<?> eventConsumerMock;
   @Mock
   private Channel channelMock;
 

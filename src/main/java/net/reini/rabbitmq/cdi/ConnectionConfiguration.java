@@ -21,9 +21,9 @@ import com.rabbitmq.client.ConnectionFactory;
  */
 final class ConnectionConfiguration implements ConnectionConfig, ConnectionConfigHolder {
   private static final int DEFAULT_CONNECTION_HEARTBEAT_TIMEOUT_IN_SEC = 3;
-  private static final int DEFAULT_CONNECT_TIMEOUT_IN_MS = 10000;
+  private static final int DEFAULT_CONNECT_TIMEOUT_IN_MS = 10_000;
   private static final int DEFAULT_WAIT_TIME_RETRY_CONNECT_IN_MS = 10_000;
-  private static final long DEFAULT_WAIT_TIME_RETRY_ACTIVATE_CONSUMER_IN_MS = 10000;
+  private static final long DEFAULT_WAIT_TIME_RETRY_ACTIVATE_CONSUMER_IN_MS = 10_000;
 
   private final List<Address> brokerHosts;
 
@@ -42,10 +42,10 @@ final class ConnectionConfiguration implements ConnectionConfig, ConnectionConfi
     brokerHosts = new ArrayList<>();
     username = "guest";
     password = "guest";
-    this.connectTimeout = DEFAULT_CONNECT_TIMEOUT_IN_MS;
-    this.requestedConnectionHeartbeatTimeout = DEFAULT_CONNECTION_HEARTBEAT_TIMEOUT_IN_SEC;
-    this.connectRetryWaitTime = DEFAULT_WAIT_TIME_RETRY_CONNECT_IN_MS;
-    this.failedConsumerActivationRetryTime = DEFAULT_WAIT_TIME_RETRY_ACTIVATE_CONSUMER_IN_MS;
+    connectTimeout = DEFAULT_CONNECT_TIMEOUT_IN_MS;
+    requestedConnectionHeartbeatTimeout = DEFAULT_CONNECTION_HEARTBEAT_TIMEOUT_IN_SEC;
+    connectRetryWaitTime = DEFAULT_WAIT_TIME_RETRY_CONNECT_IN_MS;
+    failedConsumerActivationRetryTime = DEFAULT_WAIT_TIME_RETRY_ACTIVATE_CONSUMER_IN_MS;
   }
 
   ConnectionConfiguration() {
