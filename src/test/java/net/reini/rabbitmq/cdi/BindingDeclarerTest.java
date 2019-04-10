@@ -38,7 +38,7 @@ class BindingDeclarerTest {
     BindingDeclarer sut = new BindingDeclarer();
     sut.declare(channelMock, bindingDeclaration);
 
-    Map<String, Object> expectedArgumens = new HashMap();
+    Map<String, Object> expectedArgumens = new HashMap<>();
     expectedArgumens.put(EXPECTED_ARGUMENT_NAME, EXPECTED_ARGUMENT_VALUE);
     verify(channelMock, Mockito.times(1)).queueBind(EXPECTED_QUEUE_NAME, EXPECTED_EXCHANGE_NAME, EXPECTED_ROUTING_KEY, expectedArgumens);
   }

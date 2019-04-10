@@ -35,17 +35,17 @@ dependencies {
     compile 'javax.enterprise:cdi-api:2.0'
     compile 'javax.enterprise.concurrent:javax.enterprise.concurrent-api:1.1'
     compile 'org.slf4j:slf4j-api:1.7.26'
-    compile 'com.rabbitmq:amqp-client:5.6.0'
+    compile 'com.rabbitmq:amqp-client:5.7.0'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
     
     testCompile 'org.hamcrest:hamcrest:2.1'
-    testCompile 'org.junit.jupiter:junit-jupiter-api:5.4.1'
-    testCompile 'org.junit.jupiter:junit-jupiter-params:5.4.1'
-    testCompile 'org.mockito:mockito-core:2.25.1'
-    testCompile 'org.mockito:mockito-junit-jupiter:2.25.1'
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.4.2'
+    testCompile 'org.junit.jupiter:junit-jupiter-params:5.4.2'
+    testCompile 'org.mockito:mockito-core:2.26.0'
+    testCompile 'org.mockito:mockito-junit-jupiter:2.26.0'
     
-    runtimeOnly 'org.junit.platform:junit-platform-runner:1.4.1'
-    runtimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.1'
+    runtimeOnly 'org.junit.platform:junit-platform-runner:1.4.2'
+    runtimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
     runtimeOnly 'ch.qos.logback:logback-classic:1.2.3'
 }
 
@@ -62,6 +62,15 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 artifacts {
     archives sourcesJar
     archives javadocJar
+}
+
+
+compileJava {
+    doFirst {
+        options.compilerArgs = [
+                '-Xlint:all'
+        ]
+    }
 }
 
 signing {

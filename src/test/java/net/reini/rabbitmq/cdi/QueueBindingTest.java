@@ -73,7 +73,7 @@ class QueueBindingTest {
     binding.withDeclaration(declaration1);
     binding.withDeclaration(declaration2);
 
-    List<Declaration> result = binding.getDeclarations();
+    List<ExchangeDeclaration> result = binding.getExchangeDeclarations();
     assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
   }
 
@@ -88,7 +88,7 @@ class QueueBindingTest {
     binding.withDeclaration(declaration1);
     binding.withDeclaration(declaration2);
 
-    List<Declaration> result = binding.getDeclarations();
+    List<QueueDeclaration> result = binding.getQueueDeclarations();
     assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
   }
 
@@ -101,7 +101,7 @@ class QueueBindingTest {
     expectedDeclarations.add(declaration1);
     binding.withDeclaration(declaration1);
 
-    List<Declaration> result = binding.getDeclarations();
+    List<BindingDeclaration> result = binding.getBindingDeclarations();
     assertArrayEquals(expectedDeclarations.toArray(),result.toArray());
   }
   

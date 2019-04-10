@@ -44,7 +44,7 @@ public class EventPublisherTest {
   @Mock
   private BiConsumer<TestEvent, PublishException> errorHandler;
 
-  private List<Declaration> declarations =new ArrayList<>();
+  private List<ExchangeDeclaration> declarations = new ArrayList<>();
   private EventPublisher publisher;
   private Builder basicProperties;
   private JsonEncoder<TestEvent> encoder;
@@ -96,8 +96,7 @@ public class EventPublisherTest {
    * @throws IOException
    */
   @Test
-  public void testPublishEvent_failing()
-      throws IOException, TimeoutException {
+  public void testPublishEvent_failing() throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_FAILURE);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
@@ -114,8 +113,7 @@ public class EventPublisherTest {
   }
 
   @Test
-  public void testOnEventInProgress()
-      throws IOException, TimeoutException {
+  public void testOnEventInProgress() throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.IN_PROGRESS);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
@@ -131,8 +129,7 @@ public class EventPublisherTest {
   }
 
   @Test
-  public void testOnEventInBeforeCompletion()
-      throws IOException, TimeoutException {
+  public void testOnEventInBeforeCompletion() throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.BEFORE_COMPLETION);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
@@ -148,8 +145,7 @@ public class EventPublisherTest {
   }
 
   @Test
-  public void testOnEventAfterCompletion()
-      throws IOException, TimeoutException {
+  public void testOnEventAfterCompletion() throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_COMPLETION);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
@@ -165,8 +161,7 @@ public class EventPublisherTest {
   }
 
   @Test
-  public void testOnEventAfterFailure()
-      throws IOException, TimeoutException {
+  public void testOnEventAfterFailure() throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_FAILURE);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);
@@ -182,8 +177,7 @@ public class EventPublisherTest {
   }
 
   @Test
-  public void testOnEventAfterSuccess()
-      throws IOException, TimeoutException {
+  public void testOnEventAfterSuccess() throws IOException, TimeoutException {
     EventKey<TestEvent> key = EventKey.of(TestEvent.class, TransactionPhase.AFTER_SUCCESS);
 
     when(connectionRepository.getConnection(config)).thenReturn(connection);

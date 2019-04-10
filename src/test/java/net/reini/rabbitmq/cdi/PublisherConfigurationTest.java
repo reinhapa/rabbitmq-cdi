@@ -28,7 +28,7 @@ class PublisherConfigurationTest {
   @Mock
   private Channel channel;
   @Mock
-  private List<Declaration> declarationsMock;
+  private List<ExchangeDeclaration> declarationsMock;
 
   private Builder propertiesBuilder;
   private Object event;

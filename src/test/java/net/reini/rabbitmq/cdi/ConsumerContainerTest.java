@@ -41,9 +41,9 @@ class ConsumerContainerTest {
   @Mock
   private ReentrantLock lockMock;
   @Mock
-  private DeclarerRepository declarerRepositoryMock;
+  private DeclarerRepository<QueueDeclaration> declarerRepositoryMock;
 
-  private List<Declaration> declarations = new ArrayList<>();
+  private List<QueueDeclaration> declarations = new ArrayList<>();
 
   @Test
   void testAddConsumerHolder() {

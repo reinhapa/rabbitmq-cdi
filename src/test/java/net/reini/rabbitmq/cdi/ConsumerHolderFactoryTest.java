@@ -18,9 +18,9 @@ class ConsumerHolderFactoryTest {
   @Mock
   private ConnectionConfig configMock;
   @Mock
-  private List<Declaration> declarations;
+  private List<QueueDeclaration> declarations;
   @Mock
-  private DeclarerRepository declarerRepositoryMock;
+  private DeclarerRepository<QueueDeclaration> declarerRepositoryMock;
 
 
   @Test

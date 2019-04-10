@@ -40,7 +40,7 @@ public class GenericPublisherTest {
   @Mock
   private BiConsumer<TestEvent, PublishException> errorHandler;
 
-  private List<Declaration> declarations = new ArrayList<>();
+  private List<ExchangeDeclaration> declarations = new ArrayList<>();
   private GenericPublisher publisher;
   private TestEvent event;
 

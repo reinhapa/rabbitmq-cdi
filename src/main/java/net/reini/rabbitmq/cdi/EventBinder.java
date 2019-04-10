@@ -90,13 +90,13 @@ public abstract class EventBinder {
 
   private ConnectionConfiguration configuration;
   private ConsumerContainer consumerContainer;
-  private DeclarerRepository declarerRepository;
+  private DeclarerRepository<QueueDeclaration> declarerRepository;
 
   public EventBinder() {
     exchangeBindings = new HashSet<>();
     queueBindings = new HashSet<>();
     declarerFactory = new DeclarerFactory();
-    declarerRepository = new DeclarerRepository();
+    declarerRepository = new DeclarerRepository<>(QueueDeclarer::new);
   }
 
   /**
@@ -214,7 +214,7 @@ public abstract class EventBinder {
     EventConsumer<Object> consumer = new EventConsumer<>(eventType, decoder, eventSinkBase);
     String queue = queueBinding.getQueue();
     consumerContainer.addConsumer(consumer, queue, queueBinding.isAutoAck(),
-        queueBinding.getPrefetchCount(), queueBinding.getDeclarations());
+        queueBinding.getPrefetchCount(), queueBinding.getQueueDeclarations());
     LOGGER.info("Binding between queue {} and event type {} activated", queue, eventType.getName());
   }
 
@@ -229,7 +229,7 @@ public abstract class EventBinder {
     String exchange = exchangeBinding.getExchange();
     PublisherConfiguration<Object> cfg = new PublisherConfiguration<>(configuration, exchange,
         exchangeBinding.getRoutingKey(), exchangeBinding.getBasicPropertiesBuilder(), encoder,
-        errorHandler, exchangeBinding.getDeclarations());
+        errorHandler, exchangeBinding.getExchangeDeclarations());
     eventPublisher.addEvent(EventKey.of(eventType, exchangeBinding.getTransactionPhase()), cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchange,
         eventType.getName());
@@ -310,22 +310,56 @@ public abstract class EventBinder {
     }
   }
 
+  static class DeclarationCollector {
+    private final List<BindingDeclaration> bindingDeclarations;
+    private final List<ExchangeDeclaration> exchangeDeclarations;
+    private final List<QueueDeclaration> queueDeclarations;
+
+    DeclarationCollector() {
+      bindingDeclarations = new ArrayList<>();
+      exchangeDeclarations = new ArrayList<>();
+      queueDeclarations = new ArrayList<>();
+    }
+
+    final void add(BindingDeclaration exchangeDeclaration) {
+      bindingDeclarations.add(exchangeDeclaration);
+    }
+
+    final void add(ExchangeDeclaration exchangeDeclaration) {
+      exchangeDeclarations.add(exchangeDeclaration);
+    }
+
+    final void add(QueueDeclaration queueDeclaration) {
+      queueDeclarations.add(queueDeclaration);
+    }
+
+    final List<BindingDeclaration> getBindingDeclarations() {
+      return bindingDeclarations;
+    }
+
+    final List<ExchangeDeclaration> getExchangeDeclarations() {
+      return exchangeDeclarations;
+    }
+
+    final List<QueueDeclaration> getQueueDeclarations() {
+      return queueDeclarations;
+    }
+  }
+
   /**
    * Configures and stores the binding between and event class and a queue.
    */
-  public static final class QueueBinding<T> {
+  public static final class QueueBinding<T> extends DeclarationCollector {
     private final Class<T> eventType;
     private final String queue;
 
     private boolean autoAck;
     private Decoder<T> decoder;
-    private List<Declaration> declarations;
     private int prefetchCount;
 
     QueueBinding(Class<T> eventType, String queue) {
       this.eventType = eventType;
       this.queue = queue;
-      this.declarations = new ArrayList<>();
       this.decoder = new JsonDecoder<>(eventType);
       this.prefetchCount = 0;
       LOGGER.info("Binding created between queue {} and event type {}", queue,
@@ -346,10 +380,6 @@ public abstract class EventBinder {
 
     Decoder<T> getDecoder() {
       return decoder;
-    }
-
-    List<Declaration> getDeclarations() {
-      return this.declarations;
     }
 
     int getPrefetchCount() {
@@ -397,7 +427,7 @@ public abstract class EventBinder {
      * @return the queue binding
      */
     public QueueBinding<T> withDeclaration(QueueDeclaration queueDeclaration) {
-      this.declarations.add(queueDeclaration);
+      add(queueDeclaration);
       return this;
     }
 
@@ -409,7 +439,7 @@ public abstract class EventBinder {
      * @return the queue binding
      */
     public QueueBinding<T> withDeclaration(ExchangeDeclaration exchangeDeclaration) {
-      this.declarations.add(exchangeDeclaration);
+      add(exchangeDeclaration);
       return this;
     }
 
@@ -421,7 +451,7 @@ public abstract class EventBinder {
      * @return the queue binding
      */
     public QueueBinding<T> withDeclaration(BindingDeclaration bindingDeclaration) {
-      this.declarations.add(bindingDeclaration);
+      add(bindingDeclaration);
       return this;
     }
 
@@ -475,7 +505,7 @@ public abstract class EventBinder {
   /**
    * Configures and stores the binding between an event class and an exchange.
    */
-  public static final class ExchangeBinding<T> {
+  public static final class ExchangeBinding<T> extends DeclarationCollector {
     private final Class<T> eventType;
     private final String exchange;
     private final Map<String, Object> headers;
@@ -485,14 +515,12 @@ public abstract class EventBinder {
     private Builder basicPropertiesBuilder;
     private TransactionPhase transactionPhase;
     private BiConsumer<T, PublishException> errorHandler;
-    private List<Declaration> declarations;
 
     ExchangeBinding(Class<T> eventType, String exchange) {
       this.eventType = eventType;
       this.exchange = exchange;
       this.headers = new HashMap<>();
       this.encoder = new JsonEncoder<>();
-      this.declarations = new ArrayList<>();
       routingKey = "";
       transactionPhase = TransactionPhase.IN_PROGRESS;
       errorHandler = nop();
@@ -527,10 +555,6 @@ public abstract class EventBinder {
 
     TransactionPhase getTransactionPhase() {
       return transactionPhase;
-    }
-
-    List<Declaration> getDeclarations() {
-      return this.declarations;
     }
 
     /**
@@ -624,7 +648,7 @@ public abstract class EventBinder {
      * @return the queue binding
      */
     public ExchangeBinding<T> withDeclaration(QueueDeclaration queueDeclaration) {
-      this.declarations.add(queueDeclaration);
+      add(queueDeclaration);
       return this;
     }
 
@@ -636,7 +660,7 @@ public abstract class EventBinder {
      * @return the queue binding
      */
     public ExchangeBinding<T> withDeclaration(ExchangeDeclaration exchangeDeclaration) {
-      this.declarations.add(exchangeDeclaration);
+      add(exchangeDeclaration);
       return this;
     }
 
@@ -648,7 +672,7 @@ public abstract class EventBinder {
      * @return the queue binding
      */
     public ExchangeBinding<T> withDeclaration(BindingDeclaration bindingDeclaration) {
-      this.declarations.add(bindingDeclaration);
+      add(bindingDeclaration);
       return this;
     }
 

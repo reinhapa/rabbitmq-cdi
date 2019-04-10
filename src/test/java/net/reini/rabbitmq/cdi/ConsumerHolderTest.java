@@ -23,7 +23,7 @@ import com.rabbitmq.client.Consumer;
 class ConsumerHolderTest {
   private static final int PREFETCH_COUNT = 5;
   @Mock
-  private EventConsumer eventConsumerMock;
+  private EventConsumer<TestEvent> eventConsumerMock;
   @Mock
   private ConsumerChannelFactory consumerChannelFactoryMock;
   @Mock
@@ -33,9 +33,9 @@ class ConsumerHolderTest {
   @Mock
   private Consumer consmerMock;
   @Mock
-  private List<Declaration> declarationsListMock;
+  private List<QueueDeclaration> declarationsListMock;
   @Mock
-  private DeclarerRepository declarerRepositoryMock;
+  private DeclarerRepository<QueueDeclaration> declarerRepositoryMock;
 
   private ConsumerHolder sut;
 

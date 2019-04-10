@@ -15,13 +15,13 @@ class ConsumerContainerFactoryTest {
   @Mock
   private ConnectionRepository repositoryMock;
   @Mock
-  private DeclarerRepository declarerRepositoryMock;
+  private DeclarerRepository<QueueDeclaration> declarerRepositoryMock;
 
   @Test
   void testCreate() {
     ConsumerContainerFactory consumerContainerFactory = new ConsumerContainerFactory();
     ConsumerContainer consumerContainer =
-        consumerContainerFactory.create(configMock, repositoryMock,declarerRepositoryMock);
+        consumerContainerFactory.create(configMock, repositoryMock, declarerRepositoryMock);
     assertNotNull(consumerContainer);
   }
 }
