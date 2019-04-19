@@ -221,7 +221,7 @@ public class BindingInitializer {
 
 Now the events can be used within your JavaEE container:
 
-source,java]
+[source,java]
 ----
 public class EventDemoBean {
   @Inject
