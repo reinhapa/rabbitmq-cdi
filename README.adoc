@@ -1,6 +1,8 @@
 = Provides a JavaEE Event <--> RabbitMQ bridge.
 Patrick Reinhart <https://github.com/reinhapa[@reinhapa]>
-:project-full-path: reinhapa/rabbitmq-cdi
+:project-name: rabbitmq-cdi
+:group-name: net.reini
+:project-full-path: reinhapa/{project-name}
 :github-branch: master
 
 image:https://img.shields.io/badge/license-MIT-blue.svg["MIT License", link="https://github.com/{project-full-path}/blob/{github-branch}/LICENSE"]
@@ -10,7 +12,7 @@ image:https://img.shields.io/badge/Java-10-blue.svg["Supported Versions", link="
 image:https://img.shields.io/badge/Java-11-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
 image:https://img.shields.io/badge/Java-12-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
 image:https://img.shields.io/github/release/{project-full-path}.svg["Release", link="https://github.com/{project-full-path}"]
-image:https://img.shields.io/maven-central/v/net.reini/rabbitmq-cdi.svg?label=Maven%20Central["Maven Central", link="https://search.maven.org/search?q=g:%22net.reini%22%20AND%20a:%22rabbitmq-cdi%22"]
+image:https://img.shields.io/maven-central/v/{group-name}/{project-name}.svg?label=Maven%20Central["Maven Central", link="https://search.maven.org/search?q=g:%22{group-name}%22%20AND%20a:%22{project-name}%22"]
 image:https://img.shields.io/travis/{project-full-path}/{github-branch}.svg["Build Status", link="https://travis-ci.org/{project-full-path}"]
 image:https://img.shields.io/codecov/c/github/{project-full-path}/{github-branch}.svg["Code Coverage", link="https://codecov.io/github/{project-full-path}?branch={github-branch}"]
 image:https://codecov.io/github/{project-full-path}/branch.svg?branch={github-branch}[codecov.io]
