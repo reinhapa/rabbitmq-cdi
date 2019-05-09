@@ -41,8 +41,8 @@ dependencies {
     testCompile 'org.hamcrest:hamcrest:2.1'
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.4.2'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.4.2'
-    testCompile 'org.mockito:mockito-core:2.26.0'
-    testCompile 'org.mockito:mockito-junit-jupiter:2.26.0'
+    testCompile 'org.mockito:mockito-core:2.27.0'
+    testCompile 'org.mockito:mockito-junit-jupiter:2.27.0'
     
     runtimeOnly 'org.junit.platform:junit-platform-runner:1.4.2'
     runtimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
@@ -120,7 +120,7 @@ dependencyUpdates.resolutionStrategy {
   }
 }
 
-check.dependsOn jacocoTestReport, dependencyCheckUpdate
+check.dependsOn jacocoTestReport //, dependencyCheckUpdate
 
 publishing {
     publications {
