@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 
-rootProject.name = 'rabbitmq-cdi'
+rootProject.name = 'rabbitmq-cdi-root'
 
-//include ':rabbitmq-cdi'
+include ':rabbitmq-cdi'
+include ':rabbitmq-cdi-kryo'

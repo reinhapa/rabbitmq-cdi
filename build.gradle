@@ -25,7 +25,7 @@
 import java.text.SimpleDateFormat
 
 plugins {
-    id 'java'
+    id 'java-library'
     id 'signing'
     id 'eclipse'
     id 'jacoco'
@@ -42,6 +42,10 @@ ext {
 }
 
 allprojects {
+	apply plugin: 'java'
+	apply plugin: 'signing'
+	apply plugin: 'maven-publish'
+
     group = 'net.reini'
     version = currentVersion
 
@@ -57,15 +61,15 @@ allprojects {
     }
 
     dependencies {
-        compile 'org.slf4j:slf4j-api:1.7.26'
+        implementation 'org.slf4j:slf4j-api:1.7.26'
 
-        testCompile 'org.hamcrest:hamcrest:2.1'
-        testCompile 'org.junit.jupiter:junit-jupiter-api:5.4.2'
-        testCompile 'org.junit.jupiter:junit-jupiter-params:5.4.2'
-        testCompile 'org.mockito:mockito-core:2.27.0'
-        testCompile 'org.mockito:mockito-junit-jupiter:2.27.0'
-        runtimeOnly 'org.junit.platform:junit-platform-runner:1.4.2'
-        runtimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
+        testImplementation 'org.hamcrest:hamcrest:2.1'
+        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.4.2'
+        testImplementation 'org.junit.jupiter:junit-jupiter-params:5.4.2'
+        testImplementation 'org.mockito:mockito-core:2.27.0'
+        testImplementation 'org.mockito:mockito-junit-jupiter:2.27.0'
+        testRuntimeOnly 'org.junit.platform:junit-platform-runner:1.4.2'
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
         runtimeOnly 'ch.qos.logback:logback-classic:1.2.3'
     }
 
@@ -194,11 +198,23 @@ allprojects {
     }
 }
 
-dependencies {
-    compile 'javax.annotation:javax.annotation-api:1.3.2'
-    compile 'javax.enterprise:cdi-api:2.0'
-    compile 'javax.enterprise.concurrent:javax.enterprise.concurrent-api:1.1'
-    compile 'com.rabbitmq:amqp-client:5.7.0'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+project(':rabbitmq-cdi') {
+    dependencies {
+        implementation 'javax.annotation:javax.annotation-api:1.3.2'
+        implementation 'javax.enterprise:cdi-api:2.0'
+        implementation 'javax.enterprise.concurrent:javax.enterprise.concurrent-api:1.1'
+        implementation 'com.rabbitmq:amqp-client:5.7.0'
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+    }
+}
+
+
+project(':rabbitmq-cdi-kryo') {
+    dependencies {
+        compile 'javax.enterprise:cdi-api:2.0'
+        compile 'javax.enterprise.concurrent:javax.enterprise.concurrent-api:1.1'
+        implementation project(':rabbitmq-cdi')
+        implementation 'com.esotericsoftware:kryo:5.0.0-RC4'
+    }
 }
 
