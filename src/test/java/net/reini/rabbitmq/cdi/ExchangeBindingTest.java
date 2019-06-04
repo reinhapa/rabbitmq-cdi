@@ -57,9 +57,10 @@ class ExchangeBindingTest {
 
   @Test
   void testGetRoutingKey() {
-    assertEquals("", binding.getRoutingKey());
+    TestEvent event = new TestEvent();
+    assertEquals("", binding.getRoutingKey(event));
     assertSame(binding, binding.withRoutingKey("key"));
-    assertEquals("key", binding.getRoutingKey());
+    assertEquals("key", binding.getRoutingKey(event));
   }
 
   @Test
