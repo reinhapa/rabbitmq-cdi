@@ -30,7 +30,7 @@ public class EventPublisher {
 
   private final ConnectionRepository connectionRepository;
   private final Map<EventKey<?>, PublisherConfiguration<?>> publisherConfigurations;
-  private final ThreadLocal<Map<EventKey<?>, MessagePublisher>> publishers;
+  private final ThreadLocal<Map<EventKey<Object>, MessagePublisher<Object>>> publishers;
 
   @Inject
   public EventPublisher(ConnectionRepository connectionRepository) {
@@ -115,7 +115,8 @@ public class EventPublisher {
     publishers.get().values().forEach(MessagePublisher::close);
   }
 
-  <T> void doPublish(T event, MessagePublisher publisher, PublisherConfiguration<T> configuration) {
+  <T> void doPublish(T event, MessagePublisher<T> publisher,
+      PublisherConfiguration<T> configuration) {
     try {
       LOGGER.debug("Start publishing event {} ({})...", event, configuration);
       publisher.publish(event, configuration);
@@ -134,8 +135,10 @@ public class EventPublisher {
    * @param transactionPhase The actual transaction phase of the event
    * @return The provided publisher
    */
-  MessagePublisher providePublisher(EventKey<?> eventKey, TransactionPhase transactionPhase) {
-    Map<EventKey<?>, MessagePublisher> localPublishers = publishers.get();
-    return localPublishers.computeIfAbsent(eventKey, key -> new GenericPublisher(connectionRepository));
+  MessagePublisher<Object> providePublisher(EventKey<Object> eventKey,
+      TransactionPhase transactionPhase) {
+    Map<EventKey<Object>, MessagePublisher<Object>> localPublishers = publishers.get();
+    return localPublishers.computeIfAbsent(eventKey,
+        key -> new GenericPublisher<>(connectionRepository));
   }
 }

@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.Channel;
 
-public class GenericPublisher implements MessagePublisher {
+public class GenericPublisher<T> implements MessagePublisher<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(GenericPublisher.class);
 
   public static final int DEFAULT_RETRY_ATTEMPTS = 3;
@@ -47,7 +47,7 @@ public class GenericPublisher implements MessagePublisher {
   }
 
   @Override
-  public void publish(Object event, PublisherConfiguration<?> publisherConfiguration)
+  public void publish(T event, PublisherConfiguration<T> publisherConfiguration)
       throws PublishException {
     for (int attempt = 1; attempt <= DEFAULT_RETRY_ATTEMPTS; attempt++) {
       if (attempt > 1) {
