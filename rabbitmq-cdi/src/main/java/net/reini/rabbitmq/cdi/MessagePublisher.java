@@ -1,6 +1,6 @@
 package net.reini.rabbitmq.cdi;
 
-public interface MessagePublisher {
+public interface MessagePublisher<T> {
 
   /**
    * Publishes the given event using the given publisher configuration template.
@@ -9,7 +9,7 @@ public interface MessagePublisher {
    * @param publisherConfiguration the default publisher configuration
    * @throws PublishException if the event could not be delivered to RabbitMQ
    */
-  void publish(Object event, PublisherConfiguration<?> publisherConfiguration)
+  void publish(T event, PublisherConfiguration<T> publisherConfiguration)
       throws PublishException;
 
   /**

@@ -110,8 +110,6 @@ class ConnectionManager {
   }
 
   boolean tryToEstablishConnection() {
-    String connectWarning = "could not establish connection to host " + connectionFactory.getHost()
-        + " on port " + connectionFactory.getPort() + ", retry to establish connection...";
     if (state == ConnectionState.CONNECTED || state == ConnectionState.CLOSED) {
       throw new IllegalStateException(
           "connection manager illegal state to establish a connection: " + state);
@@ -122,8 +120,8 @@ class ConnectionManager {
       connection = createNewConnection();
       return true;
     } catch (IOException | TimeoutException e) {
-      LOGGER.warn(connectWarning);
-      LOGGER.debug("could not establish connection", e);
+      LOGGER.warn("Could not establish connection using {}", config,
+          LOGGER.isDebugEnabled() ? e : null);
     } finally {
       connectionManagerLock.unlock();
     }
