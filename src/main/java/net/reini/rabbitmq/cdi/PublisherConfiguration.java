@@ -3,6 +3,7 @@ package net.reini.rabbitmq.cdi;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.AMQP.BasicProperties.Builder;
@@ -19,16 +20,17 @@ final class PublisherConfiguration<T> implements BiConsumer<T, PublishException>
   private final BasicProperties basicProperties;
   private final Encoder<T> messageEncoder;
   private final String exchange;
-  private final String routingKey;
+  private final Function<T, String> routingKeyFunction;
   private final BiConsumer<T, PublishException> errorHandler;
   private final List<ExchangeDeclaration> declarations;
 
-  PublisherConfiguration(ConnectionConfig config, String exchange, String routingKey,
+  PublisherConfiguration(ConnectionConfig config, String exchange,
+      Function<T, String> routingKeyFunction,
       Builder basicPropertiesBuilder, Encoder<T> encoder,
       BiConsumer<T, PublishException> errorHandler, List<ExchangeDeclaration> declarations) {
     this.config = config;
     this.exchange = exchange;
-    this.routingKey = routingKey;
+    this.routingKeyFunction = routingKeyFunction;
     this.messageEncoder = encoder;
     this.errorHandler = errorHandler;
     this.declarations = declarations;
@@ -55,10 +57,9 @@ final class PublisherConfiguration<T> implements BiConsumer<T, PublishException>
     return config.toString();
   }
 
-  void publish(Channel channel, Object event) throws EncodeException, IOException {
-    @SuppressWarnings("unchecked")
-    byte[] data = ((Encoder<Object>) messageEncoder).encode(event);
-    channel.basicPublish(exchange, routingKey, basicProperties, data);
+  void publish(Channel channel, T event) throws EncodeException, IOException {
+    byte[] data = messageEncoder.encode(event);
+    channel.basicPublish(exchange, routingKeyFunction.apply(event), basicProperties, data);
   }
 
   @Override

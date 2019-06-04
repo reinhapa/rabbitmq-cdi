@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -208,29 +209,27 @@ public abstract class EventBinder {
 
   void bindQueue(QueueBinding<?> queueBinding) {
     @SuppressWarnings("unchecked")
-    Class<Object> eventType = (Class<Object>) queueBinding.getEventType();
-    @SuppressWarnings("unchecked")
-    Decoder<Object> decoder = (Decoder<Object>) queueBinding.getDecoder();
+    QueueBinding<Object> binding = (QueueBinding<Object>) queueBinding;
+    Class<Object> eventType = binding.getEventType();
+    Decoder<Object> decoder = binding.getDecoder();
     EventConsumer<Object> consumer = new EventConsumer<>(eventType, decoder, eventSinkBase);
-    String queue = queueBinding.getQueue();
-    consumerContainer.addConsumer(consumer, queue, queueBinding.isAutoAck(),
-        queueBinding.getPrefetchCount(), queueBinding.getQueueDeclarations());
+    String queue = binding.getQueue();
+    consumerContainer.addConsumer(consumer, queue, binding.isAutoAck(), binding.getPrefetchCount(),
+        binding.getQueueDeclarations());
     LOGGER.info("Binding between queue {} and event type {} activated", queue, eventType.getName());
   }
 
   void bindExchange(ExchangeBinding<?> exchangeBinding) {
     @SuppressWarnings("unchecked")
-    Class<Object> eventType = (Class<Object>) exchangeBinding.getEventType();
-    @SuppressWarnings("unchecked")
-    BiConsumer<Object, PublishException> errorHandler =
-        (BiConsumer<Object, PublishException>) exchangeBinding.getErrorHandler();
-    @SuppressWarnings("unchecked")
-    Encoder<Object> encoder = (Encoder<Object>) exchangeBinding.getEncoder();
-    String exchange = exchangeBinding.getExchange();
+    ExchangeBinding<Object> binding = (ExchangeBinding<Object>) exchangeBinding;
+    Class<Object> eventType = binding.getEventType();
+    BiConsumer<Object, PublishException> errorHandler = binding.getErrorHandler();
+    Encoder<Object> encoder = binding.getEncoder();
+    String exchange = binding.getExchange();
     PublisherConfiguration<Object> cfg = new PublisherConfiguration<>(configuration, exchange,
-        exchangeBinding.getRoutingKey(), exchangeBinding.getBasicPropertiesBuilder(), encoder,
-        errorHandler, exchangeBinding.getExchangeDeclarations());
-    eventPublisher.addEvent(EventKey.of(eventType, exchangeBinding.getTransactionPhase()), cfg);
+        binding::getRoutingKey, binding.getBasicPropertiesBuilder(), encoder, errorHandler,
+        binding.getExchangeDeclarations());
+    eventPublisher.addEvent(EventKey.of(eventType, binding.getTransactionPhase()), cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchange,
         eventType.getName());
   }
@@ -510,7 +509,7 @@ public abstract class EventBinder {
     private final String exchange;
     private final Map<String, Object> headers;
 
-    private String routingKey;
+    private Function<T, String> routingKeyFunction;
     private Encoder<T> encoder;
     private Builder basicPropertiesBuilder;
     private TransactionPhase transactionPhase;
@@ -521,7 +520,7 @@ public abstract class EventBinder {
       this.exchange = exchange;
       this.headers = new HashMap<>();
       this.encoder = new JsonEncoder<>();
-      routingKey = "";
+      routingKeyFunction = e -> "";
       transactionPhase = TransactionPhase.IN_PROGRESS;
       errorHandler = nop();
       basicPropertiesBuilder = MessageProperties.BASIC.builder().headers(headers);
@@ -537,8 +536,8 @@ public abstract class EventBinder {
       return exchange;
     }
 
-    String getRoutingKey() {
-      return routingKey;
+    String getRoutingKey(T event) {
+      return routingKeyFunction.apply(event);
     }
 
     Encoder<T> getEncoder() {
@@ -564,7 +563,8 @@ public abstract class EventBinder {
      * @return the exchange binding
      */
     public ExchangeBinding<T> withRoutingKey(String key) {
-      this.routingKey = Objects.requireNonNull(key, "key must not be null");
+      Objects.requireNonNull(key, "key must not be null");
+      this.routingKeyFunction = e -> key;
       LOGGER.info("Routing key for event type {} set to {}", eventType.getSimpleName(), key);
       return this;
     }
