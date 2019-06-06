@@ -48,7 +48,7 @@ class PublisherConfigurationTest {
 
     PublisherConfiguration<Object> publisherConfig =
         new PublisherConfiguration<>(config, "exchange",
-        "routingKey", propertiesBuilder, encoder, errorHandler, declarationsMock);
+            e -> "routingKey", propertiesBuilder, encoder, errorHandler, declarationsMock);
 
     publisherConfig.publish(channel, event);
 
@@ -61,7 +61,7 @@ class PublisherConfigurationTest {
     PublishException publishError = new PublishException("some error", null);
     PublisherConfiguration<Object> publisherConfig = new PublisherConfiguration<>(config,
         "exchange",
-        "routingKey", propertiesBuilder, encoder, errorHandler, declarationsMock);
+        e -> "routingKey", propertiesBuilder, encoder, errorHandler, declarationsMock);
 
     publisherConfig.accept(event, publishError);
     

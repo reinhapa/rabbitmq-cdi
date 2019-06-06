@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import javax.enterprise.event.TransactionPhase;
 
@@ -48,12 +49,14 @@ public class EventPublisherTest {
   private EventPublisher publisher;
   private Builder basicProperties;
   private JsonEncoder<TestEvent> encoder;
+  private Function<TestEvent, String> routingKeyFunction;
 
   @BeforeEach
   public void setUp() throws Exception {
     publisher = new EventPublisher(connectionRepository);
     basicProperties = new BasicProperties.Builder();
     encoder = new JsonEncoder<>();
+    routingKeyFunction = e -> "routingKey";
   }
 
   /**
@@ -78,7 +81,7 @@ public class EventPublisherTest {
     when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
-    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", routingKeyFunction,
         basicProperties, encoder, errorHandler, declarations));
     publisher.publishEvent(new TestEvent(), TransactionPhase.AFTER_SUCCESS);
     publisher.cleanUp();
@@ -104,7 +107,7 @@ public class EventPublisherTest {
     doThrow(IOException.class).when(channel).basicPublish(eq("exchange"), eq("routingKey"), any(),
         any());
 
-    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", routingKeyFunction,
         basicProperties, encoder, errorHandler, declarations));
     publisher.publishEvent(new TestEvent(), TransactionPhase.AFTER_FAILURE);
     publisher.cleanUp();
@@ -119,7 +122,7 @@ public class EventPublisherTest {
     when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
-    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", routingKeyFunction,
         basicProperties, encoder, errorHandler, declarations));
     publisher.onEventInProgress(new TestEvent());
     publisher.cleanUp();
@@ -135,7 +138,7 @@ public class EventPublisherTest {
     when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
-    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", routingKeyFunction,
         basicProperties, encoder, errorHandler, declarations));
     publisher.onEventBeforeCompletion(new TestEvent());
     publisher.cleanUp();
@@ -151,7 +154,7 @@ public class EventPublisherTest {
     when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
-    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", routingKeyFunction,
         basicProperties, encoder, errorHandler, declarations));
     publisher.onEventAfterCompletion(new TestEvent());
     publisher.cleanUp();
@@ -167,7 +170,7 @@ public class EventPublisherTest {
     when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
-    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", routingKeyFunction,
         basicProperties, encoder, errorHandler, declarations));
     publisher.onEventAfterFailure(new TestEvent());
     publisher.cleanUp();
@@ -183,7 +186,7 @@ public class EventPublisherTest {
     when(connectionRepository.getConnection(config)).thenReturn(connection);
     when(connection.createChannel()).thenReturn(channel);
 
-    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", "routingKey",
+    publisher.addEvent(key, new PublisherConfiguration<>(config, "exchange", routingKeyFunction,
         basicProperties, encoder, errorHandler, declarations));
     publisher.onEventAfterSuccess(new TestEvent());
     publisher.cleanUp();
