@@ -14,12 +14,12 @@ public class GenericPublisher<T> implements MessagePublisher<T> {
 
   public static final int DEFAULT_RETRY_ATTEMPTS = 3;
   public static final int DEFAULT_RETRY_INTERVAL = 1000;
-  private final DeclarerRepository<ExchangeDeclaration> declarerRepository;
+  private final DeclarerRepository declarerRepository;
   private final ConnectionRepository connectionRepository;
 
   public GenericPublisher(ConnectionRepository connectionRepository) {
     this.connectionRepository = connectionRepository;
-    this.declarerRepository = new DeclarerRepository<>(ExchangeDeclarer::new);
+    this.declarerRepository = new DeclarerRepository();
   }
 
   /**
@@ -55,7 +55,7 @@ public class GenericPublisher<T> implements MessagePublisher<T> {
       }
       try (Channel channel =
           connectionRepository.getConnection(publisherConfiguration.getConfig()).createChannel()) {
-        List<ExchangeDeclaration> declarations = publisherConfiguration.getDeclarations();
+        List<Declaration> declarations = publisherConfiguration.getDeclarations();
         declarerRepository.declare(channel,declarations);
         publisherConfiguration.publish(channel, event);
         return;

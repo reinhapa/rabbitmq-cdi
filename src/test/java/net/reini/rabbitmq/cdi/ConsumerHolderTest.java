@@ -33,9 +33,9 @@ class ConsumerHolderTest {
   @Mock
   private Consumer consmerMock;
   @Mock
-  private List<QueueDeclaration> declarationsListMock;
+  private List<Declaration> declarationsListMock;
   @Mock
-  private DeclarerRepository<QueueDeclaration> declarerRepositoryMock;
+  private DeclarerRepository declarerRepositoryMock;
 
   private ConsumerHolder sut;
 

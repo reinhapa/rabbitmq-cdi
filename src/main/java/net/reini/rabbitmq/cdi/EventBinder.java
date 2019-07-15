@@ -91,13 +91,13 @@ public abstract class EventBinder {
 
   private ConnectionConfiguration configuration;
   private ConsumerContainer consumerContainer;
-  private DeclarerRepository<QueueDeclaration> declarerRepository;
+  private DeclarerRepository declarerRepository;
 
   public EventBinder() {
     exchangeBindings = new HashSet<>();
     queueBindings = new HashSet<>();
     declarerFactory = new DeclarerFactory();
-    declarerRepository = new DeclarerRepository<>(QueueDeclarer::new);
+    declarerRepository = new DeclarerRepository();
   }
 
   /**
@@ -215,21 +215,19 @@ public abstract class EventBinder {
     EventConsumer<Object> consumer = new EventConsumer<>(eventType, decoder, eventSinkBase);
     String queue = binding.getQueue();
     consumerContainer.addConsumer(consumer, queue, binding.isAutoAck(), binding.getPrefetchCount(),
-        binding.getQueueDeclarations());
+        binding.getAllDeclarations());
     LOGGER.info("Binding between queue {} and event type {} activated", queue, eventType.getName());
   }
 
-  void bindExchange(ExchangeBinding<?> exchangeBinding) {
-    @SuppressWarnings("unchecked")
-    ExchangeBinding<Object> binding = (ExchangeBinding<Object>) exchangeBinding;
-    Class<Object> eventType = binding.getEventType();
-    BiConsumer<Object, PublishException> errorHandler = binding.getErrorHandler();
-    Encoder<Object> encoder = binding.getEncoder();
-    String exchange = binding.getExchange();
-    PublisherConfiguration<Object> cfg = new PublisherConfiguration<>(configuration, exchange,
-        binding::getRoutingKey, binding.getBasicPropertiesBuilder(), encoder, errorHandler,
-        binding.getExchangeDeclarations());
-    eventPublisher.addEvent(EventKey.of(eventType, binding.getTransactionPhase()), cfg);
+  <T> void bindExchange(ExchangeBinding<T> exchangeBinding) {
+    Class<T> eventType = exchangeBinding.getEventType();
+    BiConsumer<T, PublishException> errorHandler = exchangeBinding.getErrorHandler();
+    Encoder<T> encoder = exchangeBinding.getEncoder();
+    String exchange = exchangeBinding.getExchange();
+    PublisherConfiguration<T> cfg = new PublisherConfiguration<T>(configuration, exchange,
+        exchangeBinding.routingKeyFunction, exchangeBinding.getBasicPropertiesBuilder(), encoder, errorHandler,
+        exchangeBinding.getAllDeclarations());
+    eventPublisher.addEvent(EventKey.of(eventType, exchangeBinding.getTransactionPhase()), cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchange,
         eventType.getName());
   }
@@ -342,6 +340,14 @@ public abstract class EventBinder {
 
     final List<QueueDeclaration> getQueueDeclarations() {
       return queueDeclarations;
+    }
+
+    final List<Declaration> getAllDeclarations(){
+      ArrayList<Declaration> allDeclarations = new ArrayList<>();
+      allDeclarations.addAll(bindingDeclarations);
+      allDeclarations.addAll(exchangeDeclarations);
+      allDeclarations.addAll(queueDeclarations);
+      return allDeclarations;
     }
   }
 
@@ -566,6 +572,17 @@ public abstract class EventBinder {
       Objects.requireNonNull(key, "key must not be null");
       this.routingKeyFunction = e -> key;
       LOGGER.info("Routing key for event type {} set to {}", eventType.getSimpleName(), key);
+      return this;
+    }
+
+    /**
+     * Sets the routing key function to be used for calculating the routing key for message publishing.
+     *
+     * @param routingKeyFunction The routing key function
+     * @return the exchange binding
+     */
+    public ExchangeBinding<T> withRoutingKey(Function<T, String> routingKeyFunction) {
+      this.routingKeyFunction = routingKeyFunction;
       return this;
     }
 
