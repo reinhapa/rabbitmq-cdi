@@ -6,7 +6,7 @@ import javax.enterprise.context.Dependent;
 class ConsumerContainerFactory {
   public ConsumerContainer create(ConnectionConfig configuration,
       ConnectionRepository connectionRepository,
-      DeclarerRepository<QueueDeclaration> declarerRepository) {
+      DeclarerRepository declarerRepository) {
     return new ConsumerContainer(configuration, connectionRepository,declarerRepository);
   }
 }

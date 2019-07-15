@@ -47,7 +47,7 @@ class PublisherConfigurationTest {
     when(encoder.encode(event)).thenReturn(expectedData);
 
     PublisherConfiguration<Object> publisherConfig =
-        new PublisherConfiguration<>(config, "exchange",
+        new PublisherConfiguration(config, "exchange",
             e -> "routingKey", propertiesBuilder, encoder, errorHandler, declarationsMock);
 
     publisherConfig.publish(channel, event);
@@ -59,7 +59,7 @@ class PublisherConfigurationTest {
   @Test
   void testAcceptError() {
     PublishException publishError = new PublishException("some error", null);
-    PublisherConfiguration<Object> publisherConfig = new PublisherConfiguration<>(config,
+    PublisherConfiguration<Object> publisherConfig = new PublisherConfiguration(config,
         "exchange",
         e -> "routingKey", propertiesBuilder, encoder, errorHandler, declarationsMock);
 

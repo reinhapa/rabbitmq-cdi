@@ -1,30 +1,30 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
-import java.util.function.Supplier;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Map;
 
 import com.rabbitmq.client.Channel;
 
-class DeclarerRepository<T extends Declaration> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DeclarerRepository.class);
+class DeclarerRepository {
+    private final Map<Class<?>, Declarer<? extends Declaration>> declarerMap;
 
-  private final Supplier<Declarer<T>> declarerSupplier;
-
-  DeclarerRepository(Supplier<Declarer<T>> declarerSupplier) {
-    this.declarerSupplier = declarerSupplier;
+  DeclarerRepository() {
+    this.declarerMap = new HashMap<>();
+    this.declarerMap.put(ExchangeDeclaration.class, new ExchangeDeclarer());
+    this.declarerMap.put(QueueDeclaration.class, new QueueDeclarer());
+    this.declarerMap.put(BindingDeclaration.class, new BindingDeclarer());
   }
 
-  void declare(Channel channel, List<T> declarations) throws IOException {
-    if (!declarations.isEmpty()) {
-      Declarer<T> declarer = declarerSupplier.get();
-      for (T declaration : declarations) {
-        LOGGER.info("declaring: {}", declaration);
-        declarer.declare(channel, declaration);
-      }
+  @SuppressWarnings("unchecked")
+  void declare(Channel channel, List<? extends Declaration> declarations) throws IOException {
+    for (Declaration declaration : declarations) {
+      Class<? extends Declaration> aClass = declaration.getClass();
+      @SuppressWarnings({"rawtypes"})
+      Declarer declarer = declarerMap.get(aClass);
+      declarer.declare(channel, declaration);
     }
   }
+
 }
