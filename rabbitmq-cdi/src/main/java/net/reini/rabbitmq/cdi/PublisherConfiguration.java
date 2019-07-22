@@ -22,12 +22,12 @@ final class PublisherConfiguration<T> implements BiConsumer<T, PublishException>
   private final String exchange;
   private final Function<T, String> routingKeyFunction;
   private final BiConsumer<T, PublishException> errorHandler;
-  private final List<ExchangeDeclaration> declarations;
+  private final List<Declaration> declarations;
 
   PublisherConfiguration(ConnectionConfig config, String exchange,
       Function<T, String> routingKeyFunction,
       Builder basicPropertiesBuilder, Encoder<T> encoder,
-      BiConsumer<T, PublishException> errorHandler, List<ExchangeDeclaration> declarations) {
+      BiConsumer<T, PublishException> errorHandler, List<Declaration> declarations) {
     this.config = config;
     this.exchange = exchange;
     this.routingKeyFunction = routingKeyFunction;
@@ -48,7 +48,7 @@ final class PublisherConfiguration<T> implements BiConsumer<T, PublishException>
     return config;
   }
 
-  List<ExchangeDeclaration> getDeclarations() {
+  List<Declaration> getDeclarations() {
     return declarations;
   }
 

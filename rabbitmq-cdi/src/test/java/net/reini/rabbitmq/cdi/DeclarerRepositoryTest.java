@@ -22,8 +22,8 @@ class DeclarerRepositoryTest {
 
   @Test
   void testRepository() throws IOException {
-    DeclarerRepository<QueueDeclaration> sut = new DeclarerRepository<>(QueueDeclarer::new);
-    List<QueueDeclaration> declarations = new ArrayList<>();
+    DeclarerRepository sut = new DeclarerRepository();
+    List<Declaration> declarations = new ArrayList<>();
     declarations.add(new QueueDeclaration(EXPECTED_QUEUE_NAME));
     sut.declare(channelMock, declarations);
     verify(channelMock).queueDeclare(EXPECTED_QUEUE_NAME, false, false, false, new HashMap<>());

@@ -20,8 +20,8 @@ class ConsumerHolder {
   private final ConsumerChannelFactory consumerChannelFactory;
   private final ResourceCloser resourceCloser;
   private final ConsumerFactory consumerFactory;
-  private final DeclarerRepository<QueueDeclaration> declarerRepository;
-  private final List<QueueDeclaration> declarations;
+  private final DeclarerRepository declarerRepository;
+  private final List<Declaration> declarations;
   private final int prefetchCount;
   private Channel channel;
 
@@ -29,8 +29,8 @@ class ConsumerHolder {
 
   ConsumerHolder(EventConsumer<?> consumer, String queueName, boolean autoAck, int prefetchCount,
       ConsumerChannelFactory consumerChannelFactory, ConsumerFactory consumerFactory,
-      List<QueueDeclaration> declarations,
-      DeclarerRepository<QueueDeclaration> declarerRepository) {
+      List<Declaration> declarations,
+      DeclarerRepository declarerRepository) {
     this.consumer = consumer;
     this.queueName = queueName;
     this.autoAck = autoAck;
