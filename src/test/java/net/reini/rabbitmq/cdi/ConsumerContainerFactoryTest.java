@@ -15,7 +15,7 @@ class ConsumerContainerFactoryTest {
   @Mock
   private ConnectionRepository repositoryMock;
   @Mock
-  private DeclarerRepository<QueueDeclaration> declarerRepositoryMock;
+  private DeclarerRepository declarerRepositoryMock;
 
   @Test
   void testCreate() {
