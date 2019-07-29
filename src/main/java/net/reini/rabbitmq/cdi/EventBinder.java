@@ -344,9 +344,9 @@ public abstract class EventBinder {
 
     final List<Declaration> getAllDeclarations(){
       ArrayList<Declaration> allDeclarations = new ArrayList<>();
-      allDeclarations.addAll(bindingDeclarations);
       allDeclarations.addAll(exchangeDeclarations);
       allDeclarations.addAll(queueDeclarations);
+      allDeclarations.addAll(bindingDeclarations);
       return allDeclarations;
     }
   }
