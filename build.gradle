@@ -8,7 +8,7 @@ plugins {
     id 'maven-publish'
     id 'com.github.ben-manes.versions' version '0.22.0'
     id 'net.nemerosa.versioning' version '2.8.2'
-    id 'org.owasp.dependencycheck' version '5.2.0'
+    id 'org.owasp.dependencycheck' version '5.2.1'
 }
 
 group = 'net.reini'
@@ -36,7 +36,7 @@ dependencies {
     compile 'javax.enterprise.concurrent:javax.enterprise.concurrent-api:1.1'
     compile 'org.slf4j:slf4j-api:1.7.28'
     compile 'com.rabbitmq:amqp-client:5.7.3'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.9.1'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.9.3'
     
     testCompile 'org.hamcrest:hamcrest:2.1'
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.5.1'
@@ -110,7 +110,7 @@ jacocoTestReport {
 dependencyUpdates.resolutionStrategy {
   componentSelection { rules ->
     rules.all { ComponentSelection selection ->
-      boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm', 'preview'].any { qualifier ->
+      boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm', 'pr', 'preview'].any { qualifier ->
         selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
       }
       if (rejected) {
