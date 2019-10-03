@@ -7,10 +7,8 @@ Patrick Reinhart <https://github.com/reinhapa[@reinhapa]>
 
 image:https://img.shields.io/badge/license-MIT-blue.svg["MIT License", link="https://github.com/{project-full-path}/blob/{github-branch}/LICENSE"]
 image:https://img.shields.io/badge/Java-8-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
-image:https://img.shields.io/badge/Java-9-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
-image:https://img.shields.io/badge/Java-10-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
 image:https://img.shields.io/badge/Java-11-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
-image:https://img.shields.io/badge/Java-12-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
+image:https://img.shields.io/badge/Java-13-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
 image:https://img.shields.io/github/release/{project-full-path}.svg["Release", link="https://github.com/{project-full-path}"]
 image:https://img.shields.io/maven-central/v/{group-name}/{project-name}.svg?label=Maven%20Central["Maven Central", link="https://search.maven.org/search?q=g:%22{group-name}%22%20AND%20a:%22{project-name}%22"]
 image:https://img.shields.io/travis/{project-full-path}/{github-branch}.svg["Build Status", link="https://travis-ci.org/{project-full-path}"]
