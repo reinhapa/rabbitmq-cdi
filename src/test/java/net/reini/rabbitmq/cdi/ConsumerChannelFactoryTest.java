@@ -38,6 +38,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.RecoverableChannel;
 
 @ExtendWith(MockitoExtension.class)
 public class ConsumerChannelFactoryTest {
@@ -49,7 +50,7 @@ public class ConsumerChannelFactoryTest {
   @Mock
   private Connection connectionMock;
   @Mock
-  private Channel channelMock;
+  private RecoverableChannel channelMock;
 
   @BeforeEach
   void setUp() {

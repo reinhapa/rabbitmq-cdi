@@ -33,8 +33,7 @@ class ConsumerHolderFactory {
       DeclarerRepository declarerRepository) {
     ConsumerChannelFactory consumerChannelFactory =
         new ConsumerChannelFactory(connectionRepository, config);
-    ConsumerFactory consumerFactory = new ConsumerFactory();
     return new ConsumerHolder(consumer, queue, autoAck, prefetchCount, consumerChannelFactory,
-        consumerFactory, declarations, declarerRepository);
+        declarations, declarerRepository);
   }
 }
