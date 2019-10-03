@@ -2,6 +2,8 @@ package net.reini.rabbitmq.cdi;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.function.Supplier;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -15,7 +17,7 @@ class ConsumerFactoryTest {
   @Mock
   private EventConsumer<?> eventConsumerMock;
   @Mock
-  private Channel channelMock;
+  private Supplier<Channel> channelSupplierMock;
 
   private ConsumerFactory sut = new ConsumerFactory();
 
@@ -27,7 +29,7 @@ class ConsumerFactoryTest {
 
   @Test
   void testCreateAcknowledged() {
-    Consumer consumer = sut.createAcknowledged(eventConsumerMock, channelMock);
+    Consumer consumer = sut.createAcknowledged(eventConsumerMock, channelSupplierMock);
     assertNotNull(consumer);
   }
 

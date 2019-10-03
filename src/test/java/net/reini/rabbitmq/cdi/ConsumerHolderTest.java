@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,8 @@ class ConsumerHolderTest {
   private EventConsumer<TestEvent> eventConsumerMock;
   @Mock
   private ConsumerChannelFactory consumerChannelFactoryMock;
+  @Mock
+  private Supplier<Channel> channelSupplierMock;
   @Mock
   private Channel channelMock;
   @Mock
@@ -47,7 +50,7 @@ class ConsumerHolderTest {
     Assertions.assertEquals("queue", sut.getQueueName());
     Assertions.assertFalse(sut.isAutoAck());
     when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
-    when(consumerFactoryMock.createAcknowledged(eventConsumerMock, channelMock))
+    when(consumerFactoryMock.createAcknowledged(eventConsumerMock, channelSupplierMock))
         .thenReturn(consmerMock);
     sut.activate();
     verify(channelMock).addShutdownListener(any());
@@ -71,7 +74,7 @@ class ConsumerHolderTest {
     sut.activate();
     verify(channelMock).addShutdownListener(any());
     verify(channelMock).basicConsume("queue", true, consmerMock);
-    verify(declarerRepositoryMock).declare(channelMock,declarationsListMock);
+    verify(declarerRepositoryMock).declare(channelMock, declarationsListMock);
     verify(channelMock, never()).close();
     verify(channelMock, never()).removeShutdownListener(any());
     verify(channelMock).basicQos(PREFETCH_COUNT);
@@ -91,7 +94,7 @@ class ConsumerHolderTest {
       doThrow(new IOException()).when(channelMock).basicConsume("queue", true, consmerMock);
       sut.activate();
       verify(channelMock).addShutdownListener(any());
-      verify(declarerRepositoryMock).declare(channelMock,declarationsListMock);
+      verify(declarerRepositoryMock).declare(channelMock, declarationsListMock);
       verify(channelMock).close();
       verify(channelMock).removeShutdownListener(any());
     });

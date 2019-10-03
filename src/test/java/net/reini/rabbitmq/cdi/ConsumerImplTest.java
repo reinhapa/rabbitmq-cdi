@@ -1,9 +1,12 @@
 package net.reini.rabbitmq.cdi;
 
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.net.SocketException;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,8 @@ public class ConsumerImplTest {
   @Mock
   private EnvelopeConsumer envelopeConsumer;
   @Mock
+  private Supplier<Channel> channelSupplier;
+  @Mock
   private Channel channel;
 
   private Consumer consumer;
@@ -36,7 +41,7 @@ public class ConsumerImplTest {
   @BeforeEach
   public void setUp() {
     consumer = ConsumerImpl.create(envelopeConsumer);
-    consumerAcknowledged = ConsumerImpl.createAcknowledged(envelopeConsumer, channel);
+    consumerAcknowledged = ConsumerImpl.createAcknowledged(envelopeConsumer, channelSupplier);
   }
 
   /**
@@ -121,6 +126,27 @@ public class ConsumerImplTest {
     consumerAcknowledged.handleDelivery("consumerTag", envelope, basicProperties, bodyData);
 
     verify(channel).basicAck(1234L, false);
+  }
+
+  /**
+   * Test method for {@link ConsumerImpl#handleDelivery(String, Envelope, BasicProperties, byte[])}.
+   * 
+   * @throws IOException
+   */
+  @Test
+  public void testHandleDelivery_acknowledgeFails() throws IOException {
+    Envelope envelope = new Envelope(1234L, false, "exchange", "routingKey");
+    BasicProperties basicProperties = new BasicProperties();
+    byte[] bodyData = "the body data".getBytes();
+
+    when(envelopeConsumer.consume("consumerTag", envelope, basicProperties, bodyData))
+        .thenReturn(true);
+    doThrow(new SocketException("Connection reset by peer: socket write error")).when(channel)
+        .basicAck(1234L, false);
+    doThrow(new SocketException("Connection reset by peer: socket closed")).when(channel)
+        .basicNack(1234L, false, true);
+
+    consumerAcknowledged.handleDelivery("consumerTag", envelope, basicProperties, bodyData);
   }
 
   /**

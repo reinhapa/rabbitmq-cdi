@@ -1,5 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
+import java.util.function.Supplier;
+
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Consumer;
 
@@ -24,9 +26,10 @@ class ConsumerFactory {
    * has been sent successfully.
    * 
    * @param consumer the event consumer
+   * @param channelSupplier the supplier for a open channel
    * @return the message consumer instance
    */
-  public Consumer createAcknowledged(EventConsumer<?> consumer, Channel channel) {
-    return ConsumerImpl.createAcknowledged(consumer, channel);
+  public Consumer createAcknowledged(EventConsumer<?> consumer, Supplier<Channel> channelSupplier) {
+    return ConsumerImpl.createAcknowledged(consumer, channelSupplier);
   }
 }

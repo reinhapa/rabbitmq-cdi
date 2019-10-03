@@ -1,6 +1,7 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -61,20 +62,31 @@ class ConsumerHolder {
         LOGGER.debug("Activating consumer of class {}", consumer.getClass());
         // Start the consumer
         try {
-          channel = this.consumerChannelFactory.createChannel();
-          channel.addShutdownListener(shutdownListener);
-          declarerRepository.declare(channel, declarations);
-          channel.basicQos(this.prefetchCount);
+          Channel ch = ensureOpenChannel();
+          declarerRepository.declare(ch, declarations);
           channel.basicConsume(queueName, autoAck, autoAck ? consumerFactory.create(consumer)
-              : consumerFactory.createAcknowledged(consumer, channel));
+              : consumerFactory.createAcknowledged(consumer, this::ensureOpenChannel));
           LOGGER.info("Activated consumer of class {}", consumer.getClass());
           active = true;
-        } catch (IOException e) {
+        } catch (Exception e) {
           LOGGER.error("Failed to activate consumer of class {}", consumer.getClass(), e);
           ensureCompleteShutdown();
           throw e;
         }
       }
+    }
+  }
+
+  Channel ensureOpenChannel() {
+    try {
+      if (channel == null || !channel.isOpen()) {
+        channel = this.consumerChannelFactory.createChannel();
+        channel.addShutdownListener(shutdownListener);
+        channel.basicQos(this.prefetchCount);
+      }
+      return channel;
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 
