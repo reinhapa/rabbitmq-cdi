@@ -29,8 +29,8 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.RecoverableChannel;
 
 class ConsumerChannelFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerChannelFactory.class);
@@ -49,10 +49,10 @@ class ConsumerChannelFactory {
    * @return The channel
    * @throws IOException if the channel cannot be created due to a connection problem
    */
-  protected Channel createChannel() throws IOException {
+  protected RecoverableChannel createChannel() throws IOException {
     LOGGER.debug("Creating channel");
     Connection connection = connectionRepository.getConnection(config);
-    Channel channel = connection.createChannel();
+    RecoverableChannel channel = (RecoverableChannel) connection.createChannel();
     LOGGER.debug("Created channel");
     return channel;
   }

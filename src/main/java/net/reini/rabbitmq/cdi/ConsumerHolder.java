@@ -25,36 +25,39 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ShutdownListener;
+import com.rabbitmq.client.Delivery;
+import com.rabbitmq.client.Envelope;
+import com.rabbitmq.client.Recoverable;
+import com.rabbitmq.client.RecoverableChannel;
+import com.rabbitmq.client.RecoveryListener;
+import com.rabbitmq.client.ShutdownSignalException;
 
-class ConsumerHolder {
+class ConsumerHolder implements RecoveryListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerHolder.class);
 
   private final boolean autoAck;
   private final String queueName;
   private final Object activeLock;
   private final EventConsumer<?> consumer;
-  private final ShutdownListener shutdownListener;
   private final ConsumerChannelFactory consumerChannelFactory;
   private final ResourceCloser resourceCloser;
-  private final ConsumerFactory consumerFactory;
   private final DeclarerRepository declarerRepository;
   private final List<Declaration> declarations;
   private final int prefetchCount;
-  private Channel channel;
+
+  private RecoverableChannel channel;
 
   private volatile boolean active;
+  private volatile boolean recoverRunning;
 
   ConsumerHolder(EventConsumer<?> consumer, String queueName, boolean autoAck, int prefetchCount,
-      ConsumerChannelFactory consumerChannelFactory, ConsumerFactory consumerFactory,
-      List<Declaration> declarations,
+      ConsumerChannelFactory consumerChannelFactory, List<Declaration> declarations,
       DeclarerRepository declarerRepository) {
     this.consumer = consumer;
     this.queueName = queueName;
@@ -65,8 +68,6 @@ class ConsumerHolder {
     this.declarerRepository = declarerRepository;
     this.activeLock = new Object();
     this.resourceCloser = new ResourceCloser();
-    this.shutdownListener = new ConsumerHolderChannelShutdownListener(this);
-    this.consumerFactory = consumerFactory;
   }
 
   void deactivate() {
@@ -75,6 +76,7 @@ class ConsumerHolder {
         LOGGER.debug("Deactivating consumer of class {}", consumer.getClass());
         LOGGER.debug("Closing channel for consumer of class {}", consumer.getClass());
         ensureCompleteShutdown();
+        active = false;
       }
       LOGGER.info("Deactivated consumer of class {}", consumer.getClass());
     }
@@ -86,10 +88,12 @@ class ConsumerHolder {
         LOGGER.debug("Activating consumer of class {}", consumer.getClass());
         // Start the consumer
         try {
-          Channel ch = ensureOpenChannel();
-          declarerRepository.declare(ch, declarations);
-          channel.basicConsume(queueName, autoAck, autoAck ? consumerFactory.create(consumer)
-              : consumerFactory.createAcknowledged(consumer, this::ensureOpenChannel));
+          channel = this.consumerChannelFactory.createChannel();
+          channel.addRecoveryListener(this);
+          channel.basicQos(this.prefetchCount);
+          channel.basicConsume(queueName, autoAck,
+              autoAck ? this::deliverNoAck : this::deliverWithAck, this::handleShutdownSignal);
+          declarerRepository.declare(channel, declarations);
           LOGGER.info("Activated consumer of class {}", consumer.getClass());
           active = true;
         } catch (Exception e) {
@@ -102,25 +106,57 @@ class ConsumerHolder {
   }
 
   Channel ensureOpenChannel() {
-    try {
-      if (channel == null || !channel.isOpen()) {
-        channel = this.consumerChannelFactory.createChannel();
-        channel.addShutdownListener(shutdownListener);
-        channel.basicQos(this.prefetchCount);
+    synchronized (activeLock) {
+      while (recoverRunning) {
+        LOGGER.debug("Waiting for recovery...");
+        try {
+          activeLock.wait(1000);
+        } catch (InterruptedException e) {
+          LOGGER.error("Interrupted while waiting", e);
+          Thread.currentThread().interrupt();
+        }
       }
-      return channel;
+    }
+    return channel;
+  }
+
+  void deliverNoAck(String consumerTag, Delivery message) throws IOException {
+    Envelope envelope = message.getEnvelope();
+    LOGGER.debug("Consuming message {} for consumer tag {}", envelope, consumerTag);
+    consumer.consume(consumerTag, envelope, message.getProperties(),
+        message.getBody());
+  }
+
+  void deliverWithAck(String consumerTag, Delivery message) throws IOException {
+    Envelope envelope = message.getEnvelope();
+    long deliveryTag = envelope.getDeliveryTag();
+    try {
+      LOGGER.debug("Consuming message {} for consumer tag {}", envelope, consumerTag);
+      if (consumer.consume(consumerTag, envelope, message.getProperties(), message.getBody())) {
+        ensureOpenChannel().basicAck(deliveryTag, false);
+        LOGGER.debug("Acknowledged {}", message);
+      } else {
+        ensureOpenChannel().basicNack(deliveryTag, false, false);
+        LOGGER.debug("Not acknowledged {}", envelope);
+      }
     } catch (IOException e) {
-      throw new UncheckedIOException(e);
+      LOGGER.warn("Consume failed for {}", message, e);
+      channel.basicNack(deliveryTag, false, true);
+      LOGGER.debug("Not acknowledged {} (re-queue)", envelope);
     }
   }
 
+  void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {
+    LOGGER.info("Received shutdown signal {} for consumer tag {}", sig, consumerTag);
+  }
+
   void ensureCompleteShutdown() {
-    if (channel != null) {
-      channel.removeShutdownListener(this.shutdownListener);
+    synchronized (activeLock) {
+      if (channel != null) {
+        resourceCloser.closeResource(channel, "Closing channel failed");
+        channel = null;
+      }
     }
-    resourceCloser.closeResource(channel, "closing channel for consumer " + consumer.getClass());
-    channel = null;
-    active = false;
   }
 
   boolean isAutoAck() {
@@ -129,5 +165,24 @@ class ConsumerHolder {
 
   String getQueueName() {
     return queueName;
+  }
+
+  @Override
+  public void handleRecovery(Recoverable recoverable) {
+    LOGGER.debug("Handle recovery");
+    if (channel == recoverable) {
+      synchronized (activeLock) {
+        recoverRunning = false;
+        activeLock.notify();
+      }
+    }
+  }
+
+  @Override
+  public void handleRecoveryStarted(Recoverable recoverable) {
+    LOGGER.debug("Handle recovery started");
+    if (channel == recoverable) {
+      recoverRunning = true;
+    }
   }
 }
