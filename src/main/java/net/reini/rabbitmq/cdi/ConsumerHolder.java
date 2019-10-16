@@ -25,12 +25,13 @@
 package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Queue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Delivery;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.Recoverable;
@@ -41,15 +42,15 @@ import com.rabbitmq.client.ShutdownSignalException;
 class ConsumerHolder implements RecoveryListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerHolder.class);
 
+  private final int prefetchCount;
   private final boolean autoAck;
   private final String queueName;
-  private final Object activeLock;
   private final EventConsumer<?> consumer;
   private final ConsumerChannelFactory consumerChannelFactory;
   private final ResourceCloser resourceCloser;
   private final DeclarerRepository declarerRepository;
   private final List<Declaration> declarations;
-  private final int prefetchCount;
+  private final Queue<AckAction> pendingAckActions;
 
   private RecoverableChannel channel;
 
@@ -66,12 +67,12 @@ class ConsumerHolder implements RecoveryListener {
     this.consumerChannelFactory = consumerChannelFactory;
     this.declarations = declarations;
     this.declarerRepository = declarerRepository;
-    this.activeLock = new Object();
     this.resourceCloser = new ResourceCloser();
+    this.pendingAckActions = new ArrayDeque<>();
   }
 
   void deactivate() {
-    synchronized (activeLock) {
+    synchronized (pendingAckActions) {
       if (active) {
         LOGGER.debug("Deactivating consumer of class {}", consumer.getClass());
         LOGGER.debug("Closing channel for consumer of class {}", consumer.getClass());
@@ -83,7 +84,7 @@ class ConsumerHolder implements RecoveryListener {
   }
 
   void activate() throws IOException {
-    synchronized (activeLock) {
+    synchronized (pendingAckActions) {
       if (!active) {
         LOGGER.debug("Activating consumer of class {}", consumer.getClass());
         // Start the consumer
@@ -105,44 +106,37 @@ class ConsumerHolder implements RecoveryListener {
     }
   }
 
-  Channel ensureOpenChannel() {
-    synchronized (activeLock) {
-      while (recoverRunning) {
-        LOGGER.debug("Waiting for recovery...");
-        try {
-          activeLock.wait(1000);
-        } catch (InterruptedException e) {
-          LOGGER.error("Interrupted while waiting", e);
-          Thread.currentThread().interrupt();
-        }
-      }
-    }
-    return channel;
-  }
-
   void deliverNoAck(String consumerTag, Delivery message) throws IOException {
     Envelope envelope = message.getEnvelope();
     LOGGER.debug("Consuming message {} for consumer tag {}", envelope, consumerTag);
-    consumer.consume(consumerTag, envelope, message.getProperties(),
-        message.getBody());
+    consumer.consume(consumerTag, envelope, message.getProperties(), message.getBody());
   }
 
   void deliverWithAck(String consumerTag, Delivery message) throws IOException {
     Envelope envelope = message.getEnvelope();
     long deliveryTag = envelope.getDeliveryTag();
-    try {
-      LOGGER.debug("Consuming message {} for consumer tag {}", envelope, consumerTag);
-      if (consumer.consume(consumerTag, envelope, message.getProperties(), message.getBody())) {
-        ensureOpenChannel().basicAck(deliveryTag, false);
+    LOGGER.debug("Consuming message {} for consumer tag {}", envelope, consumerTag);
+    if (consumer.consume(consumerTag, envelope, message.getProperties(), message.getBody())) {
+      invokeAckAction(ch -> {
+        ch.basicAck(deliveryTag, false);
         LOGGER.debug("Acknowledged {}", message);
-      } else {
-        ensureOpenChannel().basicNack(deliveryTag, false, false);
+      });
+    } else {
+      invokeAckAction(ch -> {
+        ch.basicNack(deliveryTag, false, false);
         LOGGER.debug("Not acknowledged {}", envelope);
+      });
+    }
+  }
+
+  void invokeAckAction(AckAction action) throws IOException {
+    if (recoverRunning) {
+      synchronized (pendingAckActions) {
+        LOGGER.debug("Queueing acknowledge action due to active recovery...");
+        pendingAckActions.add(action);
       }
-    } catch (IOException e) {
-      LOGGER.warn("Consume failed for {}", message, e);
-      channel.basicNack(deliveryTag, false, true);
-      LOGGER.debug("Not acknowledged {} (re-queue)", envelope);
+    } else {
+      action.apply(channel);
     }
   }
 
@@ -151,7 +145,7 @@ class ConsumerHolder implements RecoveryListener {
   }
 
   void ensureCompleteShutdown() {
-    synchronized (activeLock) {
+    synchronized (pendingAckActions) {
       if (channel != null) {
         resourceCloser.closeResource(channel, "Closing channel failed");
         channel = null;
@@ -171,11 +165,23 @@ class ConsumerHolder implements RecoveryListener {
   public void handleRecovery(Recoverable recoverable) {
     LOGGER.debug("Handle recovery");
     if (channel == recoverable) {
-      synchronized (activeLock) {
-        recoverRunning = false;
-        activeLock.notify();
+      recoverRunning = false;
+      synchronized (pendingAckActions) {
+        pendingAckActions.removeIf(this::invokePendingAckAction);
       }
     }
+  }
+
+  boolean invokePendingAckAction(AckAction action) {
+    if (!recoverRunning) {
+      try {
+        action.apply(channel);
+        return true;
+      } catch (IOException e) {
+        LOGGER.warn("Unable to invoke pending acknowledge action", e);
+      }
+    }
+    return false;
   }
 
   @Override
@@ -184,5 +190,10 @@ class ConsumerHolder implements RecoveryListener {
     if (channel == recoverable) {
       recoverRunning = true;
     }
+  }
+
+  @FunctionalInterface
+  interface AckAction {
+    void apply(RecoverableChannel channel) throws IOException;
   }
 }

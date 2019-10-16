@@ -24,24 +24,22 @@
 
 package net.reini.rabbitmq.cdi;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,6 +55,8 @@ import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.MessageProperties;
 import com.rabbitmq.client.RecoverableChannel;
 import com.rabbitmq.client.ShutdownSignalException;
+
+import net.reini.rabbitmq.cdi.ConsumerHolder.AckAction;
 
 @SuppressWarnings("boxing")
 @ExtendWith(MockitoExtension.class)
@@ -75,15 +75,7 @@ class ConsumerHolderTest {
   @Mock
   private DeclarerRepository declarerRepositoryMock;
 
-  private ExecutorService executor;
   private ConsumerHolder sut;
-
-  @AfterEach
-  void cleanUp() {
-    if (executor != null && executor.isTerminated()) {
-      executor.shutdownNow();
-    }
-  }
 
   @Test
   void activateAndDeactivate() throws IOException, TimeoutException {
@@ -194,13 +186,14 @@ class ConsumerHolderTest {
     byte[] body = "some body".getBytes();
     Envelope envelope = new Envelope(123L, false, "exchange", "routingKey");
     Delivery message = new Delivery(envelope, properties, body);
+    IOException ioe = new IOException("some error");
 
     when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
     when(eventConsumerMock.consume("consumerTag", envelope, properties, body)).thenReturn(false);
-    doThrow(new IOException("")).when(channelMock).basicNack(123L, false, false);
+    doThrow(ioe).when(channelMock).basicNack(123L, false, false);
 
     sut.activate();
-    sut.deliverWithAck("consumerTag", message);
+    assertThrows(IOException.class, () -> sut.deliverWithAck("consumerTag", message));
   }
 
   @Test
@@ -212,42 +205,45 @@ class ConsumerHolderTest {
   }
 
   @Test
-  void ensureOpenChannel()
-      throws IOException, InterruptedException, ExecutionException, TimeoutException {
-    executor = Executors.newSingleThreadExecutor();
+  void invokePendingAckAction() throws IOException {
     sut = new ConsumerHolder(eventConsumerMock, "queue", true, PREFETCH_COUNT,
         consumerChannelFactoryMock, declarationsListMock, declarerRepositoryMock);
+    AckAction action = mock(AckAction.class);
 
     when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
 
     sut.activate();
 
-    executor.submit(sut::ensureOpenChannel).get(2, TimeUnit.SECONDS);
-
-    sut.handleRecoveryStarted(channelMock);
-    assertThrows(TimeoutException.class,
-        () -> executor.submit(sut::ensureOpenChannel).get(1, TimeUnit.SECONDS));
-
-    sut.handleRecovery(channelMock);
-    executor.submit(sut::ensureOpenChannel).get(2, TimeUnit.SECONDS);
-
-    sut.ensureOpenChannel();
+    assertTrue(sut.invokePendingAckAction(action));
   }
 
   @Test
-  void ensureOpenChannelWaitInterrupted() throws IOException {
-    executor = Executors.newSingleThreadExecutor();
+  void invokePendingAckActionRecoveryRunning() throws IOException {
     sut = new ConsumerHolder(eventConsumerMock, "queue", true, PREFETCH_COUNT,
         consumerChannelFactoryMock, declarationsListMock, declarerRepositoryMock);
+    AckAction action = mock(AckAction.class);
 
     when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
 
     sut.activate();
-
     sut.handleRecoveryStarted(channelMock);
 
-    executor.submit(sut::ensureOpenChannel);
-    executor.shutdownNow();
+    assertFalse(sut.invokePendingAckAction(action));
+  }
+
+  @Test
+  void invokePendingAckActionFailing() throws IOException {
+    sut = new ConsumerHolder(eventConsumerMock, "queue", true, PREFETCH_COUNT,
+        consumerChannelFactoryMock, declarationsListMock, declarerRepositoryMock);
+    AckAction action = mock(AckAction.class);
+
+    when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
+    doThrow(new IOException("action failed")).when(action).apply(channelMock);
+
+    sut.activate();
+    sut.handleRecoveryStarted(null);
+
+    assertFalse(sut.invokePendingAckAction(action));
   }
 
   @Test
@@ -256,5 +252,28 @@ class ConsumerHolderTest {
         consumerChannelFactoryMock, declarationsListMock, declarerRepositoryMock);
 
     sut.handleShutdownSignal("consumerTag", new ShutdownSignalException(false, false, null, null));
+  }
+
+  @Test
+  void invokeAckActionAndRecovery() throws IOException {
+    sut = new ConsumerHolder(eventConsumerMock, "queue", true, PREFETCH_COUNT,
+        consumerChannelFactoryMock, declarationsListMock, declarerRepositoryMock);
+    AckAction action1 = mock(AckAction.class);
+    AckAction action2 = mock(AckAction.class);
+
+    when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
+
+    sut.activate();
+    sut.handleRecoveryStarted(channelMock);
+
+    sut.invokeAckAction(action1);
+    sut.invokeAckAction(action2);
+
+    sut.handleRecovery(null);
+    sut.handleRecovery(channelMock);
+    sut.handleRecovery(channelMock);
+
+    verify(action1).apply(channelMock);
+    verify(action2).apply(channelMock);
   }
 }
