@@ -39,7 +39,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
     
     testCompile 'jakarta.platform:jakarta.jakartaee-api:8.0.0'
-    testCompile 'org.hamcrest:hamcrest:2.1'
+    testCompile 'org.hamcrest:hamcrest:2.2'
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.5.2'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.5.2'
     testCompile 'org.mockito:mockito-core:3.1.0'
