@@ -44,7 +44,7 @@ public interface Encoder<T> {
   /**
    * Content type of converter.
    * 
-   * <h3>Example:</h3>
+   * <h4>Example:</h4>
    * 
    * {@code application/json}
    * 
