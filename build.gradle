@@ -40,7 +40,7 @@ dependencies {
     
     testCompile 'jakarta.platform:jakarta.jakartaee-api:8.0.0'
     testCompile 'org.hamcrest:hamcrest:2.2'
-    testCompile 'org.junit.jupiter:junit-jupiter-api:5.6.1'
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.6.2'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.6.1'
     testCompile 'org.mockito:mockito-core:3.3.3'
     testCompile 'org.mockito:mockito-junit-jupiter:3.3.3'
