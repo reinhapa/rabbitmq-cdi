@@ -129,7 +129,7 @@ class EventBinderTest {
     ContainerConnectionListener sut =
             new ContainerConnectionListener(consumerContainerMock, lockMock, conditionMock);
     eventBinder.registerConnectionListener( sut );
-    Mockito.verify(connectionRepository, Mockito.times(1)).registerConnectionListener( Mockito.any(), Mockito.eq(sut) );
+    verify(connectionRepository, Mockito.times(1)).registerConnectionListener( Mockito.any(), Mockito.eq(sut) );
   }
 
   @Test
@@ -137,7 +137,7 @@ class EventBinderTest {
     ContainerConnectionListener sut =
             new ContainerConnectionListener(consumerContainerMock, lockMock, conditionMock);
     eventBinder.removeConnectionListener( sut );
-    Mockito.verify(connectionRepository, Mockito.times(1)).removeConnectionListener( Mockito.any(), Mockito.eq(sut) );
+    verify(connectionRepository, Mockito.times(1)).removeConnectionListener( Mockito.any(), Mockito.eq(sut) );
   }
 
   static class TestEventBinder extends EventBinder {
