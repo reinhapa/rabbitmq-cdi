@@ -208,6 +208,8 @@ public abstract class EventBinder {
 
   /**
    *  Registers a {@link ConnectionListener} to the connection which is used by this object.
+   *
+   * @param connectionListener the {@link ConnectionListener} which should be registered
    */
   public void registerConnectionListener(ConnectionListener connectionListener)
   {
@@ -216,6 +218,8 @@ public abstract class EventBinder {
 
   /**
    *  Removes a {@link ConnectionListener} from the connection which is used by this object.
+   *
+   * @param connectionListener the {@link ConnectionListener} which should be removed
    */
   public void removeConnectionListener(ConnectionListener connectionListener){
     connectionRepository.removeConnectionListener( configuration, connectionListener );
