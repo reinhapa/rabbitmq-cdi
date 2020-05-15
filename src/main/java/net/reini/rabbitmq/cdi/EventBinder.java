@@ -205,6 +205,22 @@ public abstract class EventBinder {
     consumerContainer.start();
   }
 
+
+  /**
+   *  Registers a {@link ConnectionListener} to the connection which is used by this object.
+   */
+  public void registerConnectionListener(ConnectionListener connectionListener)
+  {
+    connectionRepository.registerConnectionListener( configuration, connectionListener );
+  }
+
+  /**
+   *  Removes a {@link ConnectionListener} from the connection which is used by this object.
+   */
+  public void removeConnectionListener(ConnectionListener connectionListener){
+    connectionRepository.removeConnectionListener( configuration, connectionListener );
+  }
+
   @PostConstruct
   void initializeConsumerContainer() {
     configuration = new ConnectionConfiguration();
