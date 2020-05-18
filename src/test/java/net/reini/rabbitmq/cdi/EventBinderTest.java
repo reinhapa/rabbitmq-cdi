@@ -133,6 +133,17 @@ class EventBinderTest {
   }
 
   @Test
+  void testDuplicateAddListener() throws IOException {
+    ContainerConnectionListener sut =
+            new ContainerConnectionListener(consumerContainerMock, lockMock, conditionMock);
+    eventBinder.registerConnectionListener( sut );
+    Mockito.when(connectionRepository.containsConnectionListener( Mockito.any(), Mockito.eq( sut ) ) ).thenReturn( true );
+    eventBinder.registerConnectionListener( sut );
+    verify(connectionRepository, Mockito.times(1 )).registerConnectionListener( Mockito.any(), Mockito.eq(sut) );
+    verify(connectionRepository, Mockito.times( 2 )).containsConnectionListener( Mockito.any(), Mockito.eq(sut) );
+  }
+
+  @Test
   void testRemoveListener() throws IOException {
     ContainerConnectionListener sut =
             new ContainerConnectionListener(consumerContainerMock, lockMock, conditionMock);
