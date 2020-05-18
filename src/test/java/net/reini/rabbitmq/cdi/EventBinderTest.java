@@ -29,6 +29,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.Instance;
@@ -58,7 +60,10 @@ class EventBinderTest {
   private ConsumerContainerFactory consumerContainerFactory;
   @Mock
   private ConsumerContainer consumerContainerMock;
-
+  @Mock
+  private ReentrantLock lockMock;
+  @Mock
+  private Condition conditionMock;
 
   @InjectMocks
   private TestEventBinder eventBinder;
@@ -117,6 +122,33 @@ class EventBinderTest {
   @Test
   void testDeclarerFactoryNotNUll() {
     assertNotNull(eventBinder.declarerFactory());
+  }
+
+  @Test
+  void testAddListener() throws IOException {
+    ContainerConnectionListener sut =
+            new ContainerConnectionListener(consumerContainerMock, lockMock, conditionMock);
+    eventBinder.registerConnectionListener( sut );
+    verify(connectionRepository, Mockito.times(1)).registerConnectionListener( Mockito.any(), Mockito.eq(sut) );
+  }
+
+  @Test
+  void testDuplicateAddListener() throws IOException {
+    ContainerConnectionListener sut =
+            new ContainerConnectionListener(consumerContainerMock, lockMock, conditionMock);
+    eventBinder.registerConnectionListener( sut );
+    Mockito.when(connectionRepository.containsConnectionListener( Mockito.any(), Mockito.eq( sut ) ) ).thenReturn( true );
+    eventBinder.registerConnectionListener( sut );
+    verify(connectionRepository, Mockito.times(1 )).registerConnectionListener( Mockito.any(), Mockito.eq(sut) );
+    verify(connectionRepository, Mockito.times( 2 )).containsConnectionListener( Mockito.any(), Mockito.eq(sut) );
+  }
+
+  @Test
+  void testRemoveListener() throws IOException {
+    ContainerConnectionListener sut =
+            new ContainerConnectionListener(consumerContainerMock, lockMock, conditionMock);
+    eventBinder.removeConnectionListener( sut );
+    verify(connectionRepository, Mockito.times(1)).removeConnectionListener( Mockito.any(), Mockito.eq(sut) );
   }
 
   static class TestEventBinder extends EventBinder {

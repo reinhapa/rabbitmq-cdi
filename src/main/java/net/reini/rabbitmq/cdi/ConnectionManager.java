@@ -96,6 +96,11 @@ class ConnectionManager {
     this.listeners.remove(listener);
   }
 
+  public boolean containsListener( ConnectionListener listener )
+  {
+    return this.listeners.contains( listener );
+  }
+
   /**
    * Changes the factory state and notifies all connection listeners.
    *

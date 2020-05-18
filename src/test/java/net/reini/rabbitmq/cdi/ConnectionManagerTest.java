@@ -149,6 +149,11 @@ class ConnectionManagerTest {
   }
 
   @Test
+  public void testContainsListener() {
+    assertTrue(sut.containsListener(listener));
+  }
+
+  @Test
   public void testCreateConnection()
       throws TimeoutException, IOException {
     when(configMock.createConnection(connectionFactoryMock)).thenReturn(connectionMock);

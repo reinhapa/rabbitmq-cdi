@@ -205,6 +205,31 @@ public abstract class EventBinder {
     consumerContainer.start();
   }
 
+
+  /**
+   *  Registers a {@link ConnectionListener} to the connection which is used by this object.
+   *  <p>
+   *  Note: The {@link ConnectionListener} will be added only once, if this method called with the same
+   *  {@link ConnectionListener} multiple times.
+   *  </p>
+   *
+   * @param connectionListener the {@link ConnectionListener} which should be registered
+   */
+  public void registerConnectionListener(ConnectionListener connectionListener)
+  {
+    if( !connectionRepository.containsConnectionListener( configuration, connectionListener ))
+      connectionRepository.registerConnectionListener( configuration, connectionListener );
+  }
+
+  /**
+   *  Removes a {@link ConnectionListener} from the connection which is used by this object.
+   *
+   * @param connectionListener the {@link ConnectionListener} which should be removed
+   */
+  public void removeConnectionListener(ConnectionListener connectionListener){
+    connectionRepository.removeConnectionListener( configuration, connectionListener );
+  }
+
   @PostConstruct
   void initializeConsumerContainer() {
     configuration = new ConnectionConfiguration();
