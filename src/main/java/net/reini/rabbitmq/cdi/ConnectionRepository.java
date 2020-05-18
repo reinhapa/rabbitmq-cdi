@@ -126,4 +126,18 @@ public class ConnectionRepository {
     connectionManagers.computeIfAbsent(config, connectionManagerFactoryFunction)
         .removeListener(listener);
   }
+
+
+  /**
+   * Checks if the given listener is already added to the factory
+   *
+   * @param configuration
+   * @param connectionListener
+   * @return true if the given connection listener is already added, otherwise false
+   */
+  public boolean containsConnectionListener(ConnectionConfig config, ConnectionListener listener)
+  {
+    return connectionManagers.computeIfAbsent(config, connectionManagerFactoryFunction)
+            .containsListener(listener);
+  }
 }

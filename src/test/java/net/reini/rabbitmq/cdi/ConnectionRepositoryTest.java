@@ -24,8 +24,7 @@
 
 package net.reini.rabbitmq.cdi;
 
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.util.function.Function;
@@ -81,6 +80,12 @@ public class ConnectionRepositoryTest {
 
     sut.removeConnectionListener(configMock, listener);
     verify(connectionManagerMock).removeListener(listener);
+  }
+
+  @Test
+  public void testContainsConnectionListener() {
+    sut.containsConnectionListener(configMock, listener);
+    verify(connectionManagerMock, times( 1 )).containsListener( listener );
   }
 
   @Test
