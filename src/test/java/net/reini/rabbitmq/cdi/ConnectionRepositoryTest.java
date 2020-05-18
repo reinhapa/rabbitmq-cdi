@@ -24,7 +24,9 @@
 
 package net.reini.rabbitmq.cdi;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.util.function.Function;
