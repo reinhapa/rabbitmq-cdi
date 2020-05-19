@@ -131,9 +131,9 @@ public class ConnectionRepository {
   /**
    * Checks if the given listener is already added to the factory
    *
-   * @param configuration
-   * @param connectionListener
-   * @return true if the given connection listener is already added, otherwise false
+   * @param config the connection configuration
+   * @param listener The connection listener
+   * @return {@code true} if the given connection listener is already added, otherwise {@code false}
    */
   public boolean containsConnectionListener(ConnectionConfig config, ConnectionListener listener)
   {
