@@ -92,9 +92,9 @@ class ConsumerHolder implements RecoveryListener {
           channel = this.consumerChannelFactory.createChannel();
           channel.addRecoveryListener(this);
           channel.basicQos(this.prefetchCount);
+          declarerRepository.declare(channel, declarations);
           channel.basicConsume(queueName, autoAck,
               autoAck ? this::deliverNoAck : this::deliverWithAck, this::handleShutdownSignal);
-          declarerRepository.declare(channel, declarations);
           LOGGER.info("Activated consumer of class {}", consumer.getClass());
           active = true;
         } catch (Exception e) {
