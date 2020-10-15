@@ -215,10 +215,10 @@ public abstract class EventBinder {
    *
    * @param connectionListener the {@link ConnectionListener} which should be registered
    */
-  public void registerConnectionListener(ConnectionListener connectionListener)
-  {
-    if( !connectionRepository.containsConnectionListener( configuration, connectionListener ))
-      connectionRepository.registerConnectionListener( configuration, connectionListener );
+  public void registerConnectionListener(ConnectionListener connectionListener) {
+    if (!connectionRepository.containsConnectionListener(configuration, connectionListener)) {
+      connectionRepository.registerConnectionListener(configuration, connectionListener);
+    }
   }
 
   /**
@@ -226,8 +226,8 @@ public abstract class EventBinder {
    *
    * @param connectionListener the {@link ConnectionListener} which should be removed
    */
-  public void removeConnectionListener(ConnectionListener connectionListener){
-    connectionRepository.removeConnectionListener( configuration, connectionListener );
+  public void removeConnectionListener(ConnectionListener connectionListener) {
+    connectionRepository.removeConnectionListener(configuration, connectionListener);
   }
 
   @PostConstruct
@@ -274,7 +274,7 @@ public abstract class EventBinder {
     Encoder<T> encoder = exchangeBinding.getEncoder();
     String exchange = exchangeBinding.getExchange();
     PublisherConfiguration<T> cfg = new PublisherConfiguration<T>(configuration, exchange,
-        exchangeBinding.routingKeyFunction, exchangeBinding.getBasicPropertiesBuilder(), encoder, errorHandler,
+        exchangeBinding.routingKeyFunction, exchangeBinding.getBasicPropertiesBuilder(), exchangeBinding.basicPropertiesCalculator, encoder, errorHandler,
         exchangeBinding.getAllDeclarations());
     eventPublisher.addEvent(EventKey.of(eventType, exchangeBinding.getTransactionPhase()), cfg);
     LOGGER.info("Binding between exchange {} and event type {} activated", exchange,
@@ -569,6 +569,7 @@ public abstract class EventBinder {
     private Builder basicPropertiesBuilder;
     private TransactionPhase transactionPhase;
     private BiConsumer<T, PublishException> errorHandler;
+    private BasicPropertiesCalculator<T> basicPropertiesCalculator;
 
     ExchangeBinding(Class<T> eventType, String exchange) {
       this.eventType = eventType;
@@ -609,6 +610,10 @@ public abstract class EventBinder {
 
     TransactionPhase getTransactionPhase() {
       return transactionPhase;
+    }
+
+    BasicPropertiesCalculator<T> getBasicPropertiesCalculator() {
+      return basicPropertiesCalculator;
     }
 
     /**
@@ -658,6 +663,18 @@ public abstract class EventBinder {
     public ExchangeBinding<T> withHeader(String header, Object headerValue) {
       headers.put(Objects.requireNonNull(header, "header must not be null"),
           Objects.requireNonNull(headerValue, "headerValue must not be null"));
+      return this;
+    }
+
+    /**
+     * Sets a function to calculate dynamic properties
+     *
+     * @param basicPropertiesCalculator the function to calculate the final basic properties including dynamic headers
+     * @return the BasicProperties including dynamic headers
+     */
+    public ExchangeBinding<T> withDynamicProperties(BasicPropertiesCalculator<T> basicPropertiesCalculator) {
+      Objects.requireNonNull(basicPropertiesCalculator, "BasicPropertiesCalculator must not be null");
+      this.basicPropertiesCalculator = basicPropertiesCalculator;
       return this;
     }
 

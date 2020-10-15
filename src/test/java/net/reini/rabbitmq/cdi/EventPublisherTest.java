@@ -106,7 +106,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration(config, "exchange", routingKeyFunction,
-        basicProperties, encoder, errorHandler, declarations));
+        basicProperties, null, encoder, errorHandler, declarations));
     publisher.publishEvent(new TestEvent(), TransactionPhase.AFTER_SUCCESS);
     publisher.cleanUp();
 
@@ -132,7 +132,7 @@ public class EventPublisherTest {
         any());
 
     publisher.addEvent(key, new PublisherConfiguration(config, "exchange", routingKeyFunction,
-        basicProperties, encoder, errorHandler, declarations));
+        basicProperties, null, encoder, errorHandler, declarations));
     publisher.publishEvent(new TestEvent(), TransactionPhase.AFTER_FAILURE);
     publisher.cleanUp();
 
@@ -147,7 +147,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration(config, "exchange", routingKeyFunction,
-        basicProperties, encoder, errorHandler, declarations));
+        basicProperties, null, encoder, errorHandler, declarations));
     publisher.onEventInProgress(new TestEvent());
     publisher.cleanUp();
 
@@ -163,7 +163,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration(config, "exchange", routingKeyFunction,
-        basicProperties, encoder, errorHandler, declarations));
+        basicProperties, null, encoder, errorHandler, declarations));
     publisher.onEventBeforeCompletion(new TestEvent());
     publisher.cleanUp();
 
@@ -179,7 +179,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration(config, "exchange", routingKeyFunction,
-        basicProperties, encoder, errorHandler, declarations));
+        basicProperties, null, encoder, errorHandler, declarations));
     publisher.onEventAfterCompletion(new TestEvent());
     publisher.cleanUp();
 
@@ -195,7 +195,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration(config, "exchange", routingKeyFunction,
-        basicProperties, encoder, errorHandler, declarations));
+        basicProperties, null, encoder, errorHandler, declarations));
     publisher.onEventAfterFailure(new TestEvent());
     publisher.cleanUp();
 
@@ -211,7 +211,7 @@ public class EventPublisherTest {
     when(connection.createChannel()).thenReturn(channel);
 
     publisher.addEvent(key, new PublisherConfiguration(config, "exchange", routingKeyFunction,
-        basicProperties, encoder, errorHandler, declarations));
+        basicProperties, null, encoder, errorHandler, declarations));
     publisher.onEventAfterSuccess(new TestEvent());
     publisher.cleanUp();
 

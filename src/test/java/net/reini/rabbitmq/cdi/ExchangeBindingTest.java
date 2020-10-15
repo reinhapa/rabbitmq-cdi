@@ -33,6 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,6 +90,11 @@ class ExchangeBindingTest {
   }
 
   @Test
+  void testGetRoutingKeyWithFunction() {
+    TestEvent event = new TestEvent();
+    assertSame(binding, binding.withRoutingKey((testEvent) -> "calculatedkey"));
+    assertEquals("calculatedkey", binding.getRoutingKey(event));
+  }
   void withEncoder() {
     assertEquals(JsonEncoder.class, binding.getEncoder().getClass());
     assertSame(binding, binding.withEncoder(encoder));
@@ -185,6 +192,23 @@ class ExchangeBindingTest {
     expectedHeaders.put("header", "value");
     assertEquals(PERSISTENT_BASIC.builder().headers(expectedHeaders).build(),
         binding.getBasicPropertiesBuilder().build());
+  }
+
+  @Test
+  void withDynamicPropertiesNull() {
+    final NullPointerException nullPointerException = assertThrows(NullPointerException.class, () -> {
+      binding.withDynamicProperties(null);
+    });
+    assertEquals("BasicPropertiesCalculator must not be null", nullPointerException.getMessage());
+  }
+
+  @Test
+  void withDynamicProperties() {
+    BasicProperties basicPropertiesCalculatedMock = mock(BasicProperties.class);
+    final BasicPropertiesCalculator<TestEvent> basicPropertiesCalculator = (basicProperties, event) -> basicPropertiesCalculatedMock;
+    assertSame(binding, binding.withDynamicProperties(basicPropertiesCalculator));
+    assertSame(basicPropertiesCalculator, binding.getBasicPropertiesCalculator());
+    assertSame(basicPropertiesCalculatedMock, binding.getBasicPropertiesCalculator().calculateBasicProperties(basicProperties, null));
   }
 
   @Test

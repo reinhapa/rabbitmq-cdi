@@ -47,10 +47,11 @@ final class PublisherConfiguration<T> implements BiConsumer<T, PublishException>
   private final Function<T, String> routingKeyFunction;
   private final BiConsumer<T, PublishException> errorHandler;
   private final List<Declaration> declarations;
+  private final BasicPropertiesCalculator<T> basicPropertiesCalculator;
 
   PublisherConfiguration(ConnectionConfig config, String exchange,
       Function<T, String> routingKeyFunction,
-      Builder basicPropertiesBuilder, Encoder<T> encoder,
+      Builder basicPropertiesBuilder, BasicPropertiesCalculator<T> basicPropertiesCalculator, Encoder<T> encoder,
       BiConsumer<T, PublishException> errorHandler, List<Declaration> declarations) {
     this.config = config;
     this.exchange = exchange;
@@ -63,6 +64,7 @@ final class PublisherConfiguration<T> implements BiConsumer<T, PublishException>
       basicPropertiesBuilder.contentType(contentType);
     }
     basicProperties = basicPropertiesBuilder.build();
+    this.basicPropertiesCalculator = basicPropertiesCalculator;
   }
 
   /**
@@ -83,7 +85,11 @@ final class PublisherConfiguration<T> implements BiConsumer<T, PublishException>
 
   void publish(Channel channel, T event) throws EncodeException, IOException {
     byte[] data = messageEncoder.encode(event);
-    channel.basicPublish(exchange, routingKeyFunction.apply(event), basicProperties, data);
+    BasicProperties basicPropertiesToSend = basicProperties;
+    if (basicPropertiesCalculator != null) {
+      basicPropertiesToSend = this.basicPropertiesCalculator.calculateBasicProperties(this.basicProperties, event);
+    }
+    channel.basicPublish(exchange, routingKeyFunction.apply(event), basicPropertiesToSend, data);
   }
 
   @Override
