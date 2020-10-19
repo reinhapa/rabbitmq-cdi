@@ -24,6 +24,7 @@
 
 package net.reini.rabbitmq.cdi;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -78,8 +79,8 @@ class ConsumerHolderTest {
   void activateAndDeactivate() throws IOException, TimeoutException {
     sut = new ConsumerHolder(eventConsumerMock, "queue", false, PREFETCH_COUNT,
         consumerChannelFactoryMock, declarationsListMock, declarerRepositoryMock);
-    Assertions.assertEquals("queue", sut.getQueueName());
-    Assertions.assertFalse(sut.isAutoAck());
+    assertEquals("queue", sut.getQueueName());
+    assertFalse(sut.isAutoAck());
     when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
     sut.activate();
     verify(channelMock).addRecoveryListener(sut);
@@ -95,9 +96,10 @@ class ConsumerHolderTest {
   void testActivationOrder() throws IOException {
     sut = new ConsumerHolder(eventConsumerMock, "queue", false, PREFETCH_COUNT,
         consumerChannelFactoryMock, declarationsListMock, declarerRepositoryMock);
-    Assertions.assertEquals("queue", sut.getQueueName());
+    assertEquals("queue", sut.getQueueName());
     when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
     sut.activate();
+    assertDoesNotThrow(sut::activate);
     InOrder inOrder = inOrder(channelMock, declarerRepositoryMock);
     inOrder.verify(channelMock).addRecoveryListener(sut);
     inOrder.verify(channelMock).basicQos(PREFETCH_COUNT);
@@ -110,8 +112,8 @@ class ConsumerHolderTest {
   void activateAndDeactivateWithAutoAck() throws IOException, TimeoutException {
     sut = new ConsumerHolder(eventConsumerMock, "queue", true, PREFETCH_COUNT,
         consumerChannelFactoryMock, declarationsListMock, declarerRepositoryMock);
-    Assertions.assertEquals("queue", sut.getQueueName());
-    Assertions.assertTrue(sut.isAutoAck());
+    assertEquals("queue", sut.getQueueName());
+    assertTrue(sut.isAutoAck());
     when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
     sut.activate();
     verify(channelMock).addRecoveryListener(sut);
@@ -127,7 +129,7 @@ class ConsumerHolderTest {
 
   @Test
   void errorDuringActivate() {
-    Assertions.assertThrows(IOException.class, () -> {
+    assertThrows(IOException.class, () -> {
       sut = new ConsumerHolder(eventConsumerMock, "queue", true, 0, consumerChannelFactoryMock,
           declarationsListMock, declarerRepositoryMock);
       when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
