@@ -24,12 +24,15 @@
 
 package net.reini.rabbitmq.cdi;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,6 +45,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -76,8 +80,8 @@ class ConsumerHolderTest {
   void activateAndDeactivate() throws IOException, TimeoutException {
     sut = new ConsumerHolder(eventConsumerMock, "queue", false, PREFETCH_COUNT,
         consumerChannelFactoryMock, declarationsListMock, declarerRepositoryMock);
-    Assertions.assertEquals("queue", sut.getQueueName());
-    Assertions.assertFalse(sut.isAutoAck());
+    assertEquals("queue", sut.getQueueName());
+    assertFalse(sut.isAutoAck());
     when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
     sut.activate();
     verify(channelMock).addRecoveryListener(sut);
@@ -90,11 +94,27 @@ class ConsumerHolderTest {
   }
 
   @Test
+  void testActivationOrder() throws IOException {
+    sut = new ConsumerHolder(eventConsumerMock, "queue", false, PREFETCH_COUNT,
+        consumerChannelFactoryMock, declarationsListMock, declarerRepositoryMock);
+    assertEquals("queue", sut.getQueueName());
+    when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
+    sut.activate();
+    assertDoesNotThrow(sut::activate);
+    InOrder inOrder = inOrder(channelMock, declarerRepositoryMock);
+    inOrder.verify(channelMock).addRecoveryListener(sut);
+    inOrder.verify(channelMock).basicQos(PREFETCH_COUNT);
+    inOrder.verify(declarerRepositoryMock).declare(channelMock, declarationsListMock);
+    inOrder.verify(channelMock).basicConsume(eq("queue"), eq(false), isA(DeliverCallback.class),
+        isA(ConsumerShutdownSignalCallback.class));
+  }
+
+  @Test
   void activateAndDeactivateWithAutoAck() throws IOException, TimeoutException {
     sut = new ConsumerHolder(eventConsumerMock, "queue", true, PREFETCH_COUNT,
         consumerChannelFactoryMock, declarationsListMock, declarerRepositoryMock);
-    Assertions.assertEquals("queue", sut.getQueueName());
-    Assertions.assertTrue(sut.isAutoAck());
+    assertEquals("queue", sut.getQueueName());
+    assertTrue(sut.isAutoAck());
     when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
     sut.activate();
     verify(channelMock).addRecoveryListener(sut);
@@ -110,7 +130,7 @@ class ConsumerHolderTest {
 
   @Test
   void errorDuringActivate() {
-    Assertions.assertThrows(IOException.class, () -> {
+    assertThrows(IOException.class, () -> {
       sut = new ConsumerHolder(eventConsumerMock, "queue", true, 0, consumerChannelFactoryMock,
           declarationsListMock, declarerRepositoryMock);
       when(consumerChannelFactoryMock.createChannel()).thenReturn(channelMock);
