@@ -35,15 +35,15 @@ dependencies {
     compileOnly 'jakarta.platform:jakarta.jakartaee-api:8.0.0'
 
     implementation 'org.slf4j:slf4j-api:1.7.30'
-    implementation 'com.rabbitmq:amqp-client:5.9.0'
+    implementation 'com.rabbitmq:amqp-client:5.10.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.3'
     
     testImplementation 'jakarta.platform:jakarta.jakartaee-api:8.0.0'
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.7.0'
-    testImplementation 'org.mockito:mockito-core:3.5.15'
-    testImplementation 'org.mockito:mockito-junit-jupiter:3.5.15'
+    testImplementation 'org.mockito:mockito-core:3.6.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:3.6.0'
     
     runtimeOnly 'org.junit.platform:junit-platform-runner:1.7.0'
     runtimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
