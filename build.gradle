@@ -22,6 +22,11 @@ ext {
     buildTime = new SimpleDateFormat('HH:mm:ss.SSSZ').format(buildTimeAndDate)
 }
 
+java {
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 configurations {
     asciidoclet
 }
@@ -82,7 +87,7 @@ signing {
 jar {
     manifest {
         attributes 'Implementation-Title': 'RabbitMQ CDI extension',
-                   'Implementation-Version': version,
+                   'Implementation-Version': project.version,
                    'Build-Date': buildDate,
                    'Build-Time': buildTime,
                    'Build-Revision': versioning.info.commit,
