@@ -28,3 +28,5 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
+    - uses: codecov/codecov-action@v1
+    
