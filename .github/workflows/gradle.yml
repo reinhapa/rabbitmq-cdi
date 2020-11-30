@@ -24,11 +24,11 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: ${{ matrix.jdk }}
+    - name: Run codacy analysis
+      uses: codacy/codacy-analysis-cli-action@master
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
     - name: Run codecov analysis
       uses: codecov/codecov-action@v1
-    - name: Run codacy analysis
-      uses: codacy/codacy-analysis-cli-action@master
