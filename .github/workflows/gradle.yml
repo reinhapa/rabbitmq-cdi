@@ -28,6 +28,7 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
+    - name: Run codecov analysis
     - uses: codecov/codecov-action@v1
-    - name: Run codacy-analysis-cli
+    - name: Run codacy analysis
       uses: codacy/codacy-analysis-cli-action@master
