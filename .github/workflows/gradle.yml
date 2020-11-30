@@ -29,4 +29,5 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
     - uses: codecov/codecov-action@v1
-    
+    - name: Run codacy-analysis-cli
+      uses: codacy/codacy-analysis-cli-action@master
