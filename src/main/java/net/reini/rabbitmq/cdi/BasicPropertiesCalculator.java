@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package net.reini.rabbitmq.cdi;
 /*
  * Function to calculate basic properties on the fly based on event information
