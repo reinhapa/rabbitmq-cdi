@@ -96,6 +96,13 @@ class EventBinderTest {
   @Test
   void testInitialize() throws IOException {
     eventBinder.initialize();
+    verify(consumerContainerMock).start();
+  }
+
+  @Test
+  void testShutdown() throws IOException {
+    eventBinder.shutdownConsumerContainer();
+    verify(consumerContainerMock).stop();
   }
 
   @Test
