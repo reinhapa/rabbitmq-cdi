@@ -23,12 +23,14 @@
  */
 
 package net.reini.rabbitmq.cdi;
-/*
- * Function to calculate basic properties on the fly based on event information
- */
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 
+/*
+ * Function to calculate basic properties on the fly based on event information
+ *
+ * @author Patrick Reinhart
+ */
 public interface BasicPropertiesCalculator<T> {
   BasicProperties calculateBasicProperties(BasicProperties basicProperties, T event);
 }
