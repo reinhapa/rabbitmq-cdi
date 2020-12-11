@@ -10,6 +10,14 @@ on:
     branches: [ master ]
 
 jobs:
+  codacy-analysis-cli:
+    runs-on: ubuntu-latest
+    name: Codacy Analysis CLI
+    steps:
+      - name: Checkout code
+      - uses: actions/checkout@v2
+      - name: Run codacy-analysis-cli
+        uses: codacy/codacy-analysis-cli-action@master
   build:
     name: ${{ matrix.os }} / OpenJDK ${{ matrix.jdk }}
     runs-on: ${{ matrix.os }}
@@ -24,8 +32,6 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: ${{ matrix.jdk }}
-    - name: Run codacy analysis
-      uses: codacy/codacy-analysis-cli-action@master
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
