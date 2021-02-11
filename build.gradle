@@ -1,30 +1,41 @@
-import java.text.SimpleDateFormat
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015-2020 Patrick Reinhart
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 
 plugins {
     id 'java-library'
-    id 'signing'
     id 'eclipse'
-    id 'jacoco'
-    id 'maven-publish'
-    id 'com.github.ben-manes.versions' version '0.39.0'
-    id 'net.nemerosa.versioning' version '2.15.1'
-    id 'org.owasp.dependencycheck' version '6.4.1.1'
+    id 'org.owasp.dependencycheck' version '6.5.0.1'
+    id 'org.kordamp.gradle.java-project' version '0.47.0'
 }
 
-group = 'net.reini'
+if (!project.hasProperty('ossrhUsername'))   ext.ossrhUsername   = '**undefined**'
+if (!project.hasProperty('ossrhPassword'))   ext.ossrhPassword   = '**undefined**'
 
 defaultTasks 'build'
 
-Date buildTimeAndDate = new Date()
-ext {
-    buildDate = new SimpleDateFormat('yyyy-MM-dd').format(buildTimeAndDate)
-    buildTime = new SimpleDateFormat('HH:mm:ss.SSSZ').format(buildTimeAndDate)
-}
-
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
-  withJavadocJar()
-  withSourcesJar()
 }
 
 configurations {
@@ -62,37 +73,14 @@ compileJava {
     }
 }
 
-signing {
-    required { project.hasProperty('signing.password') && !project.version.endsWith('-SNAPSHOT') }
-    sign publishing.publications
-}
-
 jar {
-    manifest {
-        attributes 'Implementation-Title': 'RabbitMQ CDI extension',
-                   'Implementation-Version': project.version,
-                   'Build-Date': buildDate,
-                   'Build-Time': buildTime,
-                   'Build-Revision': versioning.info.commit,
-                   'Automatic-Module-Name': "net.reini.rabbitmq.cdi"
-        metaInf {
-            from file('.')
-            include 'LICENSE'
-        }
-    }
+    manifest.attributes 'Automatic-Module-Name': "net.reini.rabbitmq.cdi"
 }
 
 test {
     useJUnitPlatform()
     testLogging {
         events 'skipped'
-    }
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled = true
-        html.enabled = true
     }
 }
 
@@ -109,54 +97,74 @@ dependencyUpdates.resolutionStrategy {
   }
 }
 
-check.dependsOn jacocoTestReport //, dependencyCheckUpdate
+config {
+    release = (rootProject.findProperty('release') ?: false).toBoolean()
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            pom {
-                name = 'RabbitMQ JavaEE/JakartaEE CDI enabler'
-                description = 'Enables CDI based usage of RabbitMQ within a JavaEE/JakartaEE application.'
-                url = 'https://github.com/reinhapa/rabbitmq-cdi'
-                scm {
-                    connection = 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
-                    developerConnection = 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
-                    url = 'https://github.com/reinhapa/rabbitmq-cdi'
-                }
-                licenses {
-                    license {
-                        name = 'MIT License'
-                        url = 'http://www.opensource.org/licenses/mit-license.php'
-                        distribution = 'repo'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'reinhapa'
-                        name = 'Patrick Reinhart'
-                        email = 'patrick@reini.net'
-                    }
-                    developer {
-                        id = 'ohumbel'
-                        name = 'Otmar Humbel'
-                        email = 'ohumbel@gmail.com'
-                    }
-                }
+    info {
+        vendor = 'reinhapa'
+        name = 'RabbitMQ JavaEE/JakartaEE CDI enabler'
+        description = 'Enables CDI based usage of RabbitMQ within a JavaEE/JakartaEE application.'
+        inceptionYear = '2015'
+        links {
+            website = 'https://github.com/reinhapa/rabbitmq-cdi'
+            issueTracker = 'https://github.com/reinhapa/rabbitmq-cdi/issues'
+            scm = 'https://github.com/reinhapa/rabbitmq-cdi.git'
+        }
+        scm {
+            connection = 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
+            developerConnection = 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
+            url = 'https://github.com/reinhapa/rabbitmq-cdi'
+        }
+        people {
+            person {
+                id = 'reinhapa'
+                name = 'Patrick Reinhart'
+                email = 'patrick@reini.net'
+                roles = [ 'developer' ]
+            }
+            person {
+                id = 'ohumbel'
+                name = 'Otmar Humbel'
+                email = 'ohumbel@gmail.com'
+                roles = [ 'developer' ]
+            }
+        }
+        repositories {
+            repository {
+                name = 'localRelease'
+                url  = "${project.rootProject.buildDir}/repos/staging/release"
+            }
+            repository {
+                name = 'localSnapshot'
+                url  = "${project.rootProject.buildDir}/repos/staging/snapshot"
+            }
+        }
+        credentials {
+            sonatype {
+                username = ossrhUsername
+                password = ossrhPassword
             }
         }
     }
-    repositories {
-        if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')) {
-            maven {
-                def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-                def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
-                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-                credentials {
-                    username = ossrhUsername
-                    password = ossrhPassword
-                }
+    licensing {
+        licenses {
+            license {
+                id = 'MIT'
             }
         }
+    }
+    docs {
+        javadoc.autoLinks.enabled = false
+    }
+    publishing {
+        signing.enabled = release
+        releasesRepository  = 'localRelease'
+        snapshotsRepository = 'localSnapshot'
+    }
+}
+
+normalization {
+    runtimeClasspath {
+        ignore('/META-INF/MANIFEST.MF')
     }
 }

@@ -22,18 +22,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        jdk: ['8', '11', '14']
+        jdk: ['8', '11', '17']
         os: [ubuntu-latest]
 
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK ${{ matrix.jdk }}
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
+        distribution: temurin
         java-version: ${{ matrix.jdk }}
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew build
+      run: ./gradlew build -x license
     - name: Run codecov analysis
       uses: codecov/codecov-action@v1
