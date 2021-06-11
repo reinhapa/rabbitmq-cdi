@@ -9,7 +9,7 @@ plugins {
     id 'com.github.ben-manes.versions' version '0.39.0'
     id 'net.minecrell.licenser' version '0.4.1'
     id 'net.nemerosa.versioning' version '2.14.0'
-    id 'org.owasp.dependencycheck' version '6.2.1'
+    id 'org.owasp.dependencycheck' version '6.2.2'
 }
 
 group = 'net.reini'
