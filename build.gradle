@@ -50,8 +50,8 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:3.12.4'
     testImplementation 'org.mockito:mockito-junit-jupiter:3.12.4'
     
-    runtimeOnly 'org.junit.platform:junit-platform-runner:1.7.2'
-    runtimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-runner:1.7.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
     runtimeOnly 'ch.qos.logback:logback-classic:1.2.5'
 }
 
