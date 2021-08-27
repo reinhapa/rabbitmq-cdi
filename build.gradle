@@ -1,14 +1,14 @@
 import java.text.SimpleDateFormat
 
 plugins {
-    id 'java'
+    id 'java-library'
     id 'signing'
     id 'eclipse'
     id 'jacoco'
     id 'maven-publish'
     id 'com.github.ben-manes.versions' version '0.39.0'
     id 'net.minecrell.licenser' version '0.4.1'
-    id 'net.nemerosa.versioning' version '2.14.0'
+    id 'net.nemerosa.versioning' version '2.15.0'
     id 'org.owasp.dependencycheck' version '6.2.2'
 }
 
@@ -24,7 +24,8 @@ ext {
 
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
+  withJavadocJar()
+  withSourcesJar()
 }
 
 configurations {
@@ -32,7 +33,6 @@ configurations {
 }
 
 repositories {
-    jcenter()
     mavenCentral()
 }
 
@@ -41,7 +41,7 @@ dependencies {
 
     implementation 'org.slf4j:slf4j-api:1.7.32'
     implementation 'com.rabbitmq:amqp-client:5.13.0'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.5'
     
     testImplementation 'jakarta.platform:jakarta.jakartaee-api:8.0.0'
     testImplementation 'org.hamcrest:hamcrest:2.2'
@@ -52,24 +52,8 @@ dependencies {
     
     testRuntimeOnly 'org.junit.platform:junit-platform-runner:1.7.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
-    runtimeOnly 'ch.qos.logback:logback-classic:1.2.5'
+    testRuntimeOnly 'ch.qos.logback:logback-classic:1.2.5'
 }
-
-task sourcesJar(type: Jar) {
-    classifier 'sources'
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier 'javadoc'
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives sourcesJar
-    archives javadocJar
-}
-
 
 compileJava {
     doFirst {
@@ -132,8 +116,6 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
-            artifact sourcesJar
-            artifact javadocJar
             pom {
                 name = 'RabbitMQ JavaEE/JakartaEE CDI enabler'
                 description = 'Enables CDI based usage of RabbitMQ within a JavaEE/JakartaEE application.'
