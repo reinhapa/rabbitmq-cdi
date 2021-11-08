@@ -22,14 +22,14 @@
  * THE SOFTWARE.
  */
 plugins {
-    id 'java-library'
-    id 'eclipse'
-    id 'org.owasp.dependencycheck' version '6.5.0.1'
-    id 'org.kordamp.gradle.java-project' version '0.47.0'
+  id 'java-library'
+  id 'eclipse'
+  id 'org.owasp.dependencycheck' version '6.5.0.1'
+  id 'org.kordamp.gradle.java-project' version '0.47.0'
 }
 
-if (!project.hasProperty('ossrhUsername'))   ext.ossrhUsername   = '**undefined**'
-if (!project.hasProperty('ossrhPassword'))   ext.ossrhPassword   = '**undefined**'
+if (!project.hasProperty('ossrhUsername')) ext.ossrhUsername = '**undefined**'
+if (!project.hasProperty('ossrhPassword')) ext.ossrhPassword = '**undefined**'
 
 defaultTasks 'build'
 
@@ -38,49 +38,49 @@ java {
 }
 
 configurations {
-    asciidoclet
+  asciidoclet
 }
 
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 
 dependencies {
-    compileOnly 'jakarta.platform:jakarta.jakartaee-api:8.0.0'
+  compileOnly 'jakarta.platform:jakarta.jakartaee-api:8.0.0'
 
-    implementation 'org.slf4j:slf4j-api:1.7.32'
-    implementation 'com.rabbitmq:amqp-client:5.13.1'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
-    
-    testImplementation 'jakarta.platform:jakarta.jakartaee-api:8.0.0'
-    testImplementation 'org.hamcrest:hamcrest:2.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.1'
-    testImplementation 'org.mockito:mockito-core:4.0.0'
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.0.0'
-    
-    testRuntimeOnly 'org.junit.platform:junit-platform-runner:1.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-    testRuntimeOnly 'ch.qos.logback:logback-classic:1.2.6'
+  implementation 'org.slf4j:slf4j-api:1.7.32'
+  implementation 'com.rabbitmq:amqp-client:5.13.1'
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
+
+  testImplementation 'jakarta.platform:jakarta.jakartaee-api:8.0.0'
+  testImplementation 'org.hamcrest:hamcrest:2.2'
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.1'
+  testImplementation 'org.mockito:mockito-core:4.0.0'
+  testImplementation 'org.mockito:mockito-junit-jupiter:4.0.0'
+
+  testRuntimeOnly 'org.junit.platform:junit-platform-runner:1.8.1'
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+  testRuntimeOnly 'ch.qos.logback:logback-classic:1.2.6'
 }
 
 compileJava {
-    doFirst {
-        options.compilerArgs = [
-                '-Xlint:all'
-        ]
-    }
+  doFirst {
+    options.compilerArgs = [
+      '-Xlint:all'
+    ]
+  }
 }
 
 jar {
-    manifest.attributes 'Automatic-Module-Name': "net.reini.rabbitmq.cdi"
+  manifest.attributes 'Automatic-Module-Name': "net.reini.rabbitmq.cdi"
 }
 
 test {
-    useJUnitPlatform()
-    testLogging {
-        events 'skipped'
-    }
+  useJUnitPlatform()
+  testLogging {
+    events 'skipped'
+  }
 }
 
 dependencyUpdates.resolutionStrategy {
@@ -97,73 +97,75 @@ dependencyUpdates.resolutionStrategy {
 }
 
 config {
-    release = (rootProject.findProperty('release') ?: false).toBoolean()
-
-    info {
-        vendor = 'reinhapa'
-        name = 'RabbitMQ JavaEE/JakartaEE CDI enabler'
-        description = 'Enables CDI based usage of RabbitMQ within a JavaEE/JakartaEE application.'
-        inceptionYear = '2015'
-        links {
-            website = 'https://github.com/reinhapa/rabbitmq-cdi'
-            issueTracker = 'https://github.com/reinhapa/rabbitmq-cdi/issues'
-            scm = 'https://github.com/reinhapa/rabbitmq-cdi.git'
-        }
-        scm {
-            connection = 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
-            developerConnection = 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
-            url = 'https://github.com/reinhapa/rabbitmq-cdi'
-        }
-        people {
-            person {
-                id = 'reinhapa'
-                name = 'Patrick Reinhart'
-                email = 'patrick@reini.net'
-                roles = [ 'developer' ]
-            }
-            person {
-                id = 'ohumbel'
-                name = 'Otmar Humbel'
-                email = 'ohumbel@gmail.com'
-                roles = [ 'developer' ]
-            }
-        }
-        repositories {
-            repository {
-                name = 'localRelease'
-                url  = "${project.rootProject.buildDir}/repos/staging/release"
-            }
-            repository {
-                name = 'localSnapshot'
-                url  = "${project.rootProject.buildDir}/repos/staging/snapshot"
-            }
-        }
-        credentials {
-            sonatype {
-                username = ossrhUsername
-                password = ossrhPassword
-            }
-        }
+  release = (rootProject.findProperty('release') ?: false).toBoolean()
+  info {
+    vendor = 'reinhapa'
+    name = 'RabbitMQ JavaEE/JakartaEE CDI enabler'
+    description = 'Enables CDI based usage of RabbitMQ within a JavaEE/JakartaEE application.'
+    inceptionYear = '2015'
+    links {
+      website = 'https://github.com/reinhapa/rabbitmq-cdi'
+      issueTracker = 'https://github.com/reinhapa/rabbitmq-cdi/issues'
+      scm = 'https://github.com/reinhapa/rabbitmq-cdi.git'
     }
-    licensing {
-        licenses {
-            license {
-                id = 'MIT'
-            }
-        }
+    scm {
+      connection = 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
+      developerConnection = 'scm:git://github.com/reinhapa/rabbitmq-cdi.git'
+      url = 'https://github.com/reinhapa/rabbitmq-cdi'
     }
-    docs {
-        javadoc.autoLinks.enabled = false
+    people {
+      person {
+        id = 'reinhapa'
+        name = 'Patrick Reinhart'
+        email = 'patrick@reini.net'
+        roles = [ 'developer' ]
+      }
+      person {
+        id = 'ohumbel'
+        name = 'Otmar Humbel'
+        email = 'ohumbel@gmail.com'
+        roles = [ 'developer' ]
+      }
     }
-    publishing {
-        signing.enabled = release
-        releasesRepository  = 'localRelease'
-        snapshotsRepository = 'localSnapshot'
+    repositories {
+      repository {
+        name = 'localRelease'
+        url  = "${project.rootProject.buildDir}/repos/staging/release"
+      }
+      repository {
+        name = 'localSnapshot'
+        url  = "${project.rootProject.buildDir}/repos/staging/snapshot"
+      }
     }
+    credentials {
+      sonatype {
+        username = ossrhUsername
+        password = ossrhPassword
+      }
+    }
+  }
+  licensing {
+    licenses {
+      license {
+        id = 'MIT'
+      }
+    }
+  }
+  docs {
+    javadoc.autoLinks.enabled = false
+  }
+  artifacts {
+    minpom.enabled = false
+  }
+  publishing {
+    signing.enabled = release
+    releasesRepository  = 'localRelease'
+    snapshotsRepository = 'localSnapshot'
+  }
 }
 
 normalization {
-    runtimeClasspath {
-        ignore('/META-INF/MANIFEST.MF')
-    }
+  runtimeClasspath {
+    ignore('/META-INF/MANIFEST.MF')
+  }
 }
