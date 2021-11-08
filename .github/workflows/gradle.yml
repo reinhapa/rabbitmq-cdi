@@ -35,6 +35,6 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew build -x license
+      run: ./gradlew build
     - name: Run codecov analysis
       uses: codecov/codecov-action@v1
