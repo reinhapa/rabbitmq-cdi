@@ -28,8 +28,8 @@ plugins {
   id 'org.kordamp.gradle.java-project' version '0.47.0'
 }
 
-if (!project.hasProperty('ossrhUsername')) ext.ossrhUsername = '**undefined**'
-if (!project.hasProperty('ossrhPassword')) ext.ossrhPassword = '**undefined**'
+if (!project.hasProperty('sonatypeUsername')) ext.sonatypeUsername = '**undefined**'
+if (!project.hasProperty('sonatypePassword')) ext.sonatypePassword = '**undefined**'
 
 defaultTasks 'build'
 
@@ -97,7 +97,7 @@ dependencyUpdates.resolutionStrategy {
 }
 
 config {
-  release = (rootProject.findProperty('release') ?: false).toBoolean()
+  release = !project.version.endsWith('-SNAPSHOT')
   info {
     vendor = 'reinhapa'
     name = 'RabbitMQ JavaEE/JakartaEE CDI enabler'
@@ -129,18 +129,20 @@ config {
     }
     repositories {
       repository {
-        name = 'localRelease'
-        url  = "${project.rootProject.buildDir}/repos/staging/release"
+        name = 'sonatypeRelease'
+        url  = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+        credentials {
+          username = sonatypeUsername
+          password = sonatypePassword
+        }
       }
       repository {
-        name = 'localSnapshot'
-        url  = "${project.rootProject.buildDir}/repos/staging/snapshot"
-      }
-    }
-    credentials {
-      sonatype {
-        username = ossrhUsername
-        password = ossrhPassword
+        name = 'sonatypeSnapshot'
+        url  = 'https://oss.sonatype.org/content/repositories/snapshots/'
+        credentials {
+          username = sonatypeUsername
+          password = sonatypePassword
+        }
       }
     }
   }
@@ -159,8 +161,8 @@ config {
   }
   publishing {
     signing.enabled = release
-    releasesRepository  = 'localRelease'
-    snapshotsRepository = 'localSnapshot'
+    releasesRepository  = 'sonatypeRelease'
+    snapshotsRepository = 'sonatypeSnapshot'
   }
 }
 
