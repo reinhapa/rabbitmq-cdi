@@ -5,7 +5,7 @@ Patrick Reinhart <https://github.com/reinhapa[@reinhapa]>
 :project-full-path: reinhapa/{project-name}
 :github-branch: master
 
-image:https://javadoc.io/doc/{project-full-path}["javadoc", link="https://javadoc.io/doc/net.{project-full-path}"]
+image:https://javadoc.io/doc/{group-name}/{project-name}/javadoc.svg["javadoc", link="https://javadoc.io/doc/{group-name}/{project-name}"]
 image:https://img.shields.io/badge/license-MIT-blue.svg["MIT License", link="https://github.com/{project-full-path}/blob/{github-branch}/LICENSE"]
 image:https://img.shields.io/badge/Java-8-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
 image:https://img.shields.io/badge/Java-11-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
