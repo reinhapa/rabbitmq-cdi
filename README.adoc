@@ -12,7 +12,8 @@ image:https://img.shields.io/maven-central/v/{group-name}/{project-name}.svg?lab
 image:https://github.com/{project-full-path}/workflows/Java%20CI%20with%20Gradle/badge.svg["Java CI with Gradle", link="https://github.com/{project-full-path}/actions?query=workflow%3A%22Java+CI+with+Gradle%22"]
 image:https://img.shields.io/codecov/c/github/{project-full-path}/{github-branch}.svg["Code Coverage", link="https://codecov.io/github/{project-full-path}?branch={github-branch}"]
 
-Supported Versions
+Supported Versions:
+
 image:https://img.shields.io/badge/Java-8-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
 image:https://img.shields.io/badge/Java-11-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
 image:https://img.shields.io/badge/Java-17-blue.svg["Supported Versions", link="https://travis-ci.org/{project-full-path}"]
