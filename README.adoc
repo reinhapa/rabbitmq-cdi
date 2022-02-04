@@ -8,8 +8,8 @@ Patrick Reinhart <https://github.com/reinhapa[@reinhapa]>
 image:https://img.shields.io/badge/license-MIT-blue.svg["MIT License", link="https://github.com/{project-full-path}/blob/{github-branch}/LICENSE"]
 image:https://img.shields.io/maven-central/v/{group-name}/{project-name}.svg?label=Maven%20Central["Maven Central", link="https://search.maven.org/search?q=g:%22{group-name}%22%20AND%20a:%22{project-name}%22"]
 image:https://javadoc.io/badge2/{group-name}/{project-name}/javadoc.svg["javadoc", link="https://javadoc.io/doc/{group-name}/{project-name}"]
-image:https://github.com/{project-full-path}/workflows/CI/badge.svg["CI", link="https://github.com/{project-full-path}/actions?query=workflow%3ACI"]
 image:https://img.shields.io/codecov/c/github/{project-full-path}/{github-branch}.svg["Code Coverage", link="https://codecov.io/github/{project-full-path}?branch={github-branch}"]
+image:https://github.com/{project-full-path}/actions/workflows/gradle.yml/badge.svg["CI", link="https://github.com/{project-full-path}/actions/workflows/gradle.yml"]
 
 Supported Versions:
 
