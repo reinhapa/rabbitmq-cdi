@@ -39,7 +39,7 @@ jobs:
       uses: codecov/codecov-action@v1
   deploy:
     if: ${{ github.event_name != 'pull_request' }}
-    needs: [ build ]
+    needs: [ build, codacy-analysis-cli ]
     runs-on: ubuntu-latest
     name: Deploy
     steps:
