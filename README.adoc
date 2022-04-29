@@ -16,6 +16,7 @@ Supported Versions:
 image:https://img.shields.io/badge/Java-8-blue.svg["Java 8"]
 image:https://img.shields.io/badge/Java-11-blue.svg["Java 11"]
 image:https://img.shields.io/badge/Java-17-blue.svg["Java 17"]
+image:https://img.shields.io/badge/Java-18-blue.svg["Java 18"]
 
 
 This project contains all needed classes to bind JavaEE enterprise events to a
