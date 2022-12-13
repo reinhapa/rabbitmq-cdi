@@ -13,7 +13,6 @@ image:https://github.com/{project-full-path}/actions/workflows/gradle.yml/badge.
 
 Supported Versions:
 
-image:https://img.shields.io/badge/Java-8-blue.svg["Java 8"]
 image:https://img.shields.io/badge/Java-11-blue.svg["Java 11"]
 image:https://img.shields.io/badge/Java-17-blue.svg["Java 17"]
 image:https://img.shields.io/badge/Java-18-blue.svg["Java 18"]
