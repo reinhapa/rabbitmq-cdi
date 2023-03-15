@@ -528,7 +528,7 @@ public abstract class EventBinder {
      */
     public QueueBinding<T> withPrefetchCount(int newPrefetchCount) {
       this.prefetchCount = newPrefetchCount;
-      LOGGER.info("Prefetch count of {] set for event type {}", Integer.valueOf(newPrefetchCount),
+      LOGGER.info("Prefetch count of {} set for event type {}", Integer.valueOf(newPrefetchCount),
           eventType.getSimpleName());
       return this;
     }
