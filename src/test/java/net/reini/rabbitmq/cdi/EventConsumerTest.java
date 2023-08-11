@@ -31,8 +31,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.event.ObserverException;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.ObserverException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

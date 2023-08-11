@@ -23,7 +23,7 @@
  */
 package net.reini.rabbitmq.cdi;
 
-import javax.enterprise.context.Dependent;
+import jakarta.enterprise.context.Dependent;
 
 @Dependent
 class ConsumerContainerFactory {

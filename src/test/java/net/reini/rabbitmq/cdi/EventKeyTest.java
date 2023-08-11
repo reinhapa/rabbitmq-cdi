@@ -26,7 +26,7 @@ package net.reini.rabbitmq.cdi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-import javax.enterprise.event.TransactionPhase;
+import jakarta.enterprise.event.TransactionPhase;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

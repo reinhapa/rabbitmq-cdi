@@ -37,7 +37,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import javax.enterprise.event.TransactionPhase;
+import jakarta.enterprise.event.TransactionPhase;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

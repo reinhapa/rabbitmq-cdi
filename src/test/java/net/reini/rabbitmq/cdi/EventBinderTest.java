@@ -31,8 +31,8 @@ import java.io.IOException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.inject.Instance;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.inject.Instance;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

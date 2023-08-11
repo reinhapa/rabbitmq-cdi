@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-import javax.enterprise.event.TransactionPhase;
+import jakarta.enterprise.event.TransactionPhase;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

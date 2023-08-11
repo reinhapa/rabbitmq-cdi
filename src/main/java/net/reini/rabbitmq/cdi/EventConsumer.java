@@ -25,7 +25,7 @@ package net.reini.rabbitmq.cdi;
 
 import java.io.IOException;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
