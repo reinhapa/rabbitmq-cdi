@@ -25,7 +25,7 @@ package net.reini.rabbitmq.cdi;
 
 import java.util.StringJoiner;
 
-import javax.enterprise.event.TransactionPhase;
+import jakarta.enterprise.event.TransactionPhase;
 
 final class EventKey<T> {
   private final Class<T> type;

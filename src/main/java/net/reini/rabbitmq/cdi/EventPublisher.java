@@ -23,21 +23,21 @@
  */
 package net.reini.rabbitmq.cdi;
 
-import static javax.enterprise.event.TransactionPhase.AFTER_COMPLETION;
-import static javax.enterprise.event.TransactionPhase.AFTER_FAILURE;
-import static javax.enterprise.event.TransactionPhase.AFTER_SUCCESS;
-import static javax.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
-import static javax.enterprise.event.TransactionPhase.IN_PROGRESS;
+import static jakarta.enterprise.event.TransactionPhase.AFTER_COMPLETION;
+import static jakarta.enterprise.event.TransactionPhase.AFTER_FAILURE;
+import static jakarta.enterprise.event.TransactionPhase.AFTER_SUCCESS;
+import static jakarta.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
+import static jakarta.enterprise.event.TransactionPhase.IN_PROGRESS;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.PreDestroy;
-import javax.enterprise.event.ObserverException;
-import javax.enterprise.event.Observes;
-import javax.enterprise.event.TransactionPhase;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.event.ObserverException;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
