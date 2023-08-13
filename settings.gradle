@@ -21,3 +21,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+plugins {
+  id('org.ajoberstar.reckon.settings') version '0.18.0'
+}
+
+reckon {
+  defaultInferredScope = 'minor'
+  snapshots()
+  scopeCalc = calcScopeFromProp()
+  stageCalc = calcStageFromProp()
+}
+
+rootProject.name = 'rabbitmq-cdi'
