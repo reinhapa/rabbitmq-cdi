@@ -34,7 +34,8 @@ if (!project.hasProperty('sonatypePassword')) ext.sonatypePassword = '**undefine
 defaultTasks 'build'
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_1_8
+  sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
 }
 
 configurations {
@@ -61,7 +62,7 @@ dependencies {
 
   testRuntimeOnly 'org.junit.platform:junit-platform-runner:1.10.0'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
-  testRuntimeOnly 'ch.qos.logback:logback-classic:1.4.9'
+  testRuntimeOnly 'ch.qos.logback:logback-classic:1.4.11'
 }
 
 compileJava {
@@ -97,7 +98,7 @@ dependencyUpdates.resolutionStrategy {
 }
 
 config {
-  release = !project.version.endsWith('-SNAPSHOT')
+  release = !project.version.toString().endsWith('-SNAPSHOT')
   info {
     vendor = 'reinhapa'
     name = 'RabbitMQ JavaEE/JakartaEE CDI enabler'
