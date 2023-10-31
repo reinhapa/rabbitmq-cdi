@@ -50,7 +50,7 @@ dependencies {
   compileOnly 'jakarta.platform:jakarta.jakartaee-api:10.0.0'
 
   implementation 'org.slf4j:slf4j-api:2.0.9'
-  implementation 'com.rabbitmq:amqp-client:5.19.0'
+  implementation 'com.rabbitmq:amqp-client:5.20.0'
   implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
 
   testImplementation 'jakarta.platform:jakarta.jakartaee-api:10.0.0'
