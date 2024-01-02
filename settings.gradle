@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 plugins {
-  id('org.ajoberstar.reckon.settings') version '0.18.1'
+  id('org.ajoberstar.reckon.settings') version '0.18.2'
 }
 
 reckon {
