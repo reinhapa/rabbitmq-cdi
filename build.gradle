@@ -49,7 +49,7 @@ repositories {
 dependencies {
   compileOnly 'jakarta.platform:jakarta.jakartaee-api:10.0.0'
 
-  implementation 'org.slf4j:slf4j-api:2.0.12'
+  implementation 'org.slf4j:slf4j-api:2.0.13'
   implementation 'com.rabbitmq:amqp-client:5.21.0'
   implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.0'
 
