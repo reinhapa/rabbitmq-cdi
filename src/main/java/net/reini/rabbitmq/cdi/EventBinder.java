@@ -509,14 +509,6 @@ public abstract class EventBinder {
     }
 
     /**
-     * Adds a BindingDeclaration declaration to this QueueBinding The declaration is automatically
-     * applied to the publisher channel
-     *
-     * @param bindingDeclaration The exchange declaration
-     * @return the queue binding
-     */
-
-    /**
      * Configures maximum number of unacknowledged buffered messages that are allowed for this
      * channel.
      *
