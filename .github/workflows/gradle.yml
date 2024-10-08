@@ -35,6 +35,7 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
+      timeout-minutes: 5
     - name: Run codecov analysis
       uses: codecov/codecov-action@v4
   deploy:
