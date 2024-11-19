@@ -37,7 +37,7 @@ jobs:
       run: ./gradlew build
       timeout-minutes: 5
     - name: Run codecov analysis
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
   deploy:
     if: ${{ github.event_name != 'pull_request' }}
     needs: [ build, codacy-analysis-cli ]
