@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015-2024 Patrick Reinhart
+ * Copyright (c) 2015-2025 Patrick Reinhart
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -95,9 +95,8 @@ class ConnectionManager {
     this.listeners.remove(listener);
   }
 
-  public boolean containsListener( ConnectionListener listener )
-  {
-    return this.listeners.contains( listener );
+  public boolean containsListener(ConnectionListener listener) {
+    return this.listeners.contains(listener);
   }
 
   /**
@@ -198,10 +197,8 @@ class ConnectionManager {
    */
   private void notifyListenersOnStateChange() {
     LOGGER.debug("Notifying connection listeners about state change to {}", state);
-
     for (ConnectionListener listener : listeners) {
       try {
-
         switch (state) {
           case CONNECTED:
             listener.onConnectionEstablished(connection);
@@ -218,7 +215,6 @@ class ConnectionManager {
       } catch (RuntimeException e) {
         LOGGER.warn("connection listener throw an exception while informing about state change", e);
       }
-
     }
   }
 
