@@ -131,7 +131,7 @@ config {
     repositories {
       repository {
         name = 'sonatypeRelease'
-        url  = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+        url  = 'https://ossrh-staging-api.central.sonatype.com/service/local/'
         credentials {
           username = sonatypeUsername
           password = sonatypePassword
@@ -139,7 +139,7 @@ config {
       }
       repository {
         name = 'sonatypeSnapshot'
-        url  = 'https://oss.sonatype.org/content/repositories/snapshots/'
+        url  = 'https://central.sonatype.com/repository/maven-snapshots/'
         credentials {
           username = sonatypeUsername
           password = sonatypePassword
