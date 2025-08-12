@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Codacy Analysis CLI
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Run codacy-analysis-cli
         uses: codacy/codacy-analysis-cli-action@master
   build:
@@ -22,7 +22,7 @@ jobs:
         jdk: ['11', '21','23']
         os: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Set up JDK ${{ matrix.jdk }}
       uses: actions/setup-java@v4
       with:
@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
     - name: Set up JDK
