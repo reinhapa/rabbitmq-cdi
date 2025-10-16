@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        jdk: ['11', '21','23']
+        jdk: ['21', '24']
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v5
@@ -48,7 +48,7 @@ jobs:
       uses: actions/setup-java@v5
       with:
         distribution: temurin
-        java-version: '11'
+        java-version: '21'
     - name: Deploy
       env:
         ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_SIGNING_KEY }}
