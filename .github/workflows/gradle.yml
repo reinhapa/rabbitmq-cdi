@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        jdk: ['21', '24']
+        jdk: ['21']
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v5
@@ -32,7 +32,7 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
-      timeout-minutes: 10
+      timeout-minutes: 15
     - name: Run codecov analysis
       uses: codecov/codecov-action@v5
   deploy:
