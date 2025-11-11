@@ -24,7 +24,7 @@
 plugins {
   id 'java-library'
   id 'eclipse'
-  id 'org.owasp.dependencycheck' version '12.1.8'
+  id 'org.owasp.dependencycheck' version '12.1.9'
   id 'org.kordamp.gradle.java-project' version '0.54.0'
 }
 
