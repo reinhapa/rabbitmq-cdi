@@ -51,7 +51,7 @@ dependencies {
 
   implementation 'org.slf4j:slf4j-api:2.0.20'
   implementation 'com.rabbitmq:amqp-client:5.37.0'
-  implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.4'
 
   testImplementation 'jakarta.platform:jakarta.jakartaee-api:11.0.0'
   testImplementation 'org.hamcrest:hamcrest:3.0'
